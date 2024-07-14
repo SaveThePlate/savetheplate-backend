@@ -1,12 +1,13 @@
-name: 🥚🌞 DEPLOY DEV
+name: 🥚🌑 DEPLOY DEV 
 on:
   push:
     branches:
-      - dev
+      - 'dev'
   workflow_dispatch:
+  
 env:
   REGISTRY: registry.digitalocean.com/cc-dev-registry
-  IMAGE_NAME: leftover-frontend
+  IMAGE_NAME: leftover-backend
 
 jobs:
   build_and_push:
@@ -48,9 +49,10 @@ jobs:
             docker rm $IMAGE_NAME 2> /dev/null || true
             # Run a new container from a new image
             docker run -d \
-              -p 3151:3000 \
+              -p 3150:3000 \
+              -v /storage:/app/storage \
+              -v /logs:/app/logs \
+              -e ENVIRONMENT=staging \
               --restart on-failure:5 \
               --name $IMAGE_NAME \
               $REGISTRY/$IMAGE_NAME:$(echo $GITHUB_SHA | head -c7)
-
-  
