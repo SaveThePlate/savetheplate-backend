@@ -19,5 +19,6 @@ export class CreateOfferDto {
 
   @IsArray()
   @IsNotEmpty()
-  images: string[];
+  images: string;
+
 }

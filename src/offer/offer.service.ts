@@ -12,8 +12,19 @@ export class OfferService {
     });
   }
 
+  // async findAll() {
+  //   return this.prisma.offer.findMany();
+  // }
+
   async findAll() {
-    return this.prisma.offer.findMany();
+    const offers = await this.prisma.offer.findMany();
+    return offers.map(offer => {
+      const imageFileName =  offer.images[0].filename;
+      return {
+        ...offer,
+        imageFileName: imageFileName,
+      };
+    });
   }
 
 }

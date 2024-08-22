@@ -13,7 +13,8 @@ export class OfferController {
       description: createOfferDto.description,
       expirationDate: createOfferDto.expirationDate,
       pickupLocation: createOfferDto.pickupLocation,
-      images: createOfferDto.images,
+      images: JSON.parse(createOfferDto.images),
+
     };
 
     return this.offerService.create(data);
