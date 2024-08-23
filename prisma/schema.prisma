@@ -19,6 +19,18 @@ model User {
   name  String?
 }
 
+
+model Product{
+  id           Int      @id @default(autoincrement())
+  name         String
+  quantity     Int
+  price        Float
+  location     String
+  availableFrom  DateTime
+  availableTo  DateTime
+  image        String
+  description  String?
+
 model Offer {
   id             Int      @id @default(autoincrement())
   title          String
@@ -28,4 +40,5 @@ model Offer {
   images         Json
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
 }
