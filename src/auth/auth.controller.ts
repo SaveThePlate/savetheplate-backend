@@ -39,4 +39,5 @@ export class AuthController {
   GetUserByToken(@Req() request: Request) {
     return this.authService.GetUserByToken(request);
   }
+
 }
