@@ -9,6 +9,7 @@ export class OfferController {
   @Post()
   async create(@Body() createOfferDto: CreateOfferDto) {
     const data = {
+      owner: createOfferDto.owner,
       title: createOfferDto.title,
       description: createOfferDto.description,
       expirationDate: createOfferDto.expirationDate,

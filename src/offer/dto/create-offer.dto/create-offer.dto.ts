@@ -3,6 +3,10 @@ import { IsString, IsNotEmpty, IsDateString, IsArray, IsOptional } from 'class-v
 export class CreateOfferDto {
   @IsString()
   @IsNotEmpty()
+  owner: string;
+
+  @IsString()
+  @IsNotEmpty()
   title: string;
 
   @IsString()
