@@ -1,25 +1,28 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req} from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
+import { AuthGuard } from '../auth/auth.guard';
+import { User } from '@prisma/client';
 
 @Controller('offers')
 export class OfferController {
   constructor(private readonly offerService: OfferService) {}
-
   @Post()
-  async create(@Body() createOfferDto: CreateOfferDto) {
+  @UseGuards(AuthGuard)
+  async create(@Body() createOfferDto: CreateOfferDto, @Req() request: Request) {
+    const user: User = request['user'];
     const data = {
-      owner: createOfferDto.owner,
+      owner: user.email, 
       title: createOfferDto.title,
       description: createOfferDto.description,
       expirationDate: createOfferDto.expirationDate,
       pickupLocation: createOfferDto.pickupLocation,
       images: JSON.parse(createOfferDto.images),
-
     };
 
     return this.offerService.create(data);
   }
+
 
   @Get()
   findAll() {

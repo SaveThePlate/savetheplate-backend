@@ -4,11 +4,23 @@ import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
 
 @Injectable()
 export class OfferService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) {}
 
-  async create(createOfferDto: CreateOfferDto) {
+  // async create(createOfferDto: CreateOfferDto) {
+  //   return this.prisma.offer.create({
+  //     data: createOfferDto,
+  //   });
+  // }
+  async create(data: any) {
     return this.prisma.offer.create({
-      data: createOfferDto,
+      data: {
+        owner: data.owner, 
+        title: data.title,
+        description: data.description,
+        expirationDate: data.expirationDate,
+        pickupLocation: data.pickupLocation,
+        images: data.images,
+      },
     });
   }
 
