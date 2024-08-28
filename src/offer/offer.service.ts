@@ -6,11 +6,6 @@ import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
 export class OfferService {
   constructor(private prisma: PrismaService) {}
 
-  // async create(createOfferDto: CreateOfferDto) {
-  //   return this.prisma.offer.create({
-  //     data: createOfferDto,
-  //   });
-  // }
   async create(data: any) {
     return this.prisma.offer.create({
       data: {
@@ -24,10 +19,6 @@ export class OfferService {
     });
   }
 
-  // async findAll() {
-  //   return this.prisma.offer.findMany();
-  // }
-
   async findAll() {
     const offers = await this.prisma.offer.findMany();
     return offers.map(offer => {
@@ -36,6 +27,14 @@ export class OfferService {
         ...offer,
         imageFileName: imageFileName,
       };
+    });
+  }
+
+  async findAllByOwner(ownerEmail: string) {
+    return this.prisma.offer.findMany({
+      where: {
+        owner: ownerEmail,
+      },
     });
   }
 

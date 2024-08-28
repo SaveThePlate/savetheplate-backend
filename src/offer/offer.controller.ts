@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req} from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Query} from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -23,9 +23,17 @@ export class OfferController {
     return this.offerService.create(data);
   }
 
+  @Get('owner')
+  @UseGuards(AuthGuard)
+  async findAllByOwner(@Req() request: Request) {
+    const user: User = request['user'];
+    return this.offerService.findAllByOwner(user.email);
+  }
 
   @Get()
-  findAll() {
+  async findAll() {
     return this.offerService.findAll();
   }
+
+
 }
