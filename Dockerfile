@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
 
-RUN npm ci
+RUN npm i
 
 COPY --chown=node:node . .
 
@@ -34,7 +34,7 @@ RUN npx prisma generate
 
 RUN npm run build
 
-RUN npm ci --only=production && npm cache clean --force
+RUN npm i 
 
 USER node
 
