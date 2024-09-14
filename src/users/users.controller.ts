@@ -14,6 +14,7 @@ import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { Request } from 'express';
 
+
 @ApiTags('users')
 @UseGuards(AuthGuard('jwt'))
 @ApiBearerAuth()
@@ -38,9 +39,15 @@ export class UsersController {
     return await this.usersService.update(+id, email);
   }
 
+  @Put('profile/:id')
+  async updateProfile(@Param('id') id: number, @Body() body: { username?: string; location?: string; phoneNumber?: string }) {
+    const profileData = { ...body };
+    return await this.usersService.updateUserProfile(+id, profileData);
+  }
+  
   @Get(':id')
   @ApiParam({ name: 'id', type: 'number' })
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: number) {
     return await this.usersService.findOneById(+id);
   }
 
@@ -51,16 +58,15 @@ export class UsersController {
 
   @Delete(':id')
   @ApiParam({ name: 'id', type: 'number' })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: number) {
     return await this.usersService.remove(+id);
   }
 
-  @UseGuards(AuthGuard('jwt'))
   @Get('me')
   async getCurrentUser(@Req() req: Request) {
-    const user = req.user as { email: string }; 
+    const user = req.user as { email: string };
     if (!user) {
-      throw new Error('User not authenticated'); 
+      throw new Error('User not authenticated');
     }
     return await this.usersService.findOne(user.email);
   }

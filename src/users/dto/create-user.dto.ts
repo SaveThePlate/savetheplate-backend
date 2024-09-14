@@ -1,11 +1,10 @@
 export class CreateUserDto {
-  id?: string;
+  id?: number;
   email: string;
-  name?: string;
+  username?: string;
+  location?: string;
+  phoneNumber?: number;
   createdAt?: Date;
-  university?: string;
-  fieldOfStudy?: string;
-  image?: string;
-  dateOfBirth: Date;
-  currentFieldOfStudy?: string;
+  profileImage?: string;
+
 }

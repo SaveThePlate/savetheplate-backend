@@ -1,4 +1,3 @@
-// resend.service.ts
 import { Injectable } from '@nestjs/common';
 import { Resend } from 'resend';
 

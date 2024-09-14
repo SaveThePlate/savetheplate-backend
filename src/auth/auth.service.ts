@@ -3,9 +3,9 @@ import { PrismaService } from 'nestjs-prisma';
 
 import { User } from '@prisma/client';
 import { ResendService } from 'src/utils/mailing/resend.service';
-import { DecodeToken, generateToken, JwtType } from 'src/utils/jwt';
 import MagicLinkEmailTemplate from 'emails/MagicLink';
 import { AuthMagicMailSenderDtoRequest, AuthMagicMailVerifierDtoRequest, AuthMagicMailVerifierDtoResponse } from './dto/auth-request.dto';
+import { generateToken, JwtType, DecodeToken } from 'src/utils/jwt';
 
 @Injectable()
 export class AuthService {
