@@ -9,11 +9,11 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
 
-@UseGuards(AuthGuard('jwt')) 
+@UseGuards(AuthGuard) 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
@@ -32,6 +32,11 @@ export class UsersController {
   async findAll() {
     return await this.usersService.findAll();
   }
+  @Get('me')
+  async getCurrentUser(@Req() req: Request) {
+    const user = req.user as { email: string };
+    return this.usersService.findOne(user.email);
+  }
 
   @Put('profile/:id')
   async updateProfile(@Param('id') id: number, @Body() profileData: any) {
@@ -44,9 +49,5 @@ export class UsersController {
     return await this.usersService.remove(email);
   }
 
-  @Get('me')
-  async getCurrentUser(@Req() req: Request) {
-    const user = req.user as { email: string };
-    return this.usersService.findOne(user.email);
-  }
+
 }
