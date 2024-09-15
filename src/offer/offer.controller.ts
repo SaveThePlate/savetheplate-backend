@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Query} from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
 import { AuthGuard } from '../auth/auth.guard';

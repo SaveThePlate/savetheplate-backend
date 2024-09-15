@@ -1,4 +1,3 @@
-// resend.module.ts
 import { Module } from '@nestjs/common';
 import { ResendService } from './resend.service';
 
