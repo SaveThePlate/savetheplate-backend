@@ -20,9 +20,10 @@ export class UsersController {
 
   @Post()
   async create(@Body('email') email: string) {
+    const username = email.split('@')[0];
     const data = {
       email: email, 
-      username: email.split('@')[0]
+      username: username
     };
     return this.usersService.create(data);
   }

@@ -29,9 +29,11 @@ export class AuthService {
 
       if (!user) {
         //CREATE USER BY EMAIL
+        const username = AuthUserDto.email.split('@')[0];
         user = await this.prisma.user.create({
           data: {
             email: AuthUserDto.email,
+            username: username
           },
         });
       }
