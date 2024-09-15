@@ -18,7 +18,7 @@ model User {
   email       String   @unique
   username    String
   location    String?
-  phoneNumber Int?
+  phoneNumber String?
   profileImage String?
 }
 

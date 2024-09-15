@@ -10,14 +10,18 @@ export class UsersService {
       data: {
         email: data.email,
         username: data.username,
+        profileImage: data.profileImage,
       },
     });
   }
 
-  async updateUserProfile(id: number, profileData: any) {
+  async updateUserProfile(email: string, profileData: any) {
+    const updateData = {
+      ...profileData,
+    };
     return this.prisma.user.update({
-      where: { id },
-      data: profileData,
+      where: { email }, 
+      data: updateData,
     });
   }
 

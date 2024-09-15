@@ -7,11 +7,14 @@ import {
   Post,
   Put,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(AuthGuard) 
 @Controller('users')
@@ -38,11 +41,14 @@ export class UsersController {
     return this.usersService.findOne(user.email);
   }
 
-  @Put('profile/:id')
-  async updateProfile(@Param('id') id: number, @Body() profileData: any) {
-    return this.usersService.updateUserProfile(id, profileData);
+  @Put('me')
+  async updateProfile(
+    @Req() req: Request, 
+    @Body() profileData: any
+  ) {
+    const user = req.user as { email: string };
+    return this.usersService.updateUserProfile(user.email, profileData);
   }
-
   
   @Delete(':email')
   async remove(@Param('email') email: string) {
