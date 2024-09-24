@@ -14,8 +14,12 @@ datasource db {
 }
 
 model User {
-  id    Int  @id @default(autoincrement()) 
-  email String  @unique
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  username    String
+  location    String?
+  phoneNumber String?
+  profileImage String?
 }
 
 model Offer {

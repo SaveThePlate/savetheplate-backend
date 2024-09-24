@@ -7,61 +7,53 @@ import {
   Post,
   Put,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { ApiBearerAuth, ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
+import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 
-@ApiTags('users')
-@UseGuards(AuthGuard('jwt'))
-@ApiBearerAuth()
+@UseGuards(AuthGuard) 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Post()
-  @ApiBody({
-    schema: { type: 'object', properties: { email: { type: 'string' } } },
-  })
   async create(@Body('email') email: string) {
-    return await this.usersService.create(email);
-  }
-
-  @Put(':id')
-  @ApiParam({ name: 'id', type: 'number' })
-  @ApiBody({
-    schema: { type: 'object', properties: { email: { type: 'string' } } },
-  })
-  async update(@Param('id') id: string, @Body('email') email: string) {
-    return await this.usersService.update(+id, email);
-  }
-
-  @Get(':id')
-  @ApiParam({ name: 'id', type: 'number' })
-  async findOne(@Param('id') id: string) {
-    return await this.usersService.findOneById(+id);
+    const username = email.split('@')[0];
+    const data = {
+      email: email, 
+      username: username
+    };
+    return this.usersService.create(data);
   }
 
   @Get()
   async findAll() {
     return await this.usersService.findAll();
   }
-
-  @Delete(':id')
-  @ApiParam({ name: 'id', type: 'number' })
-  async remove(@Param('id') id: string) {
-    return await this.usersService.remove(+id);
-  }
-
-  @UseGuards(AuthGuard('jwt'))
   @Get('me')
   async getCurrentUser(@Req() req: Request) {
-    const user = req.user as { email: string }; 
-    if (!user) {
-      throw new Error('User not authenticated'); 
-    }
-    return await this.usersService.findOne(user.email);
+    const user = req.user as { email: string };
+    return this.usersService.findOne(user.email);
   }
+
+  @Put('me')
+  async updateProfile(
+    @Req() req: Request, 
+    @Body() profileData: any
+  ) {
+    const user = req.user as { email: string };
+    return this.usersService.updateUserProfile(user.email, profileData);
+  }
+  
+  @Delete(':email')
+  async remove(@Param('email') email: string) {
+    return await this.usersService.remove(email);
+  }
+
+
 }

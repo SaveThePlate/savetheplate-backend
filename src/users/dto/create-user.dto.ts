@@ -1,11 +1,24 @@
+import { IsString, IsNotEmpty, IsDateString, IsArray, IsInt } from 'class-validator';
+
 export class CreateUserDto {
-  id?: string;
+  @IsString()
+  @IsNotEmpty()
   email: string;
-  name?: string;
-  createdAt?: Date;
-  university?: string;
-  fieldOfStudy?: string;
-  image?: string;
-  dateOfBirth: Date;
-  currentFieldOfStudy?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
+  @IsString()
+  @IsNotEmpty()
+  location: string;
+
+  @IsInt()
+  @IsNotEmpty()
+  phoneNumber: number;
+
+  @IsString()
+  @IsNotEmpty()
+  profileImage: string;
+
 }

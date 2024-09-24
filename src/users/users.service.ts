@@ -1,59 +1,47 @@
-import { Injectable, ConflictException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { User } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
+ 
+  async create(data: any) {
+    return this.prisma.user.create({
+      data: {
+        email: data.email,
+        username: data.username,
+        profileImage: data.profileImage,
+      },
+    });
+  }
 
-  async create(email: string): Promise<User> {
-    try {
-      return await this.prismaService.user.create({
-        data: { email },
-      });
-    } catch (error) {
-      this.handleUniqueConstraintError(error);
+  async updateUserProfile(email: string, profileData: any) {
+    const updateData = {
+      ...profileData,
+    };
+    return this.prisma.user.update({
+      where: { email }, 
+      data: updateData,
+    });
+  }
+
+  async findAll() {
+    return await this.prisma.user.findMany();
+  }
+
+  async findOne(email: string) {
+    const user = this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+    return user;
   }
 
-  async update(id: number, email: string): Promise<User> {
-    try {
-      return await this.prismaService.user.update({
-        where: { id },
-        data: { email },
-      });
-    } catch (error) {
-      this.handleUniqueConstraintError(error);
-    }
-  }
-
-  async findAll(): Promise<User[]> {
-    return await this.prismaService.user.findMany();
-  }
-
-  async findOne(email: string): Promise<User> {
-    return await this.prismaService.user.findUnique({
+  async remove(email: string) {
+    await this.prisma.user.delete({
       where: { email },
     });
   }
 
-  async findOneById(id: number): Promise<User> {
-    return await this.prismaService.user.findUnique({
-      where: { id },
-    });
-  }
-
-  async remove(id: number): Promise<void> {
-    await this.prismaService.user.delete({
-      where: { id },
-    });
-  }
-
-  private handleUniqueConstraintError(error: any) {
-    if (error.code === 'P2002') {
-      throw new ConflictException('Unique constraint failed');
-    }
-    throw error;
-  }
 
 }
