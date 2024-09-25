@@ -17,6 +17,8 @@ export class OfferController {
       description: createOfferDto.description,
       expirationDate: createOfferDto.expirationDate,
       pickupLocation: createOfferDto.pickupLocation,
+      latitude: createOfferDto.latitude,     
+      longitude: createOfferDto.longitude,   
       images: JSON.parse(createOfferDto.images),
     };
 

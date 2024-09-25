@@ -29,6 +29,8 @@ model Offer {
   description    String
   expirationDate DateTime
   pickupLocation String
+  latitude       Float?  
+  longitude      Float?
   images         Json
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
