@@ -7,14 +7,11 @@ import {
   Post,
   Put,
   Req,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(AuthGuard) 
 @Controller('users')
