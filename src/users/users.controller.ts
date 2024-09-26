@@ -42,11 +42,16 @@ export class UsersController {
   }
 
   @Put('me')
+  @UseInterceptors(FileInterceptor('profileImage'))
   async updateProfile(
     @Req() req: Request, 
+    @UploadedFile() file: Express.Multer.File, 
     @Body() profileData: any
   ) {
     const user = req.user as { email: string };
+    if (file) {
+      profileData.profileImage = file.filename; 
+    }
     return this.usersService.updateUserProfile(user.email, profileData);
   }
   

@@ -16,14 +16,17 @@ export class UsersService {
   }
 
   async updateUserProfile(email: string, profileData: any) {
-    const updateData = {
-      ...profileData,
-    };
-    return this.prisma.user.update({
-      where: { email }, 
-      data: updateData,
-    });
+    try {
+      return await this.prisma.user.update({
+        where: { email },
+        data: profileData,
+      });
+    } catch (error) {
+      console.error("Prisma update error:", error);
+      throw new Error("Failed to update user profile.");
+    }
   }
+  
 
   async findAll() {
     return await this.prisma.user.findMany();
