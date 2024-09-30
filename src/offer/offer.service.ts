@@ -13,6 +13,8 @@ export class OfferService {
         description: data.description,
         expirationDate: data.expirationDate,
         pickupLocation: data.pickupLocation,
+        latitude: data.latitude,   
+        longitude: data.longitude, 
         images: data.images,
       },
     });

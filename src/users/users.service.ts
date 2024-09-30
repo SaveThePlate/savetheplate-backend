@@ -32,6 +32,7 @@ export class UsersService {
         profileImage: profileData.profileImage,
       },
     });
+
   }
   
   
@@ -53,6 +54,7 @@ export class UsersService {
       where: { email },
     });
   }
+
 
 
 }
