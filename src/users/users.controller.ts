@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -7,11 +8,15 @@ import {
   Post,
   Put,
   Req,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { User } from '@prisma/client';
 
 @UseGuards(AuthGuard) 
 @Controller('users')
@@ -38,15 +43,35 @@ export class UsersController {
     return this.usersService.findOne(user.email);
   }
 
+  @Post('upload-profile-image')
+  @UseInterceptors(FileInterceptor('profileImage'))
+  async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    const user = req.user as { email: string };
+    const imagePath = file.filename; 
+
+    return this.usersService.updateUserProfileImage(user.email, imagePath);
+  }
+
   @Put('me')
   async updateProfile(
-    @Req() req: Request, 
-    @Body() profileData: any
+    @Body() profileData: any,
+    @Req() req: Request
   ) {
     const user = req.user as { email: string };
-    return this.usersService.updateUserProfile(user.email, profileData);
+  
+    return this.usersService.updateUserProfile(user.email, {
+      username: profileData.username,
+      location: profileData.location,
+      phoneNumber: profileData.phoneNumber,
+      profileImage: JSON.parse(profileData.profileImage), 
+    });
   }
   
+  
+
   @Delete(':email')
   async remove(@Param('email') email: string) {
     return await this.usersService.remove(email);

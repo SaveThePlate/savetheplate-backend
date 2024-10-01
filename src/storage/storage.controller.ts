@@ -5,7 +5,7 @@ import {
   Param,
   Post,
   Res,
-  UploadedFile,
+  UploadedFiles,
   UseInterceptors,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
@@ -55,7 +55,7 @@ export class StorageController {
       },
     }),
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFiles() file: Express.Multer.File) {
     return this.storageService.processUploadedFile(file);
   }
 
