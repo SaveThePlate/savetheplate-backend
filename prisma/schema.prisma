@@ -14,24 +14,36 @@ datasource db {
 }
 
 model User {
-  id          Int      @id @default(autoincrement())
-  email       String   @unique
-  username    String
-  location    String?
-  phoneNumber String?
+  id           Int     @id @default(autoincrement())
+  email        String  @unique
+  username     String
+  location     String?
+  phoneNumber  String?
   profileImage String?
+  orders       Order[]
 }
 
 model Offer {
   id             Int      @id @default(autoincrement())
-  owner          String   
+  owner          String
   title          String
   description    String
   expirationDate DateTime
   pickupLocation String
-  latitude       Float?  
+  latitude       Float?
   longitude      Float?
   images         Json
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  orders         Order[]
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  quantity  Int
+  userId    Int
+  offerId   Int
+  user      User     @relation(fields: [userId], references: [id])
+  offer     Offer    @relation(fields: [offerId], references: [id])
+  createdAt DateTime @default(now())
 }
