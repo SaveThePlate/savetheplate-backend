@@ -10,7 +10,7 @@ export class OfferService {
     return this.prisma.offer.create({
       data: {
         owner: data.owner, 
-        // ownerId: data.ownerId,
+        ownerId: data.ownerId,
         title: data.title,
         description: data.description,
         expirationDate: data.expirationDate,
