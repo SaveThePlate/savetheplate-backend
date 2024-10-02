@@ -15,10 +15,31 @@ export class UsersService {
     });
   }
 
+  //gotta fix this
   async updateUserProfileImage(email: string, imagePath: string) {
     return this.prisma.user.update({
       where: { email },
       data: { profileImage: imagePath },
+    });
+  }
+
+  async findAll() {
+    return await this.prisma.user.findMany();
+  }
+
+  async findOne(email: string) {
+    const user = this.prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  findById(userId: number) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId, 
+      },
     });
   }
 
@@ -35,19 +56,6 @@ export class UsersService {
 
   }
   
-  
-
-  async findAll() {
-    return await this.prisma.user.findMany();
-  }
-
-  async findOne(email: string) {
-    const user = this.prisma.user.findUnique({ where: { email } });
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-    return user;
-  }
 
   async remove(email: string) {
     await this.prisma.user.delete({

@@ -16,13 +16,13 @@ import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { User } from '@prisma/client';
 
 @UseGuards(AuthGuard) 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  //the signIn throught the magic link will set an automatic username 
   @Post()
   async create(@Body('email') email: string) {
     const username = email.split('@')[0];
@@ -32,6 +32,19 @@ export class UsersController {
     };
     return this.usersService.create(data);
   }
+
+    //this is not working correctly
+    @Post('upload-profile-image')
+    @UseInterceptors(FileInterceptor('profileImage'))
+    async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+      if (!file) {
+        throw new BadRequestException('No file uploaded');
+      }
+      const user = req.user as { email: string };
+      const imagePath = file.filename; 
+  
+      return this.usersService.updateUserProfileImage(user.email, imagePath);
+    }
 
   @Get()
   async findAll() {
@@ -43,25 +56,15 @@ export class UsersController {
     return this.usersService.findOne(user.email);
   }
 
-  @Post('upload-profile-image')
-  @UseInterceptors(FileInterceptor('profileImage'))
-  async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-    const user = req.user as { email: string };
-    const imagePath = file.filename; 
-
-    return this.usersService.updateUserProfileImage(user.email, imagePath);
+  //get user by Id
+  @Get(':id')
+  async getUserById(@Param('id') id: string) {
+    return this.usersService.findById(parseInt(id, 10)); 
   }
 
   @Put('me')
-  async updateProfile(
-    @Body() profileData: any,
-    @Req() req: Request
-  ) {
+  async updateProfile(@Body() profileData: any, @Req() req: Request) {
     const user = req.user as { email: string };
-  
     return this.usersService.updateUserProfile(user.email, {
       username: profileData.username,
       location: profileData.location,
@@ -69,8 +72,6 @@ export class UsersController {
       profileImage: JSON.parse(profileData.profileImage), 
     });
   }
-  
-  
 
   @Delete(':email')
   async remove(@Param('email') email: string) {
