@@ -57,19 +57,6 @@ export class UsersController {
     const user = req.user as { email: string };
     return this.usersService.findOne(user.email);
   }
-
-  @Post('upload-profile-image')
-  @UseInterceptors(FileInterceptor('profileImage'))
-  async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-    const user = req.user as { email: string };
-    const imagePath = file.filename; 
-
-    return this.usersService.updateUserProfileImage(user.email, imagePath);
-  }
-
   @Put('me')
   async updateProfile(
     @Body() profileData: any,
