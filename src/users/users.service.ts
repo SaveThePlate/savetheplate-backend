@@ -31,6 +31,7 @@ export class UsersService {
         phoneNumber: profileData.phoneNumber,
         profileImage: profileData.profileImage,
       },
+
     });
 
   }
@@ -48,6 +49,28 @@ export class UsersService {
     }
     return user;
   }
+
+  findById(userId: number) {
+    return this.prisma.user.findUnique({
+      where: {
+        id: userId, 
+      },
+    });
+  }
+
+  async updateUserProfile(email: string, profileData: any) {
+    return this.prisma.user.update({
+      where: { email },
+      data: {
+        username: profileData.username,
+        location: profileData.location,
+        phoneNumber: profileData.phoneNumber,
+        profileImage: profileData.profileImage,
+      },
+    });
+
+  }
+  
 
   async remove(email: string) {
     await this.prisma.user.delete({

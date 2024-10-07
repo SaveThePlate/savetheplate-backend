@@ -3,12 +3,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class OfferService {
+
   constructor(private prisma: PrismaService) {}
 
   async create(data: any) {
     return this.prisma.offer.create({
       data: {
         owner: data.owner, 
+        ownerId: data.ownerId,
         title: data.title,
         description: data.description,
         expirationDate: data.expirationDate,
@@ -39,4 +41,11 @@ export class OfferService {
     });
   }
 
+  async findAllByOwnerId(ownerId: number) {
+    return this.prisma.offer.findMany({
+      where: {
+        ownerId: ownerId, 
+      },
+    });
+  }
 }
