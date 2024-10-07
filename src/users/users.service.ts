@@ -15,13 +15,28 @@ export class UsersService {
     });
   }
 
-  //gotta fix this
   async updateUserProfileImage(email: string, imagePath: string) {
     return this.prisma.user.update({
       where: { email },
       data: { profileImage: imagePath },
     });
   }
+
+  async updateUserProfile(email: string, profileData: any) {
+    return this.prisma.user.update({
+      where: { email },
+      data: {
+        username: profileData.username,
+        location: profileData.location,
+        phoneNumber: profileData.phoneNumber,
+        profileImage: profileData.profileImage,
+      },
+
+    });
+
+  }
+  
+  
 
   async findAll() {
     return await this.prisma.user.findMany();
