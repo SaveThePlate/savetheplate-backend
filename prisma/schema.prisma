@@ -29,6 +29,7 @@ model Offer {
   ownerId        Int?
   title          String
   description    String
+  price          Float?
   expirationDate DateTime
   pickupLocation String
   latitude       Float?
