@@ -71,6 +71,7 @@ export class UsersController {
   }
   
   
+
   @Delete(':email')
   async remove(@Param('email') email: string) {
     return await this.usersService.remove(email);
