@@ -61,13 +61,7 @@ export class UsersController {
     @Body() profileData: any,
     @Req() req: Request
   ) {
-  async updateProfile(
-    @Body() profileData: any,
-    @Req() req: Request
-  ) {
     const user = req.user as { email: string };
-  
-
   
 
     return this.usersService.updateUserProfile(user.email, {
@@ -77,7 +71,6 @@ export class UsersController {
       profileImage: JSON.parse(profileData.profileImage), 
     });
   }
-
 
 
   @Delete(':email')
