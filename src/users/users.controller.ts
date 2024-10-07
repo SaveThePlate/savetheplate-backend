@@ -16,7 +16,6 @@ import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { User } from '@prisma/client';
 
 
 @UseGuards(AuthGuard) 
@@ -58,14 +57,18 @@ export class UsersController {
     return this.usersService.findOne(user.email);
   }
 
+   //get user by Id
+   @Get(':id')
+   async getUserById(@Param('id') id: string) {
+     return this.usersService.findById(parseInt(id, 10)); 
+   }
+   
   @Put('me')
   async updateProfile(
     @Body() profileData: any,
     @Req() req: Request
   ) {
     const user = req.user as { email: string };
-  
-
     return this.usersService.updateUserProfile(user.email, {
       username: profileData.username,
       location: profileData.location,
