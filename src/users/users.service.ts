@@ -58,6 +58,7 @@ export class UsersService {
     });
   }
 
+
   async remove(email: string) {
     await this.prisma.user.delete({
       where: { email },
