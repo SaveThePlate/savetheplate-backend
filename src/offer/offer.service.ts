@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -48,4 +48,12 @@ export class OfferService {
       },
     });
   }
+  async findOfferById(id: number) {
+    return this.prisma.offer.findUnique({
+      where: {
+        id: id,
+      },
+    });
+  }
+
 }

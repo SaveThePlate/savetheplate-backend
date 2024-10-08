@@ -15,8 +15,9 @@ import {
 import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { User } from '@prisma/client';
 
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @UseGuards(AuthGuard) 
 @Controller('users')

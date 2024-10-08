@@ -20,17 +20,17 @@ export class OrderService {
   }
 
   async findOrderById(id: number) {
-    return this.prisma.order.findMany({
+    return this.prisma.order.findUnique({
       where: {
         id: id,
       },
     });
   }
 
-  async findOrderByUser(userId: number) {
+  async findOrderByUser(id: number) {
     return this.prisma.order.findMany({
       where: {
-        userId: userId, 
+        userId: id
       },
     });
   }

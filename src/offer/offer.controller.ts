@@ -1,8 +1,8 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Param } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Param, NotFoundException } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
 import { AuthGuard } from '../auth/auth.guard';
-import { User } from '@prisma/client';
+import { Offer, User } from '@prisma/client';
 
 @Controller('offers')
 export class OfferController {
@@ -43,6 +43,13 @@ export class OfferController {
   @Get()
   async findAll() {
     return this.offerService.findAll();
+  }
+
+  @Get(':id')
+  @UseGuards(AuthGuard)
+  async getCurrentUser(@Param('id') id: number, @Req() req: Request) {
+    console.log("offer id from backend ", id);
+    return this.offerService.findOfferById(Number(id));
   }
 
 
