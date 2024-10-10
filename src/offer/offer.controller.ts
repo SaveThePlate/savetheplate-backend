@@ -12,10 +12,10 @@ export class OfferController {
   async create(@Body() createOfferDto: CreateOfferDto, @Req() request: Request) {
     const user: User = request['user'];
     const data = {
-      owner: user.username, 
       ownerId: user.id,
       title: createOfferDto.title,
       description: createOfferDto.description,
+      price: createOfferDto.price,
       expirationDate: createOfferDto.expirationDate,
       pickupLocation: createOfferDto.pickupLocation,
       latitude: createOfferDto.latitude,     
@@ -26,16 +26,16 @@ export class OfferController {
     return this.offerService.create(data);
   }
 
-  @Get('owner')
-  @UseGuards(AuthGuard)
-  async findAllByOwner(@Req() request: Request) {
-    const user: User = request['user'];
-    return this.offerService.findAllByOwner(user.email);
-  }
+  // @Get('owner')
+  // @UseGuards(AuthGuard)
+  // async findAllByOwner(@Req() request: Request) {
+  //   const user: User = request['user'];
+  //   return this.offerService.findAllByOwner(user.id);
+  // }
 
   @Get('owner/:id')
   @UseGuards(AuthGuard)
-  async findAllByOwnerIds(@Param('id') ownerId: string) {
+  async findAllByOwnerId(@Param('id') ownerId: string) {
     return this.offerService.findAllByOwnerId(parseInt(ownerId, 10)); 
   }
   

@@ -9,10 +9,10 @@ export class OfferService {
   async create(data: any) {
     return this.prisma.offer.create({
       data: {
-        owner: data.owner, 
         ownerId: data.ownerId,
         title: data.title,
         description: data.description,
+        price: data.price,
         expirationDate: data.expirationDate,
         pickupLocation: data.pickupLocation,
         latitude: data.latitude,   
@@ -33,13 +33,6 @@ export class OfferService {
     });
   }
 
-  async findAllByOwner(ownerEmail: string) {
-    return this.prisma.offer.findMany({
-      where: {
-        owner: ownerEmail,
-      },
-    });
-  }
 
   async findAllByOwnerId(ownerId: number) {
     return this.prisma.offer.findMany({

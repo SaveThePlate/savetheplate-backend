@@ -2,6 +2,7 @@
 export class CreateOfferDto {
   title: string;
   description: string;
+  price: number;
   expirationDate: string;
   pickupLocation: string;
   latitude: number;    
