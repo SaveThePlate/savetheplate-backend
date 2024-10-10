@@ -1,20 +1,21 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { User } from '@prisma/client';
+import { Offer, User } from '@prisma/client';
 
 @Controller('orders')
 export class OrderController {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+  ) {}
 
-  @Post(':offerId')
+  @Post()
   @UseGuards(AuthGuard)
-  async create(@Param('offerId') offerId: number, @Body() createOrderDto: CreateOrderDto, @Req() request: Request) {
-    const user: User = request['user'];
+  async create(@Body() createOrderDto: CreateOrderDto, @Req() request: Request) {
     const data = {
-      userId: user.id,
-      offerId: offerId,
+      userId: createOrderDto.userId,
+      offerId: createOrderDto.offerId,
       quantity: createOrderDto.quantity,
     };
     return this.orderService.create(data);
@@ -27,15 +28,14 @@ export class OrderController {
 
   @Get(':id')
   @UseGuards(AuthGuard)
-  async findOrderById(@Param('id') id: number) {
+  async getOrderById(@Param('id') id: number) {
     return this.orderService.findOrderById(Number(id));
   }
 
-  @Get('user')
+  @Get('user/:userId')
   @UseGuards(AuthGuard)
-  async getOrderByUser(@Req() request: Request) {
-    const user: User = request['user'];
-    return this.orderService.findOrderByUser(user.id);
+  async getOrderByUser(@Param('userId') userId: number) {
+    return this.orderService.findOrderByUser(Number(userId));
   }
 
   @Get('offer/:offerId')
