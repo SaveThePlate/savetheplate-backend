@@ -17,6 +17,8 @@ import { UsersService } from './users.service';
 import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from '@prisma/client';
+import { diskStorage } from 'multer';
+import path from 'path';
 
 
 @UseGuards(AuthGuard) 
@@ -35,18 +37,52 @@ export class UsersController {
     return this.usersService.create(data);
   }
 
-    //this is not working correctly
-    @Post('upload-profile-image')
-    @UseInterceptors(FileInterceptor('profileImage'))
-    async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-      if (!file) {
-        throw new BadRequestException('No file uploaded');
+
+  async updateUserProfileImage(email: string, imagePath: string) {
+    return this.usersService.updateUserProfileImage(email, imagePath); 
+  }
+
+  //this is not working correctly
+  @Post('upload-profile-image')
+  @UseInterceptors(FileInterceptor('profileImage', {
+    storage: diskStorage({
+      destination: './uploads/profile-images', // Ensure this folder exists
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+        const ext = path.extname(file.originalname); // Get the file extension
+        const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
+        cb(null, filename);
       }
-      const user = req.user as { email: string };
-      const imagePath = file.filename; 
-  
-      return this.usersService.updateUserProfileImage(user.email, imagePath);
+    }),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // Set file size limit to 5MB
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (allowedMimeTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new BadRequestException('Invalid file type'), false);
+      }
     }
+  }))
+  async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    const user = req.user as { email: string }; // Ensure the user email is correctly extracted from the request
+    if (!user || !user.email) {
+      throw new BadRequestException('Invalid user authentication');
+    }
+
+    const imagePath = `/uploads/profile-images/${file.filename}`; // Use the path where the file was saved
+    await this.updateUserProfileImage(user.email, imagePath); // Update the user's profile image path in the database
+
+    return { success: true, imagePath }; // Return the image path to the frontend
+  }
+  
+
 
   @Get()
   async findAll() {

@@ -1,4 +1,4 @@
-import { Injectable, ConflictException, BadRequestException, NotFoundException } from '@nestjs/common';
+import { Injectable, ConflictException, BadRequestException, NotFoundException, UploadedFile } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
@@ -14,6 +14,8 @@ export class UsersService {
       },
     });
   }
+
+ 
 
   async updateUserProfileImage(email: string, imagePath: string) {
     return this.prisma.user.update({
