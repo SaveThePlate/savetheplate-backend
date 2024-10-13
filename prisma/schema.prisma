@@ -13,6 +13,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Status {
+  pending
+  confirmed
+  cancelled
+}
+
 model User {
   id           Int     @id @default(autoincrement())
   email        String  @unique
@@ -44,6 +50,7 @@ model Order {
   quantity  Int
   userId    Int
   offerId   Int
+  status    Status   @default(pending) 
   user      User     @relation(fields: [userId], references: [id])
   offer     Offer    @relation(fields: [offerId], references: [id])
   createdAt DateTime @default(now())

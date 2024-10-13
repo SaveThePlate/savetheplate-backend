@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Status } from '@prisma/client';
+
 
 @Injectable()
 export class OrderService {
@@ -40,6 +42,14 @@ export class OrderService {
       where: {
         offerId: offerId, 
       },
+    });
+  }
+
+  async updateOrderStatus(id: number, status: Status) {
+    console.log("status from backend", status);
+    return this.prisma.order.update({
+      where: { id },
+      data: { status },
     });
   }
 

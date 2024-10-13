@@ -1,8 +1,9 @@
-import { BadRequestException, Body, Controller, Get, Param, Post, Req, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { Offer, User } from '@prisma/client';
+import { Status } from '@prisma/client';
+
 
 @Controller('orders')
 export class OrderController {
@@ -42,5 +43,10 @@ export class OrderController {
   @UseGuards(AuthGuard)
   async getOrderByOffer(@Param('offerId') offerId: number) {
     return this.orderService.findOrderByOffer(Number(offerId));
+  }
+
+  @Patch(':id/cancel')
+  async cancelOrder(@Param('id') id: number) {
+    return this.orderService.updateOrderStatus(Number(id), Status.cancelled);
   }
 }

@@ -48,6 +48,7 @@ export class OfferController {
   @Get(':id')
   @UseGuards(AuthGuard)
   async getCurrentUser(@Param('id') id: number, @Req() req: Request) {
+    console.log("offer id from backend ", id);
     return this.offerService.findOfferById(Number(id));
   }
 
