@@ -17,71 +17,93 @@ import { UsersService } from './users.service';
 import { Request } from 'express';
 
 import { FileInterceptor } from '@nestjs/platform-express';
-import { User } from '@prisma/client';
 import { diskStorage } from 'multer';
 import path from 'path';
-
+import { UserRole } from '@prisma/client';
 
 @UseGuards(AuthGuard) 
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  //the signIn throught the magic link will set an automatic username 
+
   @Post()
   async create(@Body('email') email: string) {
-    const username = email.split('@')[0];
-    const data = {
-      email: email, 
-      username: username
-    };
-    return this.usersService.create(data);
+      const username = email.split('@')[0];
+      const data = {
+          email: email,
+          username: username,
+          role: UserRole.NONE, 
+      };  
+      return this.usersService.create(data);
   }
 
 
-  async updateUserProfileImage(email: string, imagePath: string) {
-    return this.usersService.updateUserProfileImage(email, imagePath); 
-  }
+  @Post('set-role')
+  async setRole(@Body('role') role: 'CLIENT' | 'PROVIDER', @Req() req) {
+      const userId = req.user.id; // Extract userId from the token
+      try {
+          let redirectTo = '/home'; // Default to home
+          await this.usersService.updateRole(userId, role);
 
-  //this is not working correctly
-  @Post('upload-profile-image')
-  @UseInterceptors(FileInterceptor('profileImage', {
-    storage: diskStorage({
-      destination: './uploads/profile-images', // Ensure this folder exists
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        const ext = path.extname(file.originalname); // Get the file extension
-        const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
-        cb(null, filename);
+          if (role === 'PROVIDER') {
+              redirectTo = '/profile'; // Redirect to profile for providers
+          }
+
+          return {
+              message: 'Role updated successfully',
+              redirectTo, 
+          };
+      } catch (error) {
+          console.error('Error updating user role:', error);
+          return { message: 'Failed to update user role', error: error.message };
       }
-    }),
-    limits: {
-      fileSize: 5 * 1024 * 1024, // Set file size limit to 5MB
-    },
-    fileFilter: (req, file, cb) => {
-      const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
-      if (allowedMimeTypes.includes(file.mimetype)) {
-        cb(null, true);
-      } else {
-        cb(new BadRequestException('Invalid file type'), false);
-      }
-    }
-  }))
-  async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
-    if (!file) {
-      throw new BadRequestException('No file uploaded');
-    }
-
-    const user = req.user as { email: string }; // Ensure the user email is correctly extracted from the request
-    if (!user || !user.email) {
-      throw new BadRequestException('Invalid user authentication');
-    }
-
-    const imagePath = `/uploads/profile-images/${file.filename}`; // Use the path where the file was saved
-    await this.updateUserProfileImage(user.email, imagePath); // Update the user's profile image path in the database
-
-    return { success: true, imagePath }; // Return the image path to the frontend
   }
+  
+
+  // async updateUserProfileImage(email: string, imagePath: string) {
+  //   return this.usersService.updateUserProfileImage(email, imagePath); 
+  // }
+
+  // //this is not working correctly
+  // @Post('upload-profile-image')
+  // @UseInterceptors(FileInterceptor('profileImage', {
+  //   storage: diskStorage({
+  //     destination: './uploads/profile-images', // Ensure this folder exists
+  //     filename: (req, file, cb) => {
+  //       const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+  //       const ext = path.extname(file.originalname); // Get the file extension
+  //       const filename = `${file.fieldname}-${uniqueSuffix}${ext}`;
+  //       cb(null, filename);
+  //     }
+  //   }),
+  //   limits: {
+  //     fileSize: 5 * 1024 * 1024, // Set file size limit to 5MB
+  //   },
+  //   fileFilter: (req, file, cb) => {
+  //     const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+  //     if (allowedMimeTypes.includes(file.mimetype)) {
+  //       cb(null, true);
+  //     } else {
+  //       cb(new BadRequestException('Invalid file type'), false);
+  //     }
+  //   }
+  // }))
+  // async uploadProfileImage(@UploadedFile() file: Express.Multer.File, @Req() req: Request) {
+  //   if (!file) {
+  //     throw new BadRequestException('No file uploaded');
+  //   }
+
+  //   const user = req.user as { email: string }; // Ensure the user email is correctly extracted from the request
+  //   if (!user || !user.email) {
+  //     throw new BadRequestException('Invalid user authentication');
+  //   }
+
+  //   const imagePath = `/uploads/profile-images/${file.filename}`; // Use the path where the file was saved
+  //   await this.updateUserProfileImage(user.email, imagePath); // Update the user's profile image path in the database
+
+  //   return { success: true, imagePath }; // Return the image path to the frontend
+  // }
   
 
 

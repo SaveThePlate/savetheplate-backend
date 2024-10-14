@@ -19,6 +19,12 @@ enum Status {
   cancelled
 }
 
+enum UserRole {
+  CLIENT
+  PROVIDER
+  NONE
+}
+
 model User {
   id           Int     @id @default(autoincrement())
   email        String  @unique
@@ -27,6 +33,7 @@ model User {
   phoneNumber  String?
   profileImage String?
   orders       Order[]
+  role         UserRole
 }
 
 model Offer {

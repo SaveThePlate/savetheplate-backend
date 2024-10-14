@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@prisma/client';
+import { User, UserRole } from '@prisma/client';
 
 // AuthMagicMailSender
 
 export class AuthMagicMailSenderDtoRequest {
   @ApiProperty() email: string;
+  
 }
 
 export class AuthMagicMailSenderDtoResponse {
@@ -19,15 +20,22 @@ export class AuthMagicMailVerifierDtoRequest {
 }
 
 export class AuthMagicMailVerifierDtoResponse {
-  @ApiProperty() message: string;
+  @ApiProperty() message?: string;
   @ApiProperty() accessToken: string | null;
   @ApiProperty() refreshToken: string | null;
-  @ApiProperty() user: {
-    id: any;
+  @ApiProperty() user?: {
+    id: number; 
     email: string;
+    role: UserRole;
   } | null;
+  @ApiProperty() needsOnboarding?: boolean; 
+  @ApiProperty() redirectToOnboarding?: boolean; 
+
+
+
 }
 
 export class GetUserByTokenDtoResponse {
   @ApiProperty() user: User;
+  @ApiProperty() redirectToOnboarding: boolean; 
 }
