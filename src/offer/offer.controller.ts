@@ -2,44 +2,57 @@ import { Controller, Post, Body, Get, UseGuards, Req, Param, NotFoundException }
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
 import { AuthGuard } from '../auth/auth.guard';
-import { Offer, User } from '@prisma/client';
+import { UsersService } from 'src/users/users.service';
 
 @Controller('offers')
 export class OfferController {
-  constructor(private readonly offerService: OfferService) {}
+  constructor(
+    private readonly offerService: OfferService,
+    private readonly usersService: UsersService,
+  ) {}
+
   @Post()
   @UseGuards(AuthGuard)
-  async create(@Body() createOfferDto: CreateOfferDto, @Req() request: Request) {
-    const user: User = request['user'];
+  async create(@Body() createOfferDto: CreateOfferDto, @Req() req) {
+    const userId = req.user.id; 
+    const user = await this.usersService.findById(userId);  
+  
+    // Safely parse the images
+    let images = [];
+    if (createOfferDto.images) {
+      try {
+        images = JSON.parse(createOfferDto.images);
+      } catch (error) {
+        console.error("Error parsing images:", error);
+      }
+    }
+  
     const data = {
-      ownerId: user.id,
+      ownerId: userId,
       title: createOfferDto.title,
       description: createOfferDto.description,
       price: createOfferDto.price,
       expirationDate: createOfferDto.expirationDate,
-      pickupLocation: createOfferDto.pickupLocation,
-      latitude: createOfferDto.latitude,     
-      longitude: createOfferDto.longitude,   
-      images: JSON.parse(createOfferDto.images),
+      pickupLocation: user.location,   
+      latitude: user.latitude,         
+      longitude: user.longitude,      
+      images: images, 
     };
-
-    return this.offerService.create(data);
+  
+    return this.offerService.create(data); 
   }
-
-  // @Get('owner')
-  // @UseGuards(AuthGuard)
-  // async findAllByOwner(@Req() request: Request) {
-  //   const user: User = request['user'];
-  //   return this.offerService.findAllByOwner(user.id);
-  // }
+  
 
   @Get('owner/:id')
   @UseGuards(AuthGuard)
   async findAllByOwnerId(@Param('id') ownerId: string) {
-    return this.offerService.findAllByOwnerId(parseInt(ownerId, 10)); 
+    const ownerIdNumber = parseInt(ownerId, 10);
+    if (isNaN(ownerIdNumber)) {
+      throw new NotFoundException('Invalid owner ID'); 
+    }
+    return this.offerService.findAllByOwnerId(ownerIdNumber); 
   }
   
-
   @Get()
   async findAll() {
     return this.offerService.findAll();
@@ -47,10 +60,11 @@ export class OfferController {
 
   @Get(':id')
   @UseGuards(AuthGuard)
-  async getCurrentUser(@Param('id') id: number, @Req() req: Request) {
-    console.log("offer id from backend ", id);
-    return this.offerService.findOfferById(Number(id));
+  async getCurrentUser(@Param('id') id: string, @Req() req) {
+    const offerId = parseInt(id, 10);
+    if (isNaN(offerId)) {
+      throw new NotFoundException('Invalid offer id'); 
+    }
+    return this.offerService.findOfferById(offerId);
   }
-
-
 }

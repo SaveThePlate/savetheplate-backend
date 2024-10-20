@@ -9,5 +9,6 @@ import { PrismaModule } from 'nestjs-prisma';
   imports: [AuthModule, PrismaModule],
   controllers: [UsersController],
   providers: [UsersService, PrismaService],
+  exports: [UsersService],
 })
 export class UsersModule {}

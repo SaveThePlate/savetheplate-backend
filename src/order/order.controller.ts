@@ -13,9 +13,10 @@ export class OrderController {
 
   @Post()
   @UseGuards(AuthGuard)
-  async create(@Body() createOrderDto: CreateOrderDto, @Req() request: Request) {
+  async create(@Body() createOrderDto: CreateOrderDto, @Req() request) {
+    const userId = request.user.id;
     const data = {
-      userId: createOrderDto.userId,
+      userId: userId,
       offerId: createOrderDto.offerId,
       quantity: createOrderDto.quantity,
     };

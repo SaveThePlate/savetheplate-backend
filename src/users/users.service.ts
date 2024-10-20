@@ -6,18 +6,13 @@ import { UserRole } from '@prisma/client';
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
  
-  async create(data: {
-    email: string;
-    username: string;
-    profileImage?: string;
-    role: UserRole; 
-}) {
+  async create(data: any) {
     return this.prisma.user.create({
         data: {
             email: data.email,
             username: data.username,
             profileImage: data.profileImage,
-            role: data.role, 
+            role: data.role
         },
     });
 }
@@ -26,6 +21,18 @@ async updateRole(userId: number, role: UserRole) {
   return this.prisma.user.update({
       where: { id: userId },
       data: { role: role }, 
+  });
+}
+
+async updateDetails(id: number, location: string, longitude: number, latitude: number, phoneNumber: number) {
+  return this.prisma.user.update({
+      where: { id: id },
+      data: { 
+              latitude: latitude,   
+              longitude: longitude, 
+              location: location,
+              phoneNumber: phoneNumber
+            } 
   });
 }
 

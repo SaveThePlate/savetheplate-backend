@@ -3,7 +3,6 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class OfferService {
-
   constructor(private prisma: PrismaService) {}
 
   async create(data: any) {
@@ -15,8 +14,8 @@ export class OfferService {
         price: data.price,
         expirationDate: data.expirationDate,
         pickupLocation: data.pickupLocation,
-        latitude: data.latitude,   
-        longitude: data.longitude, 
+        latitude: data.latitude,
+        longitude: data.longitude,
         images: data.images,
       },
     });
@@ -24,29 +23,34 @@ export class OfferService {
 
   async findAll() {
     const offers = await this.prisma.offer.findMany();
-    return offers.map(offer => {
-      const imageFileName =  offer.images[0].filename;
+    return offers.map((offer) => {
+      const imageFileName = offer.images[0].filename;
       return {
         ...offer,
-        imageFileName: imageFileName,
+        imageFileName,
       };
     });
   }
 
-
   async findAllByOwnerId(ownerId: number) {
     return this.prisma.offer.findMany({
       where: {
-        ownerId: ownerId, 
-      },
-    });
-  }
-  async findOfferById(id: number) {
-    return this.prisma.offer.findUnique({
-      where: {
-        id: id,
+        ownerId,
       },
     });
   }
 
+  async findOfferById(id: number) {
+    const offer = await this.prisma.offer.findUnique({
+      where: {
+        id,
+      },
+    });
+    
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    return offer;
+  }
 }
