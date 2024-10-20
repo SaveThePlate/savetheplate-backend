@@ -19,11 +19,13 @@ enum Status {
   cancelled
 }
 
+
 enum UserRole {
   CLIENT
   PROVIDER
   NONE
 }
+
 
 model User {
   id           Int     @id @default(autoincrement())
@@ -49,6 +51,7 @@ model Offer {
   latitude       Float?
   longitude      Float?
   images         Json
+  quantity       Int
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   orders         Order[]

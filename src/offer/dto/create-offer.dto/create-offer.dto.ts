@@ -15,6 +15,8 @@ export class CreateOfferDto {
   @IsNotEmpty()
   @IsNumber()
   price: number;
+  quantity: number;
+
 
   @IsNotEmpty()
   expirationDate: string;

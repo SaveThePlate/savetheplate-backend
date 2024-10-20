@@ -17,6 +17,7 @@ export class OfferService {
         latitude: data.latitude,
         longitude: data.longitude,
         images: data.images,
+        quantity: data.quantity,
       },
     });
   }
@@ -51,6 +52,15 @@ export class OfferService {
       throw new NotFoundException('Offer not found');
     }
 
-    return offer;
+  async updateOfferQuantity(offerId: number, newQuantity: number) {
+    const offer = await this.findOfferById(offerId); 
+
+    return this.prisma.offer.update({
+      where: { id: offerId },
+      data: {
+        quantity: newQuantity,
+      },
+    });
   }
+
 }

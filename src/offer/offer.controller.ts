@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Req, Param, NotFoundException, Patch } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -6,6 +6,7 @@ import { UsersService } from 'src/users/users.service';
 
 @Controller('offers')
 export class OfferController {
+
   constructor(
     private readonly offerService: OfferService,
     private readonly usersService: UsersService,
@@ -32,6 +33,7 @@ export class OfferController {
       title: createOfferDto.title,
       description: createOfferDto.description,
       price: createOfferDto.price,
+      quantity: createOfferDto.quantity,
       expirationDate: createOfferDto.expirationDate,
       pickupLocation: user.location,   
       latitude: user.latitude,         
@@ -57,6 +59,16 @@ export class OfferController {
   async findAll() {
     return this.offerService.findAll();
   }
+
+
+  @Patch(':id/quantity')
+  async updateOfferQuantity(
+    @Param('id') offerId: number,
+    @Body('quantity') newQuantity: number,
+  ) {
+    return this.offerService.updateOfferQuantity(Number(offerId), newQuantity);
+  }
+
 
   @Get(':id')
   @UseGuards(AuthGuard)

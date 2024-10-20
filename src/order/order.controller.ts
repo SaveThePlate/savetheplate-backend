@@ -20,7 +20,7 @@ export class OrderController {
       offerId: createOrderDto.offerId,
       quantity: createOrderDto.quantity,
     };
-    return this.orderService.create(data);
+    return this.orderService.placeOrder(data);
   }
 
   @Get()

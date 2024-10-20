@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
+import { OfferService } from '../offer/offer.service';
+
 
 
 @Injectable()
 export class OrderService {
-  constructor (private prisma: PrismaService) {}
+  constructor (private prisma: PrismaService, private offerService: OfferService) {}
 
   async create(data: any) {
     return this.prisma.order.create({
@@ -51,6 +53,29 @@ export class OrderService {
       where: { id },
       data: { status },
     });
+  }
+
+  async placeOrder(data: any) {
+    const offer = await this.offerService.findOfferById(data.offerId);
+
+    if (offer.quantity < data.quantity) {
+      throw new BadRequestException('Requested quantity exceeds available stock');
+    }
+
+    const updatedOffer = await this.offerService.updateOfferQuantity(
+      data.offerId,
+      offer.quantity - data.quantity,
+    );
+    
+    const order = await this.prisma.order.create({
+      data: {
+        userId: data.userId,
+        offerId: data.offerId,
+        quantity: data.quantity,
+      },
+    });
+
+    return { updatedOffer, order };
   }
 
 }
