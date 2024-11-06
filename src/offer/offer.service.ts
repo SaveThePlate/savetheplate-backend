@@ -52,6 +52,9 @@ export class OfferService {
       throw new NotFoundException('Offer not found');
     }
 
+    return offer;
+  }
+
   async updateOfferQuantity(offerId: number, newQuantity: number) {
     const offer = await this.findOfferById(offerId); 
 
@@ -61,6 +64,6 @@ export class OfferService {
         quantity: newQuantity,
       },
     });
-  }
 
+  }
 }

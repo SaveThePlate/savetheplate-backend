@@ -1,7 +1,9 @@
 import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreateOfferDto {
+
   @IsNotEmpty()
+  @IsString()
   ownerId: string;
 
   @IsNotEmpty()
@@ -10,7 +12,13 @@ export class CreateOfferDto {
 
   @IsNotEmpty()
   @IsString()
+
+  @IsNotEmpty()
+  @IsString()
   description: string;
+
+  @IsNotEmpty()
+  @IsNumber()
 
   @IsNotEmpty()
   @IsNumber()
@@ -19,7 +27,12 @@ export class CreateOfferDto {
 
 
   @IsNotEmpty()
+
+  @IsNotEmpty()
   expirationDate: string;
+
+  @IsNotEmpty()
+  @IsString()
 
   @IsNotEmpty()
   @IsString()
@@ -33,4 +46,5 @@ export class CreateOfferDto {
 
   @IsNotEmpty()
   images: string; 
+
 }

@@ -14,13 +14,22 @@ import {
 import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from './users.service';
 import { Request } from 'express';
-
 import { FileInterceptor } from '@nestjs/platform-express';
-import { User } from '@prisma/client';
 import { diskStorage } from 'multer';
 import path from 'path';
 import { User, UserRole } from '@prisma/client';
 import { UpdateDetailsDto } from './dto/update-details.dto';
+
+
+interface ProfileData {
+  username?: string;
+  location?: string;
+  longitude?: number;
+  latitude?: number;
+  phoneNumber?: string;
+  profileImage?: string; 
+
+}
 
 
 interface ProfileData {
