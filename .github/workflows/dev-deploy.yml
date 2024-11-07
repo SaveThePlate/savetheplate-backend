@@ -49,7 +49,7 @@ jobs:
             docker rm $IMAGE_NAME 2> /dev/null || true
             # Run a new container from a new image
             docker run -d \
-              -p 3150:3000 \
+              -p 3150:3001 \
               -v /storage:/app/storage \
               -v /logs:/app/logs \
               -e ENVIRONMENT=staging \
