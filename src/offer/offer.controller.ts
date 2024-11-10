@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Param, NotFoundException, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Get, Put, UseGuards, Req, Param, NotFoundException, Patch, Delete } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -45,6 +45,9 @@ export class OfferController {
   }
   
 
+
+
+
   @Get('owner/:id')
   @UseGuards(AuthGuard)
   async findAllByOwnerId(@Param('id') ownerId: string) {
@@ -79,4 +82,15 @@ export class OfferController {
     }
     return this.offerService.findOfferById(offerId);
   }
+
+  @UseGuards(AuthGuard)
+  @Delete(':id')
+  async deleteOffer(@Param('id') id: string) {
+    const offerId = parseInt(id, 10);
+    await this.offerService.deleteOffer(offerId);
+    return { message: 'Offer deleted successfully' };
+  }
+
+
+
 }

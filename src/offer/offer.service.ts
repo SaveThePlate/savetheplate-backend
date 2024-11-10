@@ -66,4 +66,44 @@ export class OfferService {
     });
 
   }
+
+
+  // async updateOffer(data: any) {
+
+  //   return this.prisma.offer.update({
+  //     where: { id: data.offerId },
+  //     data: {
+  //       title: data.title,
+  //       description: data.description,
+  //       price: data.price,
+  //       expirationDate: data.expirationDate,
+  //       pickupLocation: data.pickupLocation,
+  //       quantity: data.newQuantity,
+  //     },
+  //   });
+
+  // }
+
+  async deleteOffer(offerId: number) {
+    try {
+      const offer = await this.prisma.offer.findUnique({
+        where: { id: offerId },
+      });
+  
+      if (!offer) {
+        throw new Error('Offer not found');
+      }
+  
+      await this.prisma.offer.delete({
+        where: { id: offerId },
+      });
+  
+      return { message: 'Offer deleted successfully' };
+    } catch (error) {
+      throw new Error(`Failed to delete offer: ${error.message}`);
+    }
+  }
+  
+
+
 }
