@@ -46,7 +46,7 @@ export class OrderController {
     return this.orderService.findOrderByOffer(Number(offerId));
   }
 
-  @Patch(':id/cancel')
+  @Post(':id/cancel')
   async cancelOrder(@Param('id') id: number) {
     return this.orderService.updateOrderStatus(Number(id), Status.cancelled);
   }

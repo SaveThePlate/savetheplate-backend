@@ -17,10 +17,7 @@ async function bootstrap() {
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'));
   
-  app.enableCors({
-    origin: 'https://savetheplate.ccdev.space',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  });
+  app.enableCors();
 
 
   await app.listen(3001);
