@@ -21,6 +21,9 @@ export class CreateUserDto {
   @IsNotEmpty()
   profileImage: string;
 
+  @IsString()
+  mapsLink: string;
+
   // @IsNumber()
   // @IsNotEmpty()
   // longitude: number;

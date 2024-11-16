@@ -89,7 +89,8 @@ export class UsersController {
       updateDetailsDto.location,
       updateDetailsDto.longitude,
       updateDetailsDto.latitude,
-      updateDetailsDto.phoneNumber
+      updateDetailsDto.phoneNumber,
+      updateDetailsDto.mapsLink
     );
   }
   
@@ -197,6 +198,13 @@ export class UsersController {
   async findAll() {
     return await this.usersService.findAll();
   }
+
+  @Get('providers')
+  async findAllProviders() {
+    return await this.usersService.findAllProviders();
+  }
+
+
   @Get('me')
   async getCurrentUser(@Req() req: Request) {
     const user = req.user as { email: string };

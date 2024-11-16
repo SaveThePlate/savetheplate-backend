@@ -14,6 +14,7 @@ export class OfferService {
         price: data.price,
         expirationDate: data.expirationDate,
         pickupLocation: data.pickupLocation,
+        mapsLink: data.mapsLink,
         latitude: data.latitude,
         longitude: data.longitude,
         images: data.images,

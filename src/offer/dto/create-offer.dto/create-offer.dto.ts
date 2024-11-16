@@ -12,9 +12,6 @@ export class CreateOfferDto {
 
   @IsNotEmpty()
   @IsString()
-
-  @IsNotEmpty()
-  @IsString()
   description: string;
 
   @IsNotEmpty()
@@ -25,14 +22,12 @@ export class CreateOfferDto {
   price: number;
   quantity: number;
 
-
-  @IsNotEmpty()
-
   @IsNotEmpty()
   expirationDate: string;
 
   @IsNotEmpty()
   @IsString()
+  mapsLink: string;
 
   @IsNotEmpty()
   @IsString()

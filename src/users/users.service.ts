@@ -24,14 +24,15 @@ async updateRole(userId: number, role: UserRole) {
   });
 }
 
-async updateDetails(id: number, location: string, longitude: number, latitude: number, phoneNumber: number) {
+async updateDetails(id: number, location: string, longitude: number, latitude: number, phoneNumber: number, mapsLink: string) {
   return this.prisma.user.update({
       where: { id: id },
       data: { 
               latitude: latitude,   
               longitude: longitude, 
               location: location,
-              phoneNumber: phoneNumber
+              phoneNumber: phoneNumber,
+              mapsLink: mapsLink
             } 
   });
 }
@@ -58,9 +59,12 @@ async updateDetails(id: number, location: string, longitude: number, latitude: n
   }
   
   
-
   async findAll() {
     return await this.prisma.user.findMany();
+  }
+
+  async findAllProviders() {
+    return await this.prisma.user.findMany({ where: { role: 'PROVIDER' } });
   }
 
   async findOne(email: string) {

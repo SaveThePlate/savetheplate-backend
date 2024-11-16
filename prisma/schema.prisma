@@ -32,6 +32,7 @@ model User {
   email        String  @unique
   username     String
   location     String?
+  mapsLink     String?
   longitude    Float?
   latitude     Float?
   phoneNumber  Int?
@@ -48,6 +49,7 @@ model Offer {
   price          Float?
   expirationDate DateTime
   pickupLocation String
+  mapsLink       String?
   latitude       Float?
   longitude      Float?
   images         Json

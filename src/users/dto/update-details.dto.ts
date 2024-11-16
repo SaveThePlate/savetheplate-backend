@@ -13,4 +13,7 @@ export class UpdateDetailsDto {
   @IsNumber()
   phoneNumber: number;
 
+  @IsString()
+  mapsLink: string;
+
 }
