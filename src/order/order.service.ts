@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
 import { OfferService } from '../offer/offer.service';
-
+import { Cron, CronExpression } from '@nestjs/schedule';
 
 
 @Injectable()
@@ -48,7 +48,6 @@ export class OrderService {
   }
 
   async updateOrderStatus(id: number, status: Status) {
-    console.log("status from backend", status);
     return this.prisma.order.update({
       where: { id },
       data: { status },
@@ -77,5 +76,52 @@ export class OrderService {
 
     return { updatedOffer, order };
   }
+
+  @Cron(CronExpression.EVERY_MINUTE)
+  async cancelOrdersAfter2Hours() {
+    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+    const ordersToCancel = await this.prisma.order.findMany({
+      where: {
+        status: Status.confirmed,
+        createdAt: { lte: twoHoursAgo },
+      },
+    });
+
+    for (const order of ordersToCancel) {
+      await this.updateOrderStatus(order.id, Status.cancelled);
+      console.log(`Order ${order.id} was automatically cancelled.`);
+    }
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async deleteExpiredOrders() {
+    const todayMidnight = new Date();
+    todayMidnight.setHours(0, 0, 0, 0);
+  
+    const deleted = await this.prisma.order.deleteMany({
+      where: {
+        createdAt: { lt: todayMidnight },
+      },
+    });
+  
+    console.log(`${deleted.count} orders were deleted.`);
+  }
+
+  async cancelOrder(orderId: number) {
+    const order = await this.findOrderById(orderId);
+
+    if (!order) {
+      throw new BadRequestException(`Order with ID ${orderId} not found`);
+    }
+
+    await this.offerService.updateOfferQuantity(
+      order.offerId,
+      (await this.offerService.findOfferById(order.offerId)).quantity + order.quantity,
+    );
+  
+    return this.updateOrderStatus(orderId, Status.cancelled);
+  }
+  
 
 }

@@ -48,6 +48,6 @@ export class OrderController {
 
   @Post(':id/cancel')
   async cancelOrder(@Param('id') id: number) {
-    return this.orderService.updateOrderStatus(Number(id), Status.cancelled);
+    return this.orderService.cancelOrder(Number(id));
   }
 }

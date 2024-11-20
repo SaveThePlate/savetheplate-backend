@@ -14,7 +14,7 @@ datasource db {
 }
 
 enum Status {
-  pending
+  expired
   confirmed
   cancelled
 }
@@ -64,7 +64,7 @@ model Order {
   quantity  Int
   userId    Int
   offerId   Int
-  status    Status   @default(pending) 
+  status    Status   @default(confirmed) 
   user      User     @relation(fields: [userId], references: [id])
   offer     Offer    @relation(fields: [offerId], references: [id])
   createdAt DateTime @default(now())
