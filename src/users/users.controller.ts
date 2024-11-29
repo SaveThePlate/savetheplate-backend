@@ -63,11 +63,14 @@ export class UsersController {
   async setRole(@Body('role') role: 'CLIENT' | 'PROVIDER', @Req() req) {
       const userId = req.user.id; // Extract userId from the token
       try {
-          let redirectTo = '/home'; // Default to home
+          let redirectTo = '/'; // Default to home
           await this.usersService.updateRole(userId, role);
 
           if (role === 'PROVIDER') {
-              redirectTo = '/profile'; // Redirect to profile for providers
+              redirectTo = '/provider/home'; // Redirect to profile for providers
+          }
+          else {
+            redirectTo = '/client/home';
           }
 
           return {
