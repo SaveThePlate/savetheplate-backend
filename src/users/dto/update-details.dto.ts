@@ -1,4 +1,4 @@
-import { IsString, IsNumber } from 'class-validator';
+import { IsString, IsNumber, IsInt } from 'class-validator';
 
 export class UpdateDetailsDto {
   @IsString()
@@ -10,7 +10,7 @@ export class UpdateDetailsDto {
   @IsNumber()
   longitude: number;
 
-  @IsNumber()
+  @IsInt()
   phoneNumber: number;
 
   @IsString()

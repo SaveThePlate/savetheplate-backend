@@ -32,7 +32,7 @@ model User {
   email        String  @unique
   username     String
   location     String?
-  mapsLink     String?
+  mapsLink     String? @db.Text
   longitude    Float?
   latitude     Float?
   phoneNumber  Int?

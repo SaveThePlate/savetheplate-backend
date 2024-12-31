@@ -30,8 +30,6 @@ interface ProfileData {
   profileImage?: string; 
 
 }
-
-
 interface ProfileData {
   username?: string;
   location?: string;
@@ -41,7 +39,6 @@ interface ProfileData {
   profileImage?: string; 
 
 }
-
 @UseGuards(AuthGuard) 
 @Controller('users')
 export class UsersController {
@@ -61,13 +58,13 @@ export class UsersController {
 
   @Post('set-role')
   async setRole(@Body('role') role: 'CLIENT' | 'PROVIDER', @Req() req) {
-      const userId = req.user.id; // Extract userId from the token
+      const userId = req.user.id; 
       try {
-          let redirectTo = '/'; // Default to home
+          let redirectTo = '/'; 
           await this.usersService.updateRole(userId, role);
 
           if (role === 'PROVIDER') {
-              redirectTo = '/provider/home'; // Redirect to profile for providers
+              redirectTo = '/provider/home'; 
           }
           else {
             redirectTo = '/client/home';
@@ -83,7 +80,7 @@ export class UsersController {
       }
   }
 
-  @Put('update-details')
+  @Post('update-details')
   async updateLocation(@Body() updateDetailsDto: UpdateDetailsDto, @Req() req) {
     const userId = req.user.id; 
 

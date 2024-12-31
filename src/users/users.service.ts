@@ -12,7 +12,8 @@ export class UsersService {
             email: data.email,
             username: data.username,
             profileImage: data.profileImage,
-            role: data.role
+            role: data.role,
+            mapsLink: data.mapsLink,
         },
     });
 }
@@ -36,13 +37,6 @@ async updateDetails(id: number, location: string, longitude: number, latitude: n
             } 
   });
 }
-
-  // async updateUserProfileImage(email: string, imagePath: string) {
-  //   return this.prisma.user.update({
-  //     where: { email },
-  //     data: { profileImage: imagePath },
-  //   });
-  // }
 
   async updateUserProfile(email: string, profileData: any) {
     return this.prisma.user.update({

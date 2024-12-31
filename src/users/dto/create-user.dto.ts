@@ -1,5 +1,8 @@
-import { IsString, IsNotEmpty, IsDateString, IsArray, IsInt, IsNumber } from 'class-validator';
-
+import {
+  IsString,
+  IsNotEmpty,
+  IsInt,
+} from 'class-validator';
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty({ message: 'Email ne peut pas être vide.' })
@@ -8,10 +11,6 @@ export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
   username: string;
-
-  // @IsString()
-  // @IsNotEmpty()
-  // location: string;
 
   @IsInt()
   @IsNotEmpty()
@@ -23,14 +22,4 @@ export class CreateUserDto {
 
   @IsString()
   mapsLink: string;
-
-  // @IsNumber()
-  // @IsNotEmpty()
-  // longitude: number;
-
-  // @IsNumber()
-  // @IsNotEmpty()
-  // latitude: number;
-
-
 }
