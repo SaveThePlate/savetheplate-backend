@@ -8,7 +8,7 @@ WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
 
-RUN apk add --no-cache openssl1.1-compat
+RUN apk add --no-cache openssl1.1
 
 RUN npm i
 
@@ -26,7 +26,7 @@ WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
 
-RUN apk add --no-cache openssl1.1-compat
+RUN apk add --no-cache openssl1.1
 
 COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
 
