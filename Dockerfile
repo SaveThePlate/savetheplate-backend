@@ -8,6 +8,8 @@ WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
 
+RUN apk add --no-cache openssl1.1-compat
+
 RUN npm i
 
 COPY --chown=node:node . .
@@ -23,6 +25,8 @@ FROM node:lts-alpine As build
 WORKDIR /usr/src/app
 
 COPY --chown=node:node package*.json ./
+
+RUN apk add --no-cache openssl1.1-compat
 
 COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
 
