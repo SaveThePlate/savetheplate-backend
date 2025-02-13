@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  InternalServerErrorException,
   NotFoundException,
   Param,
   Post,
@@ -40,45 +41,58 @@ export class StorageController {
       storage: diskStorage({
         destination: './store',
         filename: (req, file, callback) => {
-          const fileExtName = extname(file.originalname);
-          const finalFilename = file.originalname; 
-
-          console.log('Generated filename:', finalFilename);
-          callback(null, finalFilename);
-        },
+          const fileExtName = extname(file.originalname); // Get the file extension
+          const uniqueName = `${Date.now()}${fileExtName}`; // Generate a unique filename based on timestamp
+        
+          callback(null, uniqueName);
+        }
+        
       }),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB max file size
+      },
       fileFilter: (req, file, callback) => {
-        if (!file.originalname.match(/\.(jpg|jpeg|png|gif)$/)) {
+        
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedMimeTypes.includes(file.mimetype)) {
           return callback(new Error('Only image files are allowed!'), false);
         }
-        callback(null, true);
-      },
+        
+        callback(null, true); // Proceed with the file if it's valid
+      }
+      
+      
     }),
   )
-  async uploadFile(@UploadedFiles() file: Express.Multer.File) {
-    return this.storageService.processUploadedFile(file);
+  async uploadFile(@UploadedFiles() files: Express.Multer.File[]) {
+    console.log('Received file:', files); // Log the file object to check its properties
+    // 
+    try {
+      return files.map(file => ({ filePath: `store/${file.filename}` })); // Return paths
+    } catch (error) {
+      console.error("Image upload error:", error);
+      throw new InternalServerErrorException('Failed to process the image upload');
+    }
   }
+  
 
   @Get(':path')
   seeUploadedFile(@Param('path') fileName, @Res() res) {
-    if (['undefined', 'null'].includes(fileName)) {
-      throw new NotFoundException();
-    } else {
-      try {
-        return res.sendFile(fileName, { root: './store' }, function (err) {
-          if (err) {
-            return res
-              .status(404)
-              .json({ message: { statusCode: 404, error: 'Not Found' } });
-          }
-        });
-      } catch (error) {
+    if ( !fileName || fileName === 'undefined' || fileName === 'null' ) {
+      throw new NotFoundException('Invalid file path');
+    // }
+    
+    }
+    const filePath = `./store/${fileName}`;
+
+    return res.sendFile( filePath, { root: '.' }, function(err){
+      if (err) {
         return res
           .status(404)
-          .json({ message: { statusCode: 404, error: 'Not Found' } });
+          .json({ message: 'File not found' });
       }
-    }
-  }
+    });
 
+  }
 
 }

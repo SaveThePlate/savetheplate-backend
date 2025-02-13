@@ -1,11 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-
+import axios from 'axios';
 @Injectable()
 export class OfferService {
   constructor(private prisma: PrismaService) {}
 
+  async shortenUrl(longUrl: string): Promise<string> {
+    try {
+      const response = await axios.get(
+        `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`,
+      );
+      return response.data; // The shortened URL
+    } catch (error) {
+      console.error('Error shortening URL:', error);
+      return longUrl; // Fallback to the original URL
+    }
+  }
   async create(data: any) {
+    const shortenedLink = await this.shortenUrl(data.mapsLink);
     return this.prisma.offer.create({
       data: {
         ownerId: data.ownerId,
@@ -14,7 +26,7 @@ export class OfferService {
         price: data.price,
         expirationDate: data.expirationDate,
         pickupLocation: data.pickupLocation,
-        mapsLink: data.mapsLink,
+        mapsLink: shortenedLink,
         latitude: data.latitude,
         longitude: data.longitude,
         images: data.images,
@@ -48,7 +60,7 @@ export class OfferService {
         id,
       },
     });
-    
+
     if (!offer) {
       throw new NotFoundException('Offer not found');
     }
@@ -57,7 +69,7 @@ export class OfferService {
   }
 
   async updateOfferQuantity(offerId: number, newQuantity: number) {
-    const offer = await this.findOfferById(offerId); 
+    const offer = await this.findOfferById(offerId);
 
     return this.prisma.offer.update({
       where: { id: offerId },
@@ -65,9 +77,7 @@ export class OfferService {
         quantity: newQuantity,
       },
     });
-
   }
-
 
   // async updateOffer(data: any) {
 
@@ -90,21 +100,18 @@ export class OfferService {
       const offer = await this.prisma.offer.findUnique({
         where: { id: offerId },
       });
-  
+
       if (!offer) {
         throw new Error('Offer not found');
       }
-  
+
       await this.prisma.offer.delete({
         where: { id: offerId },
       });
-  
+
       return { message: 'Offer deleted successfully' };
     } catch (error) {
       throw new Error(`Failed to delete offer: ${error.message}`);
     }
   }
-  
-
-
 }
