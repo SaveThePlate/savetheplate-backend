@@ -40,5 +40,7 @@ COPY --chown=node:node --from=build /usr/src/app/dist ./dist
 COPY --chown=node:node --from=build /usr/src/app/.env.staging .env
 # Copy Prisma schema and generated client
 COPY --chown=node:node --from=build /usr/src/app/prisma ./prisma
+# Create store directory with proper permissions for file uploads
+RUN mkdir -p /usr/src/app/store && chown -R node:node /usr/src/app/store
 USER node
 CMD [ "node", "dist/src/main.js" ]
