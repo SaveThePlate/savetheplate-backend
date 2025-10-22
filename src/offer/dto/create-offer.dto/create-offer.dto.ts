@@ -1,10 +1,8 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsOptional } from 'class-validator';
 
 export class CreateOfferDto {
-
-  @IsNotEmpty()
-  @IsString()
-  ownerId: string;
+  // ownerId is set from the authenticated user, not from the request body
+  // So we don't validate it here
 
   @IsNotEmpty()
   @IsString()
@@ -16,30 +14,31 @@ export class CreateOfferDto {
 
   @IsNotEmpty()
   @IsNumber()
+  price: number;
 
   @IsNotEmpty()
   @IsNumber()
-  price: number;
   quantity: number;
 
   @IsNotEmpty()
   expirationDate: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  mapsLink: string;
+  mapsLink?: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  pickupLocation: string;
+  pickupLocation?: string;
 
+  @IsOptional()
   @IsNumber()
-  latitude: number;
+  latitude?: number;
 
+  @IsOptional()
   @IsNumber()
-  longitude: number;
+  longitude?: number;
 
   @IsNotEmpty()
   images: string; 
-
 }

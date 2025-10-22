@@ -7,17 +7,28 @@ export class OfferService {
 
   async shortenUrl(longUrl: string): Promise<string> {
     try {
+      // Ensure URL has protocol
+      let fullUrl = longUrl;
+      if (!longUrl.startsWith('http://') && !longUrl.startsWith('https://')) {
+        fullUrl = 'https://' + longUrl;
+      }
+
       const response = await axios.get(
-        `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`,
+        `https://tinyurl.com/api-create.php?url=${encodeURIComponent(fullUrl)}`,
       );
       return response.data; // The shortened URL
     } catch (error) {
       console.error('Error shortening URL:', error);
-      return longUrl; // Fallback to the original URL
+      // If shortening fails, return a truncated version to fit in DB
+      return longUrl.substring(0, 250); // Fallback to truncated URL
     }
   }
   async create(data: any) {
-    const shortenedLink = await this.shortenUrl(data.mapsLink);
+    // Only shorten URL if mapsLink is provided
+    const shortenedLink = data.mapsLink 
+      ? await this.shortenUrl(data.mapsLink) 
+      : '';
+      
     return this.prisma.offer.create({
       data: {
         ownerId: data.ownerId,

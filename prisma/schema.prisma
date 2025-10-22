@@ -49,7 +49,7 @@ model Offer {
   price          Float?
   expirationDate DateTime
   pickupLocation String
-  mapsLink       String?
+  mapsLink       String?  @db.Text
   latitude       Float?
   longitude      Float?
   images         Json
