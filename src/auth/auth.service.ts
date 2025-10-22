@@ -50,7 +50,18 @@ export class AuthService {
 
       const link = `${process.env.FRONT_URL}/callback/${emailToken}`;
 
-      // Send email
+      // For local dev: Skip email and return the link directly
+      if (process.env.NODE_ENV === 'development') {
+        console.log('\n🔗 Magic Link (Local Dev):', link);
+        return {
+          message: `Magic link generated for ${user.email}`,
+          sent: true,
+          magicLink: link, // Return link directly in dev mode
+          emailToken, // Also return the token
+        };
+      }
+
+      // Production: Send actual email
       const mail_resp = await this.resend.getResendInstance().emails.send({
         from: 'no-reply@resend.ccdev.space',
         to: user.email,
