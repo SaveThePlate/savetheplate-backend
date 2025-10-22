@@ -63,7 +63,7 @@ export class AuthService {
 
       // Production: Send actual email
       const mail_resp = await this.resend.getResendInstance().emails.send({
-        from: 'no-reply@resend.ccdev.space',
+        from: 'no-reply@ccdev.space',
         to: user.email,
         subject: 'Log in to SaveThePlate',
         react: MagicLinkEmailTemplate({ magicLink: link }),
