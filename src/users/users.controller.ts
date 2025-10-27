@@ -131,10 +131,6 @@ export class UsersController {
     return this.usersService.findById(parseInt(id, 10));
   }
 
-  // TODO: Profile image upload - Currently disabled
-  // This endpoint handles profile image uploads with file validation and storage
-  // Uncomment when ready to enable profile image functionality
-  /*
   @Post('me')
   @UseInterceptors(
     FileInterceptor('profileImage', {
@@ -184,7 +180,6 @@ export class UsersController {
       throw new InternalServerErrorException('Failed to update profile');
     }
   }
-  */
 
   @Delete(':email')
   async remove(@Param('email') email: string) {
