@@ -17,6 +17,7 @@ enum Status {
   expired
   confirmed
   cancelled
+  pending
 }
 
 
@@ -64,8 +65,10 @@ model Order {
   quantity  Int
   userId    Int
   offerId   Int
-  status    Status   @default(confirmed) 
+  status      Status    @default(pending)
   user      User     @relation(fields: [userId], references: [id])
   offer     Offer    @relation(fields: [offerId], references: [id])
   createdAt DateTime @default(now())
+  updatedAt   DateTime?  @updatedAt
+  collectedAt DateTime?
 }

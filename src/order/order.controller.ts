@@ -62,4 +62,19 @@ export class OrderController {
   async cancelOrder(@Param('id') id: number) {
     return this.orderService.cancelOrder(Number(id));
   }
+
+    /**
+     * Confirm an order (set status to confirmed)
+     * Route: POST /orders/:id/confirm
+     */
+    /**
+     * Confirm an order (set status to confirmed)
+     * Route: POST /orders/:id/confirm
+     */
+    @Post(':id/confirm')
+    @UseGuards(AuthGuard)
+    async confirmOrder(@Param('id') id: number, @Req() request) {
+      const requesterId = request.user?.id;
+      return this.orderService.confirmOrder(Number(id), Number(requesterId));
+    }
 }

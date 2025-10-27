@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
 import { OfferService } from '../offer/offer.service';
@@ -143,6 +143,37 @@ export class OrderService {
         },
       });
     }
+
+    /**
+     * Confirm an order (set status to confirmed)
+     */
+async confirmOrder(orderId: number, requesterId: number) {
+  const order = await this.findOrderById(orderId); // your existing finder
+  if (!order) {
+    throw new NotFoundException(`Order with ID ${orderId} not found`);
+  }
+
+  // Only the user who placed the order may confirm pickup
+  if (order.userId !== requesterId) {
+    throw new ForbiddenException('You are not allowed to confirm this order');
+  }
+
+  if (order.status === Status.cancelled) {
+    throw new BadRequestException('Cannot confirm a cancelled order');
+  }
+
+  if (order.status === Status.confirmed) {
+    // idempotent: already confirmed, return it
+    return order;
+  }
+
+  const updated = await this.prisma.order.update({
+    where: { id: orderId },
+    data: { status: Status.confirmed, collectedAt: new Date() },
+  });
+
+  return updated;
+}
   
 
 }
