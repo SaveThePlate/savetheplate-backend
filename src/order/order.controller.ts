@@ -11,6 +11,18 @@ export class OrderController {
     private readonly orderService: OrderService,
   ) {}
 
+    /**
+     * Get all orders for offers published by the current provider
+     * Route: GET /orders/provider
+     * Requires authentication
+     */
+    @Get('provider')
+    @UseGuards(AuthGuard)
+    async getOrdersForProvider(@Req() request) {
+      const providerId = request.user.id;
+      return this.orderService.findOrdersForProvider(providerId);
+    }
+
   @Post()
   @UseGuards(AuthGuard)
   async create(@Body() createOrderDto: CreateOrderDto, @Req() request) {

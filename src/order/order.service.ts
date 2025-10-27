@@ -122,6 +122,27 @@ export class OrderService {
   
     return this.updateOrderStatus(orderId, Status.cancelled);
   }
+
+    /**
+     * Find all orders for offers published by the given provider (ownerId)
+     */
+    async findOrdersForProvider(providerId: number) {
+      // Find all offers by this provider
+      const offers = await this.prisma.offer.findMany({
+        where: { ownerId: providerId },
+        select: { id: true },
+      });
+      const offerIds = offers.map(o => o.id);
+      if (offerIds.length === 0) return [];
+      // Find all orders for these offers
+      return this.prisma.order.findMany({
+        where: { offerId: { in: offerIds } },
+        include: {
+          user: true,
+          offer: true,
+        },
+      });
+    }
   
 
 }
