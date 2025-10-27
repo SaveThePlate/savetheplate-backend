@@ -101,4 +101,20 @@ export class OfferController {
     await this.offerService.deleteOffer(offerId);
     return { message: 'Offer deleted successfully' };
   }
+
+@UseGuards(AuthGuard)
+@Put(':id')
+async updateOffer(@Param('id') id: string, @Body() updateData: any, @Req() req) {
+  const offerId = parseInt(id, 10);
+  if (isNaN(offerId)) throw new NotFoundException('Invalid offer id');
+
+  const offer = await this.offerService.findOfferById(offerId);
+  if (!offer) throw new NotFoundException('Offer not found');
+
+  if (offer.ownerId !== req.user.id)
+    throw new NotFoundException('You cannot edit this offer');
+
+  return this.offerService.updateOffer({ ...updateData, offerId });
+}
+
 }
