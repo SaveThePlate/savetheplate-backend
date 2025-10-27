@@ -41,10 +41,7 @@ export class StorageController {
       storage: diskStorage({
         destination: './store',
         filename: (req, file, callback) => {
-          const fileExtName = extname(file.originalname);
-          const finalFilename = file.originalname; 
-
-          console.log('Generated filename:', finalFilename);
+          const finalFilename = file.originalname;
           callback(null, finalFilename);
         },
       }),
@@ -56,8 +53,32 @@ export class StorageController {
       },
     }),
   )
-  async uploadFile(@UploadedFiles() file: Express.Multer.File) {
-    return this.storageService.processUploadedFile(file);
+  async uploadFile(@UploadedFiles() files: Express.Multer.File[]) {
+    try {
+      if (!files || files.length === 0) {
+        throw new InternalServerErrorException('No files uploaded');
+      }
+
+      // Process all uploaded files
+      const processedFiles = await Promise.all(
+        files.map(async (file) => {
+          return await this.storageService.processUploadedFile(file);
+        })
+      );
+      
+      // Return a clean response with just the necessary data
+      return processedFiles.map(file => ({
+        filename: file.filename,
+        path: `store/${file.filename}`,
+        url: `/storage/${file.filename}`,
+        blurhash: file.blurhash,
+        width: file.width,
+        height: file.height,
+      }));
+    } catch (error) {
+      console.error('Upload error:', error);
+      throw new InternalServerErrorException(`Upload failed: ${error.message}`);
+    }
   }
   
   @Get(':path')

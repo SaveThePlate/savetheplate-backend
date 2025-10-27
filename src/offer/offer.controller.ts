@@ -27,20 +27,15 @@ export class OfferController {
   @UseGuards(AuthGuard)
   async create(@Body() createOfferDto: CreateOfferDto, @Req() req) {
     try {
-      console.log('📦 Creating offer...', { userId: req.user.id, body: createOfferDto });
-      
       const userId = req.user.id;
       const user = await this.usersService.findById(userId);
-      console.log('👤 User found:', { id: user.id, location: user.location, mapsLink: user.mapsLink });
 
       // Safely parse the images
       let images = [];
       if (createOfferDto.images) {
         try {
           images = JSON.parse(createOfferDto.images);
-          console.log('🖼️ Parsed images:', images);
         } catch (error) {
-          console.error('❌ Error parsing images:', error);
           throw new Error('Invalid images format');
         }
       }
@@ -59,12 +54,9 @@ export class OfferController {
         images: images,
       };
 
-      console.log('💾 Data to save:', data);
-      const result = await this.offerService.create(data);
-      console.log('✅ Offer created:', result.id);
-      return result;
+      return await this.offerService.create(data);
     } catch (error) {
-      console.error('❌ Error creating offer:', error);
+      console.error('Error creating offer:', error);
       throw error;
     }
   }
