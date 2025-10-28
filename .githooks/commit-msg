@@ -1,0 +1,25 @@
+#!/bin/sh
+# Simple commit-msg hook to prevent empty commit messages.
+# Install with: git config core.hooksPath .githooks
+
+MSG_FILE="$1"
+if [ -z "$MSG_FILE" ]; then
+  echo "commit-msg hook: no message file provided"
+  exit 1
+fi
+
+MSG="$(cat "$MSG_FILE" | sed -e 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+if [ -z "$MSG" ]; then
+  echo "Aborting commit: empty commit message. Please provide a descriptive commit message."
+  exit 1
+fi
+
+# Optional: enforce a minimum length (e.g., 10 chars)
+MINLEN=10
+if [ ${#MSG} -lt $MINLEN ]; then
+  echo "Warning: commit message is shorter than ${MINLEN} characters."
+  echo "Please consider a more descriptive message."
+  # Allow short messages but warn (change `exit 1` to enforce)
+fi
+
+exit 0
