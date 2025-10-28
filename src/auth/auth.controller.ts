@@ -66,7 +66,9 @@ export class AuthController {
       });
     }
 
-    const needsOnboarding = response.user?.role === 'NONE';
+  // Role-based onboarding/redirect disabled in the new approach.
+  // const needsOnboarding = response.user?.role === 'NONE';
+  const needsOnboarding = false;
 
     // In production we avoid returning tokens in the response body (cookie is authoritative)
     if (process.env.NODE_ENV === 'production') {

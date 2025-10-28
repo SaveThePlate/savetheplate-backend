@@ -55,44 +55,48 @@ export class UsersController {
   }
 
   @Post('set-role')
+  // Role switching and redirect behaviour is disabled in the "new approach".
+  // Keeping this endpoint present but neutralized so frontends depending on it
+  // won't break. To fully restore behaviour, uncomment the implementation.
   async setRole(@Body('role') role: 'CLIENT' | 'PROVIDER', @Req() req) {
-    const userId = req.user.id;
-    try {
-      let redirectTo = '/';
-      await this.usersService.updateRole(userId, role);
+    // const userId = req.user.id;
+    // try {
+    //   let redirectTo = '/';
+    //   await this.usersService.updateRole(userId, role);
+    //   if (role === 'PROVIDER') {
+    //     redirectTo = '/provider/profile';
+    //   } else {
+    //     redirectTo = '/client/home';
+    //   }
+    //   return { message: 'Role updated successfully', redirectTo };
+    // } catch (error) {
+    //   console.error('Error updating user role:', error);
+    //   return { message: 'Failed to update user role', error: error.message };
+    // }
 
-      if (role === 'PROVIDER') {
-        redirectTo = '/provider/profile';
-      } else {
-        redirectTo = '/client/home';
-      }
-
-      return {
-        message: 'Role updated successfully',
-        redirectTo,
-      };
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      return { message: 'Failed to update user role', error: error.message };
-    }
+    return {
+      message:
+        'Role update disabled on server (role-based page permissioning commented out).',
+    };
   }
 
   @Get('get-role')
+  // Endpoint that previously returned the user's role for client-side routing.
+  // Commented/neutralized so the frontend won't be guided by server role responses.
   async getCurrentUserRole(@Req() req) {
-    const userId = req.user.id;
-    try {
-      const user = await this.usersService.findById(userId);
-      if (!user) {
-        return { message: 'User not found' };
-      }
-      return {
-        role: user.role,
-        message: 'User role retrieved successfully',
-      };
-    } catch (error) {
-      console.error('Error retrieving user role:', error);
-      return { message: 'Failed to retrieve user role', error: error.message };
-    }
+    // const userId = req.user.id;
+    // try {
+    //   const user = await this.usersService.findById(userId);
+    //   if (!user) {
+    //     return { message: 'User not found' };
+    //   }
+    //   return { role: user.role, message: 'User role retrieved successfully' };
+    // } catch (error) {
+    //   console.error('Error retrieving user role:', error);
+    //   return { message: 'Failed to retrieve user role', error: error.message };
+    // }
+
+    return { role: 'NONE', message: 'Role checks disabled on server' };
   }
 
   @Post('update-details')
