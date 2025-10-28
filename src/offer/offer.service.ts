@@ -99,7 +99,7 @@ export class OfferService {
         price: data.price,
         expirationDate: data.expirationDate,
         pickupLocation: data.pickupLocation,
-        quantity: data.newQuantity, 
+        quantity: data.quantity, 
       },
     });
   }
