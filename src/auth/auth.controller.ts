@@ -6,9 +6,7 @@ import {
   UseGuards,
   Get,
   Req,
-  Res,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthGuard } from './auth.guard';
@@ -37,55 +35,23 @@ export class AuthController {
   @ApiOkResponse({ type: AuthMagicMailVerifierDtoResponse })
   async AuthMagicMailVerifier(
     @Body() AuthUserDto: AuthMagicMailVerifierDtoRequest,
-    @Res({ passthrough: true }) res: Response,
   ): Promise<AuthMagicMailVerifierDtoResponse> {
     const response = await this.authService.AuthMagicMailVerifier(AuthUserDto);
-
-    // Configure cookie options
-    const cookieOptions: any = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      path: '/',
-    };
-
-    // If COOKIE_DOMAIN is set (for cross-subdomain cookies), include it
-    if (process.env.COOKIE_DOMAIN) {
-      cookieOptions.domain = process.env.COOKIE_DOMAIN;
-    }
-
-    // Set HttpOnly cookies for access and refresh tokens
-    if (response.accessToken) {
-      res.cookie('accessToken', response.accessToken, cookieOptions);
-    }
-    if (response.refreshToken) {
-      res.cookie('refreshToken', response.refreshToken, {
-        ...cookieOptions,
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      });
-    }
-
-  // Role-based onboarding/redirect disabled in the new approach.
-  // const needsOnboarding = response.user?.role === 'NONE';
-  const needsOnboarding = false;
-
-    // In production we avoid returning tokens in the response body (cookie is authoritative)
-    if (process.env.NODE_ENV === 'production') {
+    
+    // Check if user role is NONE
+    if (response.user.role === 'NONE') { 
       return {
-        accessToken: null,
-        refreshToken: null,
-        user: response.user,
-        needsOnboarding,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+        needsOnboarding: true, // Indicate onboarding is needed
       };
     }
 
-    // In development, return tokens as before for convenience
+    // If user exists and role is not NONE, return tokens
     return {
       accessToken: response.accessToken,
       refreshToken: response.refreshToken,
-      user: response.user,
-      needsOnboarding,
+      needsOnboarding: false, // User does not need onboarding
     };
   }
 

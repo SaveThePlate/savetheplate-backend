@@ -36,19 +36,4 @@ We prefer documentation as README files in this repo. However, we have a conflue
 
 🛡️https://github.com/CodeCooperation/CC-Guidelines
 
-
-Git hooks
----------
-
-This repository includes a small commit-msg hook in `.githooks/commit-msg` that prevents empty commit messages and warns on very short messages.
-
-To enable the git hooks locally run:
-
-```bash
-npm run install-githooks
-# or
-git config core.hooksPath .githooks
-```
-
-After enabling, git will run the hook on every commit and reject empty commit messages.
 Please continue filling this readme with any relevant information related to this project
