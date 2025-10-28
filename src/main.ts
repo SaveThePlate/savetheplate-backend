@@ -18,7 +18,13 @@ async function bootstrap() {
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'));
   
-  app.enableCors();
+  // Enable CORS for the frontend and allow credentials so the browser
+  // will accept Set-Cookie from the backend during the auth callback.
+  // Make sure FRONT_URL is set to your frontend's origin (including protocol).
+  app.enableCors({
+    origin: process.env.FRONT_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
+    credentials: true,
+  });
 
   // Content Security Policy (CSP) header - tighten script-src by default.
   // If you need to allow string evaluation temporarily for debugging, set
