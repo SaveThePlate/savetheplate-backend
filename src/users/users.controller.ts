@@ -95,19 +95,97 @@ export class UsersController {
     }
   }
 
-  @Post('update-details')
-  async updateLocation(@Body() updateDetailsDto: UpdateDetailsDto, @Req() req) {
+  // @Post('update-details')
+  // async updateLocation(@Body() updateDetailsDto: UpdateDetailsDto, @Req() req) {
+  //   const userId = req.user.id;
+
+  //   return this.usersService.updateDetails(
+  //     userId,
+  //     updateDetailsDto.location,
+  //     updateDetailsDto.longitude,
+  //     updateDetailsDto.latitude,
+  //     updateDetailsDto.phoneNumber,
+  //     updateDetailsDto.mapsLink
+  //   );
+  // }
+
+   @Post('update-details')
+  async updateLocation(@Body() updateDetailsDto: any, @Req() req) {
     const userId = req.user.id;
+
+    // Expand and extract data if a Google Maps link is provided
+    let latitude = updateDetailsDto.latitude;
+    let longitude = updateDetailsDto.longitude;
+    let locationName = updateDetailsDto.location;
+    let mapsLink = updateDetailsDto.mapsLink;
+
+    if (mapsLink) {
+      const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
+      const data = this.extractLocationData(expandedUrl);
+
+      if (data.latitude && data.longitude) {
+        latitude = data.latitude;
+        longitude = data.longitude;
+      }
+      if (data.locationName) {
+        locationName = data.locationName;
+      }
+    }
 
     return this.usersService.updateDetails(
       userId,
-      updateDetailsDto.location,
-      updateDetailsDto.longitude,
-      updateDetailsDto.latitude,
+      locationName,
+      longitude,
+      latitude,
       updateDetailsDto.phoneNumber,
-      updateDetailsDto.mapsLink
+      mapsLink
     );
   }
+
+  // Helper: expand short URL (handles maps.app.goo.gl or goo.gl)
+  private async expandGoogleMapsUrl(shortUrl: string): Promise<string> {
+    try {
+      const response = await fetch(shortUrl, {
+        method: 'GET',
+        redirect: 'follow',
+      });
+      return response.url;
+    } catch (error) {
+      console.error('❌ Failed to expand short link:', error);
+      return shortUrl;
+    }
+  }
+
+  // Helper: extract lat/lng/name from long Google Maps URL
+  private extractLocationData(googleMapsUrl: string) {
+    const regex = /@(-?\d+\.\d+),(-?\d+\.\d+)/;
+    const match = googleMapsUrl.match(regex);
+    const latitude = match ? parseFloat(match[1]) : null;
+    const longitude = match ? parseFloat(match[2]) : null;
+
+    const nameRegex = /maps\/place\/([^/@]+)/;
+    const nameMatch = googleMapsUrl.match(nameRegex);
+    const locationName = nameMatch
+      ? decodeURIComponent(nameMatch[1]).replace(/\+/g, ' ')
+      : '';
+
+    return { latitude, longitude, locationName };
+  }
+
+  @Post('extract-location')
+async extractLocation(@Body() body: { mapsLink: string }) {
+  const { mapsLink } = body;
+  let locationName = "";
+
+  if (mapsLink) {
+    const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
+    const data = this.extractLocationData(expandedUrl);
+    locationName = data.locationName || "";
+  }
+
+  return { locationName };
+}
+
 
   @Get()
   async findAll() {
