@@ -95,19 +95,19 @@ export class OfferService {
     });
   }
 
-async updateOffer(data: any) {
-  return this.prisma.offer.update({
-    where: { id: 22 },
-    data: {
-      title: data.title,
-      description: data.description,
-      price: parseFloat(data.price),     
-      quantity: parseInt(data.quantity), 
-      expirationDate: data.expirationDate,
-      pickupLocation: data.pickupLocation,
-    },
-  });
-}
+  async updateOffer(data: any) {
+    return this.prisma.offer.update({
+      where: { id: data.offerId },
+      data: {
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        expirationDate: data.expirationDate,
+        pickupLocation: data.pickupLocation,
+        quantity: data.quantity, 
+      },
+    });
+  }
 
 
 
@@ -121,9 +121,12 @@ async updateOffer(data: any) {
         throw new Error('Offer not found');
       }
 
-      await this.prisma.offer.delete({
-        where: { id: offerId },
-      });
+      // Delete dependent orders first to avoid foreign key constraint errors.
+      // Use a transaction to ensure both operations succeed or both fail.
+      await this.prisma.$transaction([
+        this.prisma.order.deleteMany({ where: { offerId } }),
+        this.prisma.offer.delete({ where: { id: offerId } }),
+      ]);
 
       return { message: 'Offer deleted successfully' };
     } catch (error) {
