@@ -167,17 +167,31 @@ export class UsersController {
     const updatedData: Partial<ProfileData> = {
       username: profileData.username,
       location: profileData.location,
-      phoneNumber: profileData.phoneNumber,
+      // phoneNumber may come as a string from the frontend; normalize to Int or null
+      // We'll set the field only when provided to avoid sending `undefined` to Prisma.
     };
 
+    // Normalize and add phoneNumber only when present
+    if (profileData.phoneNumber !== undefined && profileData.phoneNumber !== null && profileData.phoneNumber !== '') {
+      // Strip non-digits and parse as integer
+      const digits = String(profileData.phoneNumber).replace(/\D/g, '');
+      const parsed = digits ? parseInt(digits, 10) : NaN;
+  (updatedData as any).phoneNumber = Number.isNaN(parsed) ? null : parsed;
+    }
+
     if (profileImage) {
+      // Only set profileImage when a new file was uploaded
       updatedData.profileImage = `/store/profile-images/${profileImage.filename}`; // Save file path
     }
 
     try {
       return await this.usersService.updateUserProfile(user.email, updatedData);
     } catch (error) {
-      throw new InternalServerErrorException('Failed to update profile');
+      // Log detailed error server-side for debugging and return a helpful message
+      console.error('Failed to update profile for', user?.email, 'error:', error?.message || error);
+      throw new InternalServerErrorException(
+        error?.message ? `Failed to update profile: ${error.message}` : 'Failed to update profile',
+      );
     }
   }
 
