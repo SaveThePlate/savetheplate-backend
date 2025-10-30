@@ -25,18 +25,30 @@ async updateRole(userId: number, role: UserRole) {
   });
 }
 
-async updateDetails(id: number, location: string, longitude: number, latitude: number, phoneNumber: number, mapsLink: string) {
+async updateDetails(
+  id: number,
+  location: string,
+  longitude: number,
+  latitude: number,
+  phoneNumber: string | number,
+  mapsLink: string
+) {
+  // Convert phoneNumber to number if it's a string
+  const parsedPhoneNumber =
+    typeof phoneNumber === "string" ? parseInt(phoneNumber, 10) : phoneNumber;
+
   return this.prisma.user.update({
-      where: { id: id },
-      data: { 
-              latitude: latitude,   
-              longitude: longitude, 
-              location: location,
-              phoneNumber: phoneNumber,
-              mapsLink: mapsLink
-            } 
+    where: { id },
+    data: {
+      latitude,
+      longitude,
+      location,
+      phoneNumber: parsedPhoneNumber,
+      mapsLink,
+    },
   });
 }
+
 
   async updateUserProfile(email: string, profileData: any) {
     return this.prisma.user.update({

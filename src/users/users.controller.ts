@@ -173,18 +173,18 @@ export class UsersController {
   }
 
   @Post('extract-location')
-async extractLocation(@Body() body: { mapsLink: string }) {
-  const { mapsLink } = body;
-  let locationName = "";
+  async extractLocation(@Body() body: { mapsLink: string }) {
+    const { mapsLink } = body;
+    let locationName = "";
 
-  if (mapsLink) {
-    const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
-    const data = this.extractLocationData(expandedUrl);
-    locationName = data.locationName || "";
+    if (mapsLink) {
+      const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
+      const data = this.extractLocationData(expandedUrl);
+      locationName = data.locationName || "";
+    }
+
+    return { locationName };
   }
-
-  return { locationName };
-}
 
 
   @Get()
