@@ -49,7 +49,12 @@ export class OfferService {
   async findAll() {
     const offers = await this.prisma.offer.findMany();
     return offers.map((offer) => {
-      const imageFileName = offer.images[0].filename;
+      // images may be undefined or an empty array for some offers.
+      // Guard access to avoid runtime errors and provide a sensible fallback.
+      const imageFileName = Array.isArray(offer.images) && offer.images.length > 0
+        ? ((offer.images as any)[0]?.filename ?? null)
+        : null;
+
       return {
         ...offer,
         imageFileName,
@@ -90,19 +95,20 @@ export class OfferService {
     });
   }
 
-  async updateOffer(data: any) {
-    return this.prisma.offer.update({
-      where: { id: data.offerId },
-      data: {
-        title: data.title,
-        description: data.description,
-        price: data.price,
-        expirationDate: data.expirationDate,
-        pickupLocation: data.pickupLocation,
-        quantity: data.quantity, 
-      },
-    });
-  }
+async updateOffer(data: any) {
+  return this.prisma.offer.update({
+    where: { id: 22 },
+    data: {
+      title: data.title,
+      description: data.description,
+      price: parseFloat(data.price),     
+      quantity: parseInt(data.quantity), 
+      expirationDate: data.expirationDate,
+      pickupLocation: data.pickupLocation,
+    },
+  });
+}
+
 
 
   async deleteOffer(offerId: number) {
