@@ -40,6 +40,27 @@ export class OfferController {
         }
       }
 
+      // Normalize image entries so DB stores a canonical structure
+      const backendBase = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+      const normalizedImages = (images || []).map((img: any) => {
+        // img may be a string or an object like { path: './groceries.jpg' }
+        let candidate = img;
+        if (typeof img === 'object' && img !== null) {
+          candidate = img.path || img.relativePath || img.filename || img.url || img.absoluteUrl || '';
+        }
+        candidate = String(candidate || '').replace(/^\.\//, '').replace(/^\/+/, '');
+        const filename = candidate.split('/').filter(Boolean).pop() || '';
+        const url = filename ? `/storage/${encodeURIComponent(filename)}` : null;
+        const absoluteUrl = url ? (backendBase ? `${backendBase}${url}` : url) : null;
+        return {
+          filename: filename || null,
+          path: filename ? `store/${filename}` : null,
+          url,
+          absoluteUrl,
+          original: img,
+        };
+      });
+
       const data = {
         ownerId: userId,
         title: createOfferDto.title,
@@ -51,7 +72,7 @@ export class OfferController {
         mapsLink: user.mapsLink || '',
         latitude: user.latitude || null,
         longitude: user.longitude || null,
-        images: images,
+        images: normalizedImages,
       };
 
       return await this.offerService.create(data);
