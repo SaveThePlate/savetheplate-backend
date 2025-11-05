@@ -77,36 +77,36 @@ export class OrderService {
     return { updatedOffer, order };
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
-  async cancelOrdersAfter2Hours() {
-    const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+  // @Cron(CronExpression.EVERY_MINUTE)
+  // async cancelOrdersAfter2Hours() {
+  //   const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
-    const ordersToCancel = await this.prisma.order.findMany({
-      where: {
-        status: Status.confirmed,
-        createdAt: { lte: twoHoursAgo },
-      },
-    });
+  //   const ordersToCancel = await this.prisma.order.findMany({
+  //     where: {
+  //       status: Status.confirmed,
+  //       createdAt: { lte: twoHoursAgo },
+  //     },
+  //   });
 
-    for (const order of ordersToCancel) {
-      await this.updateOrderStatus(order.id, Status.cancelled);
-      console.log(`Order ${order.id} was automatically cancelled.`);
-    }
-  }
+  //   for (const order of ordersToCancel) {
+  //     await this.updateOrderStatus(order.id, Status.cancelled);
+  //     console.log(`Order ${order.id} was automatically cancelled.`);
+  //   }
+  // }
 
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  async deleteExpiredOrders() {
-    const todayMidnight = new Date();
-    todayMidnight.setHours(0, 0, 0, 0);
+  // @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  // async deleteExpiredOrders() {
+  //   const todayMidnight = new Date();
+  //   todayMidnight.setHours(0, 0, 0, 0);
   
-    const deleted = await this.prisma.order.deleteMany({
-      where: {
-        createdAt: { lt: todayMidnight },
-      },
-    });
+  //   const deleted = await this.prisma.order.deleteMany({
+  //     where: {
+  //       createdAt: { lt: todayMidnight },
+  //     },
+  //   });
   
-    console.log(`${deleted.count} orders were deleted.`);
-  }
+  //   console.log(`${deleted.count} orders were deleted.`);
+  // }
 
   async cancelOrder(orderId: number) {
     const order = await this.findOrderById(orderId);
