@@ -66,6 +66,7 @@ model Order {
   userId    Int
   offerId   Int
   status      Status    @default(pending)
+  qrCodeToken String?  @unique
   user      User     @relation(fields: [userId], references: [id])
   offer     Offer    @relation(fields: [offerId], references: [id])
   createdAt DateTime @default(now())

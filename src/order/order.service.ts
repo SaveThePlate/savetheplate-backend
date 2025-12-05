@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
 import { OfferService } from '../offer/offer.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { randomBytes } from 'crypto';
 
 
 @Injectable()
@@ -54,6 +55,16 @@ export class OrderService {
     });
   }
 
+  /**
+   * Generate a unique QR code token for an order
+   */
+  private generateQrCodeToken(): string {
+    // Generate a secure random token: order-{timestamp}-{randomBytes}
+    const timestamp = Date.now();
+    const randomPart = randomBytes(16).toString('hex');
+    return `order-${timestamp}-${randomPart}`;
+  }
+
   async placeOrder(data: any) {
     const offer = await this.offerService.findOfferById(data.offerId);
 
@@ -66,11 +77,15 @@ export class OrderService {
       offer.quantity - data.quantity,
     );
     
+    // Generate unique QR code token for this order
+    const qrCodeToken = this.generateQrCodeToken();
+    
     const order = await this.prisma.order.create({
       data: {
         userId: data.userId,
         offerId: data.offerId,
         quantity: data.quantity,
+        qrCodeToken: qrCodeToken,
       },
     });
 
@@ -145,35 +160,108 @@ export class OrderService {
     }
 
     /**
-     * Confirm an order (set status to confirmed)
+     * Find order by QR code token
      */
-async confirmOrder(orderId: number, requesterId: number) {
-  const order = await this.findOrderById(orderId); // your existing finder
-  if (!order) {
-    throw new NotFoundException(`Order with ID ${orderId} not found`);
-  }
+    async findOrderByQrToken(qrCodeToken: string) {
+      return this.prisma.order.findUnique({
+        where: { qrCodeToken },
+        include: {
+          user: true,
+          offer: true,
+        },
+      });
+    }
 
-  // Only the user who placed the order may confirm pickup
-  if (order.userId !== requesterId) {
-    throw new ForbiddenException('You are not allowed to confirm this order');
-  }
+    /**
+     * Get offer for an order (helper method)
+     */
+    async getOfferForOrder(offerId: number) {
+      return this.offerService.findOfferById(offerId);
+    }
 
-  if (order.status === Status.cancelled) {
-    throw new BadRequestException('Cannot confirm a cancelled order');
-  }
+    /**
+     * Scan and confirm an order using QR code token (for providers)
+     * Provider confirms the order when customer shows QR code
+     */
+    async scanAndConfirmOrder(qrCodeToken: string, providerId: number) {
+      const order = await this.findOrderByQrToken(qrCodeToken);
+      
+      if (!order) {
+        throw new NotFoundException('Invalid QR code. Order not found.');
+      }
 
-  if (order.status === Status.confirmed) {
-    // idempotent: already confirmed, return it
-    return order;
-  }
+      // Verify that the provider owns the offer
+      const offer = await this.offerService.findOfferById(order.offerId);
+      if (offer.ownerId !== providerId) {
+        throw new ForbiddenException('You are not authorized to confirm this order. This order belongs to a different provider.');
+      }
 
-  const updated = await this.prisma.order.update({
-    where: { id: orderId },
-    data: { status: Status.confirmed, collectedAt: new Date() },
-  });
+      if (order.status === Status.cancelled) {
+        throw new BadRequestException('Cannot confirm a cancelled order');
+      }
 
-  return updated;
-}
+      if (order.status === Status.confirmed) {
+        // Already confirmed - return order info
+        return {
+          order,
+          message: 'Order was already confirmed',
+          alreadyConfirmed: true,
+        };
+      }
+
+      // Update order status to confirmed
+      const updated = await this.prisma.order.update({
+        where: { id: order.id },
+        data: { 
+          status: Status.confirmed, 
+          collectedAt: new Date(),
+          // Invalidate QR token after use (optional - for extra security)
+          // qrCodeToken: null,
+        },
+        include: {
+          user: true,
+          offer: true,
+        },
+      });
+
+      return {
+        order: updated,
+        message: 'Order confirmed successfully',
+        alreadyConfirmed: false,
+      };
+    }
+
+    /**
+     * Confirm an order (legacy method - kept for backward compatibility)
+     * Now customers can still manually confirm, but QR scanning is preferred
+     */
+    async confirmOrder(orderId: number, requesterId: number) {
+      const order = await this.findOrderById(orderId);
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${orderId} not found`);
+      }
+
+      // Only the user who placed the order may confirm pickup
+      if (order.userId !== requesterId) {
+        throw new ForbiddenException('You are not allowed to confirm this order');
+      }
+
+      if (order.status === Status.cancelled) {
+        throw new BadRequestException('Cannot confirm a cancelled order');
+      }
+
+      if (order.status === Status.confirmed) {
+        // idempotent: already confirmed, return it
+        return order;
+      }
+
+      const updated = await this.prisma.order.update({
+        where: { id: orderId },
+        data: { status: Status.confirmed, collectedAt: new Date() },
+      });
+
+      return updated;
+    }
   
 
 }
