@@ -50,6 +50,10 @@ export class OrderController {
   @UseGuards(AuthGuard)
   async getOrderByQrToken(@Param('token') token: string, @Req() request) {
     const providerId = request.user?.id;
+    if (!providerId) {
+      throw new ForbiddenException('Authentication required.');
+    }
+    
     const order = await this.orderService.findOrderByQrToken(token);
     
     if (!order) {
@@ -58,7 +62,7 @@ export class OrderController {
 
     // Verify provider owns the offer
     const offer = await this.orderService.getOfferForOrder(order.offerId);
-    if (offer.ownerId !== providerId) {
+    if (!offer.ownerId || offer.ownerId !== providerId) {
       throw new ForbiddenException('You are not authorized to view this order.');
     }
 
