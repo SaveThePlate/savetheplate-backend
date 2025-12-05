@@ -15,5 +15,4 @@ export class UpdateDetailsDto {
 
   @IsString()
   mapsLink: string;
-
 }

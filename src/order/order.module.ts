@@ -8,6 +8,6 @@ import { OfferModule } from 'src/offer/offer.module';
 @Module({
   controllers: [OrderController],
   providers: [OrderService, PrismaService],
-  imports: [PrismaModule, OfferModule]
+  imports: [PrismaModule, OfferModule],
 })
 export class OrderModule {}

@@ -39,7 +39,7 @@ export class AuthGuard implements CanActivate {
       if (!user) {
         this.logger.warn(`User not found for email: ${payload.email}`);
         throw new NotFoundException('User not found');
-    }
+      }
       request['user'] = user;
       return true;
     } catch (e) {

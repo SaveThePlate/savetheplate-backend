@@ -8,19 +8,16 @@ import { UsersModule } from './users/users.module';
 import { OrderModule } from './order/order.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
-
 @Module({
   imports: [
-    AuthModule, 
-    OfferModule, 
-    StorageModule, 
-    UsersModule, 
+    AuthModule,
+    OfferModule,
+    StorageModule,
+    UsersModule,
     OrderModule,
-    ScheduleModule.forRoot()
+    ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
-  providers: [
-    AppService,
-  ],
+  providers: [AppService],
 })
-export class AppModule {};
+export class AppModule {}

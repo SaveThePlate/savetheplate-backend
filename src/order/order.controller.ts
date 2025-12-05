@@ -1,28 +1,36 @@
-import { Body, Controller, Get, Param, Patch, Post, Req, UseGuards, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Req,
+  UseGuards,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ScanOrderDto } from './dto/scan-order.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { Status } from '@prisma/client';
 
-
 @Controller('orders')
 export class OrderController {
-  constructor(
-    private readonly orderService: OrderService,
-  ) {}
+  constructor(private readonly orderService: OrderService) {}
 
-    /**
-     * Get all orders for offers published by the current provider
-     * Route: GET /orders/provider
-     * Requires authentication
-     */
-    @Get('provider')
-    @UseGuards(AuthGuard)
-    async getOrdersForProvider(@Req() request) {
-      const providerId = request.user.id;
-      return this.orderService.findOrdersForProvider(providerId);
-    }
+  /**
+   * Get all orders for offers published by the current provider
+   * Route: GET /orders/provider
+   * Requires authentication
+   */
+  @Get('provider')
+  @UseGuards(AuthGuard)
+  async getOrdersForProvider(@Req() request) {
+    const providerId = request.user.id;
+    return this.orderService.findOrdersForProvider(providerId);
+  }
 
   @Post()
   @UseGuards(AuthGuard)
@@ -53,9 +61,9 @@ export class OrderController {
     if (!providerId) {
       throw new ForbiddenException('Authentication required.');
     }
-    
+
     const order = await this.orderService.findOrderByQrToken(token);
-    
+
     if (!order) {
       throw new NotFoundException('Invalid QR code. Order not found.');
     }
@@ -63,7 +71,9 @@ export class OrderController {
     // Verify provider owns the offer
     const offer = await this.orderService.getOfferForOrder(order.offerId);
     if (!offer.ownerId || offer.ownerId !== providerId) {
-      throw new ForbiddenException('You are not authorized to view this order.');
+      throw new ForbiddenException(
+        'You are not authorized to view this order.',
+      );
     }
 
     return order;
@@ -92,28 +102,30 @@ export class OrderController {
     return this.orderService.cancelOrder(Number(id));
   }
 
-    /**
-     * Confirm an order (set status to confirmed)
-     * Route: POST /orders/:id/confirm
-     * Legacy endpoint - customers can still manually confirm
-     */
-    @Post(':id/confirm')
-    @UseGuards(AuthGuard)
-    async confirmOrder(@Param('id') id: number, @Req() request) {
-      const requesterId = request.user?.id;
-      return this.orderService.confirmOrder(Number(id), Number(requesterId));
-    }
+  /**
+   * Confirm an order (set status to confirmed)
+   * Route: POST /orders/:id/confirm
+   * Legacy endpoint - customers can still manually confirm
+   */
+  @Post(':id/confirm')
+  @UseGuards(AuthGuard)
+  async confirmOrder(@Param('id') id: number, @Req() request) {
+    const requesterId = request.user?.id;
+    return this.orderService.confirmOrder(Number(id), Number(requesterId));
+  }
 
-    /**
-     * Scan QR code and confirm order (for providers)
-     * Route: POST /orders/scan
-     * Provider scans the QR code shown by customer to confirm pickup
-     */
-    @Post('scan')
-    @UseGuards(AuthGuard)
-    async scanOrder(@Body() scanOrderDto: ScanOrderDto, @Req() request) {
-      const providerId = request.user?.id;
-      return this.orderService.scanAndConfirmOrder(scanOrderDto.qrCodeToken, providerId);
-    }
-
+  /**
+   * Scan QR code and confirm order (for providers)
+   * Route: POST /orders/scan
+   * Provider scans the QR code shown by customer to confirm pickup
+   */
+  @Post('scan')
+  @UseGuards(AuthGuard)
+  async scanOrder(@Body() scanOrderDto: ScanOrderDto, @Req() request) {
+    const providerId = request.user?.id;
+    return this.orderService.scanAndConfirmOrder(
+      scanOrderDto.qrCodeToken,
+      providerId,
+    );
+  }
 }

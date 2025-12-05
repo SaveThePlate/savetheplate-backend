@@ -41,17 +41,35 @@ export class OfferController {
       }
 
       // Normalize image entries so DB stores a canonical structure
-      const backendBase = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+      const backendBase = (
+        process.env.BACKEND_URL ||
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        ''
+      ).replace(/\/$/, '');
       const normalizedImages = (images || []).map((img: any) => {
         // img may be a string or an object like { path: './groceries.jpg' }
         let candidate = img;
         if (typeof img === 'object' && img !== null) {
-          candidate = img.path || img.relativePath || img.filename || img.url || img.absoluteUrl || '';
+          candidate =
+            img.path ||
+            img.relativePath ||
+            img.filename ||
+            img.url ||
+            img.absoluteUrl ||
+            '';
         }
-        candidate = String(candidate || '').replace(/^\.\//, '').replace(/^\/+/, '');
+        candidate = String(candidate || '')
+          .replace(/^\.\//, '')
+          .replace(/^\/+/, '');
         const filename = candidate.split('/').filter(Boolean).pop() || '';
-        const url = filename ? `/storage/${encodeURIComponent(filename)}` : null;
-        const absoluteUrl = url ? (backendBase ? `${backendBase}${url}` : url) : null;
+        const url = filename
+          ? `/storage/${encodeURIComponent(filename)}`
+          : null;
+        const absoluteUrl = url
+          ? backendBase
+            ? `${backendBase}${url}`
+            : url
+          : null;
         return {
           filename: filename || null,
           path: filename ? `store/${filename}` : null,
@@ -123,19 +141,22 @@ export class OfferController {
     return { message: 'Offer deleted successfully' };
   }
 
-@UseGuards(AuthGuard)
-@Put(':id')
-async updateOffer(@Param('id') id: string, @Body() updateData: any, @Req() req) {
-  const offerId = parseInt(id, 10);
-  if (isNaN(offerId)) throw new NotFoundException('Invalid offer id');
+  @UseGuards(AuthGuard)
+  @Put(':id')
+  async updateOffer(
+    @Param('id') id: string,
+    @Body() updateData: any,
+    @Req() req,
+  ) {
+    const offerId = parseInt(id, 10);
+    if (isNaN(offerId)) throw new NotFoundException('Invalid offer id');
 
-  const offer = await this.offerService.findOfferById(offerId);
-  if (!offer) throw new NotFoundException('Offer not found');
+    const offer = await this.offerService.findOfferById(offerId);
+    if (!offer) throw new NotFoundException('Offer not found');
 
-  if (offer.ownerId !== req.user.id)
-    throw new NotFoundException('You cannot edit this offer');
+    if (offer.ownerId !== req.user.id)
+      throw new NotFoundException('You cannot edit this offer');
 
-  return this.offerService.updateOffer({ ...updateData, offerId });
-}
-
+    return this.offerService.updateOffer({ ...updateData, offerId });
+  }
 }

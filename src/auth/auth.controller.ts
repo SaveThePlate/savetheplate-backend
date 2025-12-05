@@ -11,12 +11,12 @@ import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
-import { 
-  AuthMagicMailSenderDtoRequest, 
-  AuthMagicMailSenderDtoResponse, 
-  AuthMagicMailVerifierDtoRequest, 
-  AuthMagicMailVerifierDtoResponse, 
-  GetUserByTokenDtoResponse 
+import {
+  AuthMagicMailSenderDtoRequest,
+  AuthMagicMailSenderDtoResponse,
+  AuthMagicMailVerifierDtoRequest,
+  AuthMagicMailVerifierDtoResponse,
+  GetUserByTokenDtoResponse,
 } from './dto/auth-request.dto';
 
 @Controller('auth')
@@ -37,9 +37,9 @@ export class AuthController {
     @Body() AuthUserDto: AuthMagicMailVerifierDtoRequest,
   ): Promise<AuthMagicMailVerifierDtoResponse> {
     const response = await this.authService.AuthMagicMailVerifier(AuthUserDto);
-    
+
     // Check if user role is NONE
-    if (response.user.role === 'NONE') { 
+    if (response.user.role === 'NONE') {
       return {
         accessToken: response.accessToken,
         refreshToken: response.refreshToken,

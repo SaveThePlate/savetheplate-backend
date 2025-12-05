@@ -1,8 +1,4 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsInt,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsInt } from 'class-validator';
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty({ message: 'Email ne peut pas être vide.' })

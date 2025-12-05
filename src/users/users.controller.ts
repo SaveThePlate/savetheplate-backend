@@ -29,14 +29,7 @@ interface ProfileData {
   latitude?: number;
   phoneNumber?: string;
   profileImage?: string;
-}
-interface ProfileData {
-  username?: string;
-  location?: string;
-  longitude?: number;
-  latitude?: number;
-  phoneNumber?: string;
-  profileImage?: string;
+  mapsLink?: string;
 }
 @UseGuards(AuthGuard)
 @Controller('users')
@@ -109,7 +102,7 @@ export class UsersController {
   //   );
   // }
 
-   @Post('update-details')
+  @Post('update-details')
   async updateLocation(@Body() updateDetailsDto: any, @Req() req) {
     const userId = req.user.id;
 
@@ -117,7 +110,7 @@ export class UsersController {
     let latitude = updateDetailsDto.latitude;
     let longitude = updateDetailsDto.longitude;
     let locationName = updateDetailsDto.location;
-    let mapsLink = updateDetailsDto.mapsLink;
+    const mapsLink = updateDetailsDto.mapsLink;
 
     if (mapsLink) {
       const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
@@ -138,7 +131,7 @@ export class UsersController {
       longitude,
       latitude,
       updateDetailsDto.phoneNumber,
-      mapsLink
+      mapsLink,
     );
   }
 
@@ -175,17 +168,16 @@ export class UsersController {
   @Post('extract-location')
   async extractLocation(@Body() body: { mapsLink: string }) {
     const { mapsLink } = body;
-    let locationName = "";
+    let locationName = '';
 
     if (mapsLink) {
       const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
       const data = this.extractLocationData(expandedUrl);
-      locationName = data.locationName || "";
+      locationName = data.locationName || '';
     }
 
     return { locationName };
   }
-
 
   @Get()
   async findAll() {
@@ -249,26 +241,56 @@ export class UsersController {
       // We'll set the field only when provided to avoid sending `undefined` to Prisma.
     };
 
+    // Include mapsLink if provided
+    if (profileData.mapsLink !== undefined && profileData.mapsLink !== null) {
+      updatedData.mapsLink = profileData.mapsLink.trim() || null;
+    }
+
     // Normalize and add phoneNumber only when present
-    if (profileData.phoneNumber !== undefined && profileData.phoneNumber !== null && profileData.phoneNumber !== '') {
+    if (
+      profileData.phoneNumber !== undefined &&
+      profileData.phoneNumber !== null &&
+      profileData.phoneNumber !== ''
+    ) {
       // Strip non-digits and parse as integer
       const digits = String(profileData.phoneNumber).replace(/\D/g, '');
       const parsed = digits ? parseInt(digits, 10) : NaN;
-  (updatedData as any).phoneNumber = Number.isNaN(parsed) ? null : parsed;
+      (updatedData as any).phoneNumber = Number.isNaN(parsed) ? null : parsed;
     }
 
+    // Handle profileImage: can come as file upload OR as string (filename from storage/upload)
     if (profileImage) {
-      // Only set profileImage when a new file was uploaded
-      updatedData.profileImage = `/store/profile-images/${profileImage.filename}`; // Save file path
+      // File was uploaded directly - save it
+      updatedData.profileImage = `/store/profile-images/${profileImage.filename}`;
+      console.log(
+        '📤 Profile image uploaded as file:',
+        updatedData.profileImage,
+      );
+    } else if (profileData.profileImage) {
+      // profileImage was sent as string (filename from storage/upload endpoint)
+      // Use it as-is - it should already be in the correct format
+      updatedData.profileImage = profileData.profileImage;
+      console.log('📤 Profile image sent as string:', updatedData.profileImage);
+    } else {
+      console.log('⚠️ No profileImage provided in request');
     }
+
+    console.log('📤 Final updatedData:', JSON.stringify(updatedData, null, 2));
 
     try {
       return await this.usersService.updateUserProfile(user.email, updatedData);
     } catch (error) {
       // Log detailed error server-side for debugging and return a helpful message
-      console.error('Failed to update profile for', user?.email, 'error:', error?.message || error);
+      console.error(
+        'Failed to update profile for',
+        user?.email,
+        'error:',
+        error?.message || error,
+      );
       throw new InternalServerErrorException(
-        error?.message ? `Failed to update profile: ${error.message}` : 'Failed to update profile',
+        error?.message
+          ? `Failed to update profile: ${error.message}`
+          : 'Failed to update profile',
       );
     }
   }

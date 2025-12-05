@@ -40,5 +40,5 @@ export class CreateOfferDto {
   longitude?: number;
 
   @IsNotEmpty()
-  images: string; 
+  images: string;
 }

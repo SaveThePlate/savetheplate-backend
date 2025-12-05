@@ -5,7 +5,6 @@ import { User, UserRole } from '@prisma/client';
 
 export class AuthMagicMailSenderDtoRequest {
   @ApiProperty() email: string;
-  
 }
 
 export class AuthMagicMailSenderDtoResponse {
@@ -24,18 +23,15 @@ export class AuthMagicMailVerifierDtoResponse {
   @ApiProperty() accessToken: string | null;
   @ApiProperty() refreshToken: string | null;
   @ApiProperty() user?: {
-    id: number; 
+    id: number;
     email: string;
     role: UserRole;
   } | null;
-  @ApiProperty() needsOnboarding?: boolean; 
-  @ApiProperty() redirectToOnboarding?: boolean; 
-
-
-
+  @ApiProperty() needsOnboarding?: boolean;
+  @ApiProperty() redirectToOnboarding?: boolean;
 }
 
 export class GetUserByTokenDtoResponse {
   @ApiProperty() user: User;
-  @ApiProperty() redirectToOnboarding: boolean; 
+  @ApiProperty() redirectToOnboarding: boolean;
 }

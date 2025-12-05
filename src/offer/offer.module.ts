@@ -9,6 +9,6 @@ import { UsersModule } from 'src/users/users.module';
   imports: [PrismaModule, UsersModule],
   providers: [OfferService, PrismaService],
   controllers: [OfferController],
-  exports: [OfferService]
+  exports: [OfferService],
 })
 export class OfferModule {}

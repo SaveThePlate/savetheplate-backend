@@ -23,7 +23,7 @@ import { StorageService } from './storage.service';
 @ApiTags('storage')
 @Controller('storage')
 export class StorageController {
-    constructor(private readonly storageService: StorageService) {}
+  constructor(private readonly storageService: StorageService) {}
 
   // Ensure the store directory exists when the controller is initialized
   onModuleInit() {
@@ -74,7 +74,10 @@ export class StorageController {
         const allowedMime = ['image/jpeg', 'image/png', 'image/gif'];
         const originalExt = extname(file.originalname || '').toLowerCase();
         const allowedExts = ['.jpg', '.jpeg', '.png', '.gif'];
-        if (!allowedMime.includes(file.mimetype) || !allowedExts.includes(originalExt)) {
+        if (
+          !allowedMime.includes(file.mimetype) ||
+          !allowedExts.includes(originalExt)
+        ) {
           return callback(new Error('Only image files are allowed!'), false);
         }
         callback(null, true);
@@ -95,11 +98,15 @@ export class StorageController {
       const processedFiles = await Promise.all(
         files.map(async (file) => {
           return await this.storageService.processUploadedFile(file);
-        })
+        }),
       );
-      
+
       // Return a clean response with just the necessary data
-      const baseUrl = (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+      const baseUrl = (
+        process.env.BACKEND_URL ||
+        process.env.NEXT_PUBLIC_BACKEND_URL ||
+        ''
+      ).replace(/\/$/, '');
       return processedFiles.map((file) => {
         const filename = file.filename;
         const urlPath = `/storage/${filename}`;
@@ -118,20 +125,26 @@ export class StorageController {
     } catch (error) {
       console.error('Upload error:', error);
       // Map some common errors to better HTTP responses
-      if (error && error.message && error.message.includes('Only image files are allowed')) {
+      if (
+        error &&
+        error.message &&
+        error.message.includes('Only image files are allowed')
+      ) {
         throw new BadRequestException(error.message);
       }
-      throw new InternalServerErrorException(`Upload failed: ${error?.message || error}`);
+      throw new InternalServerErrorException(
+        `Upload failed: ${error?.message || error}`,
+      );
     }
   }
-  
+
   @Get('*')
   seeUploadedFile(@Req() req: Request, @Res() res) {
     try {
       // Extract the path part after /storage/ (controller is mounted on /storage)
       const original = (req.originalUrl || req.url).split('?')[0];
       // original may be like '/storage/./groceries.jpg' or '/storage/groceries.jpg'
-      let after = original.replace(/^\/storage\/?/, '');
+      const after = original.replace(/^\/storage\/?/, '');
 
       // Normalize and sanitize: get only the basename (prevents traversal)
       const filename = basename(after || '');
@@ -162,5 +175,4 @@ export class StorageController {
         .json({ message: { statusCode: 404, error: 'Not Found' } });
     }
   }
-
 }

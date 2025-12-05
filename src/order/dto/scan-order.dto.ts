@@ -5,4 +5,3 @@ export class ScanOrderDto {
   @IsNotEmpty()
   qrCodeToken: string;
 }
-

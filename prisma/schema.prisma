@@ -39,6 +39,7 @@ model User {
   phoneNumber  Int?
   profileImage String?
   orders       Order[]
+  offers       Offer[]
   role         UserRole
 }
 
@@ -59,6 +60,7 @@ model Offer {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   orders         Order[]
+  owner          User?    @relation(fields: [ownerId], references: [id])
 }
 
 model Order {

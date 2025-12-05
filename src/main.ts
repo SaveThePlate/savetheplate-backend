@@ -17,7 +17,7 @@
 //   SwaggerModule.setup('api', app, document);
 
 //   app.useStaticAssets(join(__dirname, '..', 'uploads'));
-  
+
 //   // Enable CORS for the frontend and allow credentials so the browser
 //   // will accept Set-Cookie from the backend during the auth callback.
 //   // Make sure FRONT_URL is set to your frontend's origin (including protocol).
@@ -78,11 +78,9 @@
 //     return next();
 //   });
 
-
 //   await app.listen(3001);
 // }
 // bootstrap();
-
 
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -90,7 +88,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);;
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const config = new DocumentBuilder()
     .setTitle('Cats example')
@@ -102,9 +100,8 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'));
-  
-  app.enableCors();
 
+  app.enableCors();
 
   await app.listen(3001);
 }

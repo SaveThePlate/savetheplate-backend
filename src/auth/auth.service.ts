@@ -192,7 +192,7 @@ export class AuthService {
         phoneNumber: user.phoneNumber || '',
         profileImage: user.profileImage || '',
         role: user.role,
-      }, 
+      },
       needsOnboarding: true, // New user needs to complete onboarding
     };
   }

@@ -5,7 +5,7 @@ import { AuthController } from './auth.controller';
 import { PrismaService } from 'nestjs-prisma';
 
 @Module({
-  imports: [ResendModule, ],
+  imports: [ResendModule],
   controllers: [AuthController],
   providers: [AuthService, PrismaService],
 })
