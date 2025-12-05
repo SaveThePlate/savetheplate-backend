@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { PrismaService } from 'nestjs-prisma';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { User, UserRole } from '@prisma/client';
 import { ResendService } from 'src/utils/mailing/resend.service';
 import MagicLinkEmailTemplate from 'emails/MagicLink';

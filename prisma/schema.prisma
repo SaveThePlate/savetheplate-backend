@@ -76,3 +76,15 @@ model Order {
   updatedAt   DateTime?  @updatedAt
   collectedAt DateTime?
 }
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  userRole  String?  // CLIENT, PROVIDER, or GUEST
+  userId   Int?     // Optional: link to user if logged in
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+}

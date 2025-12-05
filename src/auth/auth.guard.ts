@@ -8,7 +8,7 @@ import {
 } from '@nestjs/common';
 
 import { Request } from 'express';
-import { PrismaService } from 'nestjs-prisma';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { DecodeToken, JwtPayload, JwtType } from 'src/utils/jwt';
 
 @Injectable()

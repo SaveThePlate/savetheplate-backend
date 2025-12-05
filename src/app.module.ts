@@ -6,6 +6,7 @@ import { OfferModule } from './offer/offer.module';
 import { StorageModule } from './storage/storage.module';
 import { UsersModule } from './users/users.module';
 import { OrderModule } from './order/order.module';
+import { ContactModule } from './contact/contact.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
@@ -15,6 +16,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     StorageModule,
     UsersModule,
     OrderModule,
+    ContactModule,
     ScheduleModule.forRoot(),
   ],
   controllers: [AppController],
