@@ -1,4 +1,5 @@
-import { IsString, IsEmail, IsOptional, IsNotEmpty } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsNotEmpty, IsNumber } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateContactDto {
   @IsString()
@@ -22,6 +23,8 @@ export class CreateContactDto {
   userRole?: string;
 
   @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
   userId?: number;
 }
 
