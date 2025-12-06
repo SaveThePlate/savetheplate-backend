@@ -24,6 +24,7 @@ enum Status {
 enum UserRole {
   CLIENT
   PROVIDER
+  PENDING_PROVIDER
   NONE
 }
 

@@ -21,6 +21,7 @@ import { diskStorage } from 'multer';
 import path, { extname } from 'path';
 import { User, UserRole } from '@prisma/client';
 import { UpdateDetailsDto } from './dto/update-details.dto';
+import { ResendService } from 'src/utils/mailing/resend.service';
 
 interface ProfileData {
   username?: string;
@@ -34,7 +35,10 @@ interface ProfileData {
 @UseGuards(AuthGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly resendService: ResendService,
+  ) {}
 
   @Post()
   async create(@Body('email') email: string) {
@@ -52,10 +56,13 @@ export class UsersController {
     const userId = req.user.id;
     try {
       let redirectTo = '/';
-      await this.usersService.updateRole(userId, role);
+      // For providers, set role to PENDING_PROVIDER instead of PROVIDER
+      // They need to complete details and wait for admin approval
+      const roleToSet = role === 'PROVIDER' ? UserRole.PENDING_PROVIDER : UserRole[role];
+      await this.usersService.updateRole(userId, roleToSet);
 
       if (role === 'PROVIDER') {
-        redirectTo = '/provider/profile';
+        redirectTo = '/onboarding/fillDetails';
       } else {
         redirectTo = '/client/home';
       }
@@ -106,6 +113,10 @@ export class UsersController {
   async updateLocation(@Body() updateDetailsDto: any, @Req() req) {
     const userId = req.user.id;
 
+    // Get user info to check if they're a pending provider
+    const user = await this.usersService.findById(userId);
+    const isPendingProvider = user?.role === UserRole.PENDING_PROVIDER;
+
     // Expand and extract data if a Google Maps link is provided
     let latitude = updateDetailsDto.latitude;
     let longitude = updateDetailsDto.longitude;
@@ -125,7 +136,7 @@ export class UsersController {
       }
     }
 
-    return this.usersService.updateDetails(
+    const updatedUser = await this.usersService.updateDetails(
       userId,
       locationName,
       longitude,
@@ -133,6 +144,62 @@ export class UsersController {
       updateDetailsDto.phoneNumber,
       mapsLink,
     );
+
+    // If this is a pending provider completing their details, send email to admin
+    if (isPendingProvider) {
+      await this.sendProviderApprovalEmail(updatedUser);
+    }
+
+    return updatedUser;
+  }
+
+  private async sendProviderApprovalEmail(user: any) {
+    const adminEmail = 'savetheplatetunisia@gmail.com';
+    const subject = 'New Provider Registration - Approval Required';
+    
+    const emailBody = `
+      <h2>New Provider Registration</h2>
+      <p>A new food provider has completed their registration and is waiting for approval.</p>
+      
+      <h3>Provider Details:</h3>
+      <ul>
+        <li><strong>Name:</strong> ${user.username}</li>
+        <li><strong>Email:</strong> ${user.email}</li>
+        <li><strong>Phone:</strong> ${user.phoneNumber || 'Not provided'}</li>
+        <li><strong>Location:</strong> ${user.location || 'Not provided'}</li>
+        <li><strong>Maps Link:</strong> <a href="${user.mapsLink}">${user.mapsLink || 'Not provided'}</a></li>
+      </ul>
+      
+      <p>Please review this provider and approve or reject their registration.</p>
+      <p><strong>User ID:</strong> ${user.id}</p>
+    `;
+
+    try {
+      // For local dev: Log the email instead of sending
+      if (process.env.NODE_ENV === 'development') {
+        console.log('\n📧 Provider Approval Email (Local Dev):');
+        console.log('To:', adminEmail);
+        console.log('Subject:', subject);
+        console.log('Body:', emailBody);
+        return;
+      }
+
+      // Production: Send actual email
+      const mail_resp = await this.resendService.getResendInstance().emails.send({
+        from: 'no-reply@ccdev.space',
+        to: adminEmail,
+        subject: subject,
+        html: emailBody,
+      });
+
+      if (mail_resp.error) {
+        console.error('Error sending provider approval email:', mail_resp.error);
+      } else {
+        console.log('Provider approval email sent successfully to', adminEmail);
+      }
+    } catch (error) {
+      console.error('Error sending provider approval email:', error);
+    }
   }
 
   // Helper: expand short URL (handles maps.app.goo.gl or goo.gl)
