@@ -7,7 +7,6 @@ import {
   InternalServerErrorException,
   Param,
   Post,
-  Put,
   Req,
   UploadedFile,
   UseGuards,
@@ -18,9 +17,8 @@ import { UsersService } from './users.service';
 import { Request } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import path, { extname } from 'path';
-import { User, UserRole } from '@prisma/client';
-import { UpdateDetailsDto } from './dto/update-details.dto';
+import { extname } from 'path';
+import { UserRole } from '@prisma/client';
 import { ResendService } from 'src/utils/mailing/resend.service';
 
 interface ProfileData {
@@ -58,7 +56,8 @@ export class UsersController {
       let redirectTo = '/';
       // For providers, set role to PENDING_PROVIDER instead of PROVIDER
       // They need to complete details and wait for admin approval
-      const roleToSet = role === 'PROVIDER' ? UserRole.PENDING_PROVIDER : UserRole[role];
+      const roleToSet =
+        role === 'PROVIDER' ? UserRole.PENDING_PROVIDER : UserRole[role];
       await this.usersService.updateRole(userId, roleToSet);
 
       if (role === 'PROVIDER') {
@@ -156,7 +155,7 @@ export class UsersController {
   private async sendProviderApprovalEmail(user: any) {
     const adminEmail = 'savetheplatetunisia@gmail.com';
     const subject = 'New Provider Registration - Approval Required';
-    
+
     const emailBody = `
       <h2>New Provider Registration</h2>
       <p>A new food provider has completed their registration and is waiting for approval.</p>
@@ -185,15 +184,20 @@ export class UsersController {
       }
 
       // Production: Send actual email
-      const mail_resp = await this.resendService.getResendInstance().emails.send({
-        from: 'no-reply@ccdev.space',
-        to: adminEmail,
-        subject: subject,
-        html: emailBody,
-      });
+      const mail_resp = await this.resendService
+        .getResendInstance()
+        .emails.send({
+          from: 'no-reply@ccdev.space',
+          to: adminEmail,
+          subject: subject,
+          html: emailBody,
+        });
 
       if (mail_resp.error) {
-        console.error('Error sending provider approval email:', mail_resp.error);
+        console.error(
+          'Error sending provider approval email:',
+          mail_resp.error,
+        );
       } else {
         console.log('Provider approval email sent successfully to', adminEmail);
       }

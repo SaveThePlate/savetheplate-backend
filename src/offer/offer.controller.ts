@@ -125,7 +125,7 @@ export class OfferController {
 
   @Get(':id')
   @UseGuards(AuthGuard)
-  async getCurrentUser(@Param('id') id: string, @Req() req) {
+  async getCurrentUser(@Param('id') id: string) {
     const offerId = parseInt(id, 10);
     if (isNaN(offerId)) {
       throw new NotFoundException('Invalid offer id');

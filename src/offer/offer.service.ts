@@ -103,7 +103,7 @@ export class OfferService {
         },
       },
     });
-    
+
     // Update offers with current owner location and mapsLink
     return offers.map((offer) => ({
       ...offer,
@@ -145,7 +145,7 @@ export class OfferService {
   }
 
   async updateOfferQuantity(offerId: number, newQuantity: number) {
-    const offer = await this.findOfferById(offerId);
+    await this.findOfferById(offerId);
 
     return this.prisma.offer.update({
       where: { id: offerId },

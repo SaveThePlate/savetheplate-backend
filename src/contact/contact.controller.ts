@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Body, Param, Patch, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import { ContactService } from './contact.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { AuthGuard } from '../auth/auth.guard';
@@ -30,4 +38,3 @@ export class ContactController {
     return this.contactService.markAsRead(+id);
   }
 }
-

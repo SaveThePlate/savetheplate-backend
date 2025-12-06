@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Param,
-  Patch,
   Post,
   Req,
   UseGuards,
@@ -14,7 +13,6 @@ import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ScanOrderDto } from './dto/scan-order.dto';
 import { AuthGuard } from 'src/auth/auth.guard';
-import { Status } from '@prisma/client';
 
 @Controller('orders')
 export class OrderController {

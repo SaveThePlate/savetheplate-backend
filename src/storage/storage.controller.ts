@@ -3,7 +3,6 @@ import {
   Get,
   InternalServerErrorException,
   NotFoundException,
-  Param,
   Post,
   Res,
   UploadedFiles,

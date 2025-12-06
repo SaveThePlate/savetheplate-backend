@@ -7,7 +7,6 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
 import { OfferService } from '../offer/offer.service';
-import { Cron, CronExpression } from '@nestjs/schedule';
 import { randomBytes } from 'crypto';
 
 @Injectable()
