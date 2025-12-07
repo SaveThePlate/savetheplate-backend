@@ -117,26 +117,30 @@ export class UsersService {
 
     // Use a transaction to ensure all deletions succeed or all fail
     await this.prisma.$transaction(async (tx) => {
-      // Delete all orders associated with the user's offers
+      // Step 1: Delete all orders associated with offers owned by this user
+      // This ensures that when we delete the offers, there are no foreign key constraints
       if (offerIds.length > 0) {
         await tx.order.deleteMany({
           where: { offerId: { in: offerIds } },
         });
       }
 
-      // Delete all orders placed by the user
+      // Step 2: Delete all orders placed by the user (as a client)
+      // This covers orders the user made on other providers' offers
       await tx.order.deleteMany({
         where: { userId: user.id },
       });
 
-      // Delete all offers owned by the user
+      // Step 3: Delete all offers owned by the user (provider)
+      // All related orders have already been deleted in Step 1
       if (offerIds.length > 0) {
         await tx.offer.deleteMany({
           where: { ownerId: user.id },
         });
       }
 
-      // Finally, delete the user
+      // Step 4: Finally, delete the user
+      // All related offers and orders have been deleted
       await tx.user.delete({
         where: { id: user.id },
       });
