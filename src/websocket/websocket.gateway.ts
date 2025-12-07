@@ -13,8 +13,42 @@ import { DecodeToken, JwtType } from '../utils/jwt';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || '*',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+      
+      // Always allow localhost for development
+      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        callback(null, true);
+        return;
+      }
+      
+      // Allow configured frontend URLs
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        process.env.NEXT_PUBLIC_FRONTEND_URL,
+        'https://leftover.ccdev.space',
+        'https://savetheplate.ccdev.space',
+      ].filter(Boolean);
+      
+      if (allowedOrigins.includes(origin) || origin.includes('.ccdev.space')) {
+        callback(null, true);
+        return;
+      }
+      
+      // In development/staging, allow all
+      if (process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+        return;
+      }
+      
+      callback(new Error('Not allowed by CORS'), false);
+    },
     credentials: true,
+    methods: ['GET', 'POST'],
   },
   namespace: '/',
 })
@@ -34,7 +68,16 @@ export class AppWebSocketGateway
         client.handshake.query?.token ||
         client.handshake.headers?.authorization?.replace('Bearer ', '');
 
+      // In development, allow connection without token for testing
+      if (!token && process.env.NODE_ENV === 'development') {
+        console.log('WebSocket connection without token (development mode)');
+        client.data.userId = null;
+        client.data.userRole = null;
+        return;
+      }
+
       if (!token) {
+        console.log('WebSocket connection rejected: No token provided');
         client.disconnect();
         return;
       }

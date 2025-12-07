@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 COPY --chown=node:node package*.json ./
 # Install OpenSSL and other dependencies
 RUN apk add --no-cache openssl libc6-compat
-RUN npm i --legacy-peer-deps
+RUN npm i
 COPY --chown=node:node . .
 USER node
 
@@ -20,12 +20,16 @@ COPY --chown=node:node package*.json ./
 RUN apk add --no-cache openssl libc6-compat
 COPY --chown=node:node --from=development /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node . .
-ENV NODE_ENV=production
-# Generate Prisma client with correct binary targets
+# Install all dependencies (including devDependencies) needed for build
+# Note: NODE_ENV is not set yet, so devDependencies will be installed
+RUN npm install && npm cache clean --force
+# Generate Prisma client using the installed prisma version to avoid version conflicts
 RUN npx prisma generate
+# Build the application
 RUN npm run build
-# Install production dependencies only
-RUN npm ci --only=production --legacy-peer-deps && npm cache clean --force
+# Set NODE_ENV=production and remove devDependencies after build to reduce image size
+ENV NODE_ENV=production
+RUN npm prune --production && npm cache clean --force
 USER node
 
 ###################

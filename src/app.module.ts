@@ -8,10 +8,12 @@ import { UsersModule } from './users/users.module';
 import { OrderModule } from './order/order.module';
 import { ContactModule } from './contact/contact.module';
 import { ScheduleModule } from '@nestjs/schedule';
-import { WebSocketModule } from './websocket/websocket.module';
+// import { WebSocketModule } from './websocket/websocket.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
+    PrismaModule,
     AuthModule,
     OfferModule,
     StorageModule,
@@ -19,7 +21,7 @@ import { WebSocketModule } from './websocket/websocket.module';
     OrderModule,
     ContactModule,
     ScheduleModule.forRoot(),
-    WebSocketModule,
+    // WebSocketModule, // Temporarily disabled for testing
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -9,7 +9,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
 import { OfferService } from '../offer/offer.service';
-import { AppWebSocketGateway } from '../websocket/websocket.gateway';
+// import { AppWebSocketGateway } from '../websocket/websocket.gateway';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -17,8 +17,8 @@ export class OrderService {
   constructor(
     private prisma: PrismaService,
     private offerService: OfferService,
-    @Inject(forwardRef(() => AppWebSocketGateway))
-    private wsGateway: AppWebSocketGateway,
+    // @Inject(forwardRef(() => AppWebSocketGateway))
+    // private wsGateway: AppWebSocketGateway,
   ) {}
 
   async create(data: any) {
@@ -156,7 +156,7 @@ export class OrderService {
     });
 
     // Emit real-time update
-    this.wsGateway.emitOrderUpdate(order, 'created');
+    // this.wsGateway.emitOrderUpdate(order, 'created'); // Temporarily disabled
 
     return { updatedOffer, order };
   }
@@ -240,7 +240,7 @@ export class OrderService {
 
     // Emit real-time update
     if (fullOrder) {
-      this.wsGateway.emitOrderUpdate(fullOrder, 'updated');
+      // this.wsGateway.emitOrderUpdate(fullOrder, 'updated'); // Temporarily disabled
     }
 
     return cancelled;
@@ -408,7 +408,7 @@ export class OrderService {
     });
 
     // Emit real-time update
-    this.wsGateway.emitOrderUpdate(updated, 'updated');
+    // this.wsGateway.emitOrderUpdate(updated, 'updated'); // Temporarily disabled
 
     return {
       order: updated,
@@ -473,7 +473,7 @@ export class OrderService {
     });
 
     // Emit real-time update
-    this.wsGateway.emitOrderUpdate(updated, 'updated');
+    // this.wsGateway.emitOrderUpdate(updated, 'updated'); // Temporarily disabled
 
     return updated;
   }

@@ -1,10 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 import { User, UserRole } from '@prisma/client';
 
 // AuthMagicMailSender
 
 export class AuthMagicMailSenderDtoRequest {
-  @ApiProperty() email: string;
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty({ message: 'Email is required' })
+  @IsString()
+  email: string;
 }
 
 export class AuthMagicMailSenderDtoResponse {

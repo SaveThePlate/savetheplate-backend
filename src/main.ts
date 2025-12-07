@@ -87,8 +87,19 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { Logger } from '@nestjs/common';
+
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const logger = new Logger('Bootstrap');
+  
+  try {
+    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+      logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+    });
+
+    // Add global exception filter to catch all errors
+    app.useGlobalFilters(new AllExceptionsFilter());
 
   const config = new DocumentBuilder()
     .setTitle('Cats example')
@@ -102,58 +113,129 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads'));
 
   // Enable CORS for the frontend and allow credentials
-  // For staging/development, allow all ccdev.space origins
-  // For production, use specific allowed origins
+  // Explicitly allow all ccdev.space domains and configured frontend URLs
+  const allowedOrigins = [
+    'https://leftover.ccdev.space',
+    'https://savetheplate.ccdev.space',
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    process.env.FRONTEND_URL,
+    process.env.NEXT_PUBLIC_FRONTEND_URL,
+    process.env.FRONT_URL,
+  ].filter(Boolean) as string[];
+
+  // Use a simpler, more explicit CORS configuration
+  // This ensures CORS headers are always sent, even for errors
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) {
+        logger.debug('CORS: Allowing request with no origin');
         callback(null, true);
         return;
       }
       
+      logger.log(`CORS: Checking origin: ${origin}`);
+      
       // Always allow localhost for development
       if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        logger.log('CORS: Allowing localhost origin');
         callback(null, true);
         return;
       }
       
       // Always allow all ccdev.space domains (staging environment)
+      // This is the most important check for the current setup
       if (origin.includes('.ccdev.space')) {
+        logger.log(`CORS: Allowing ccdev.space domain: ${origin}`);
         callback(null, true);
         return;
       }
       
-      // For other origins, check against allowed list
-      const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        process.env.NEXT_PUBLIC_FRONTEND_URL,
-        'https://leftover.ccdev.space',
-        'https://savetheplate.ccdev.space',
-      ].filter(Boolean) as string[];
-      
+      // Check against explicit allowed list
       if (allowedOrigins.includes(origin)) {
+        logger.log('CORS: Allowing origin from allowed list');
         callback(null, true);
         return;
       }
       
       // In production, reject unknown origins
       if (process.env.NODE_ENV === 'production') {
+        logger.warn(`CORS: Rejecting origin in production: ${origin}`);
         callback(new Error('Not allowed by CORS'), false);
         return;
       }
       
       // In development/staging, allow all
+      logger.log('CORS: Allowing origin in development/staging mode');
       callback(null, true);
     },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    exposedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+    allowedHeaders: [
+      'Content-Type', 
+      'Authorization', 
+      'Accept', 
+      'Cache-Control', 
+      'cache-control',
+      'X-Requested-With',
+      'Origin',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers'
+    ],
+    exposedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin'],
     preflightContinue: false,
     optionsSuccessStatus: 204,
+    maxAge: 86400, // 24 hours
   });
+  
+  // Add a middleware to ensure CORS headers are set even on error responses
+  // This runs AFTER CORS middleware to add headers to error responses
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    
+    // Set CORS headers for all responses (as a fallback)
+    // The main CORS middleware should handle this, but this ensures it's set on errors
+    if (origin && (origin.includes('.ccdev.space') || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
+      // Only set if not already set by CORS middleware
+      if (!res.getHeader('Access-Control-Allow-Origin')) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Cache-Control, cache-control, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+      }
+    }
+    
+    // Don't handle OPTIONS here - let CORS middleware handle it
+    next();
+  });
+  
+  logger.log(`✅ CORS enabled for origins: ${allowedOrigins.join(', ')}`);
+  logger.log(`✅ CORS will allow all .ccdev.space domains`);
 
-  await app.listen(3001);
+    const port = process.env.PORT || 3001;
+    await app.listen(port);
+    logger.log(`🚀 Application is running on: http://localhost:${port}`);
+    logger.log(`📚 Swagger documentation: http://localhost:${port}/api`);
+  } catch (error) {
+    logger.error('❌ Error starting the application:', error);
+    process.exit(1);
+  }
 }
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  const logger = new Logger('UnhandledRejection');
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (error: Error) => {
+  const logger = new Logger('UncaughtException');
+  logger.error('Uncaught Exception:', error);
+  process.exit(1);
+});
+
 bootstrap();

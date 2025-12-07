@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@nestjs/cli": "^10.0.0",
-    "@nestjs/common": "^10.0.0",
+    "@nestjs/common": "^10.4.16",
     "@nestjs/core": "^10.0.0",
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/passport": "^10.0.3",
@@ -32,13 +32,13 @@
     "@nestjs/swagger": "^7.4.0",
     "@nestjs/websockets": "^10.4.20",
     "@prisma/client": "^5.18.0",
-    "@react-email/components": "^0.0.22",
-    "@react-email/render": "^0.0.17",
-    "axios": "^1.7.9",
+    "@react-email/components": "^1.0.1",
+    "@react-email/render": "^2.0.0",
+    "axios": "^1.13.2",
     "blurhash": "^2.0.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.0.2",
     "nestjs-prisma": "^0.23.0",
     "nestjs-resend": "^0.0.3",
     "node-cron": "^3.0.3",
@@ -60,7 +60,7 @@
     "@nestjs/testing": "^10.0.0",
     "@types/express": "^4.17.17",
     "@types/jest": "^29.5.2",
-    "@types/multer": "^1.4.11",
+    "@types/multer": "^1.4.12",
     "@types/node": "^20.3.1",
     "@types/passport-local": "^1.0.38",
     "@types/react": "^19.2.7",
@@ -98,5 +98,22 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "overrides": {
+    "form-data": "^4.0.4",
+    "multer": "^2.0.2",
+    "validator": "^13.15.23",
+    "jws": "^4.0.1",
+    "glob": "^13.0.0",
+    "@babel/helpers": "^7.26.10",
+    "js-yaml": "^4.1.1",
+    "prismjs": "^1.30.0",
+    "formidable": "^3.5.4",
+    "tmp": "^0.2.5",
+    "brace-expansion": "^2.0.2",
+    "@react-email/components": {
+      "react": "^19.2.1",
+      "react-dom": "^19.2.1"
+    }
   }
 }

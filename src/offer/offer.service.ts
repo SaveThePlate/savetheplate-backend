@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AppWebSocketGateway } from '../websocket/websocket.gateway';
+// import { AppWebSocketGateway } from '../websocket/websocket.gateway';
 import axios from 'axios';
 @Injectable()
 export class OfferService {
   constructor(
     private prisma: PrismaService,
-    @Inject(forwardRef(() => AppWebSocketGateway))
-    private wsGateway: AppWebSocketGateway,
+    // @Inject(forwardRef(() => AppWebSocketGateway))
+    // private wsGateway: AppWebSocketGateway,
   ) {}
 
   async shortenUrl(longUrl: string): Promise<string> {
@@ -71,7 +71,7 @@ export class OfferService {
     };
 
     // Emit real-time update
-    this.wsGateway.emitOfferUpdate(formattedOffer, 'created');
+    // this.wsGateway.emitOfferUpdate(formattedOffer, 'created'); // Temporarily disabled
 
     return offer;
   }
@@ -203,7 +203,7 @@ export class OfferService {
     };
 
     // Emit real-time update when quantity changes
-    this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
+    // this.wsGateway.emitOfferUpdate(formattedOffer, 'updated'); // Temporarily disabled
 
     return offer;
   }
@@ -242,7 +242,7 @@ export class OfferService {
     };
 
     // Emit real-time update
-    this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
+    // this.wsGateway.emitOfferUpdate(formattedOffer, 'updated'); // Temporarily disabled
 
     return offer;
   }
@@ -277,7 +277,7 @@ export class OfferService {
       ]);
 
       // Emit real-time update (before deletion, so we have the data)
-      this.wsGateway.emitOfferUpdate(offer, 'deleted');
+      // this.wsGateway.emitOfferUpdate(offer, 'deleted'); // Temporarily disabled
 
       return { message: 'Offer deleted successfully' };
     } catch (error) {

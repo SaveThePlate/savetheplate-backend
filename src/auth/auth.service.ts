@@ -3,6 +3,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { User, UserRole } from '@prisma/client';
 import { ResendService } from 'src/utils/mailing/resend.service';
 import MagicLinkEmailTemplate from 'emails/MagicLink';
+import { render } from '@react-email/render';
 import {
   AuthMagicMailSenderDtoRequest,
   AuthMagicMailVerifierDtoRequest,
@@ -62,11 +63,16 @@ export class AuthService {
       }
 
       // Production: Send actual email
+      // Render React component to HTML
+      const emailHtml = await render(
+        MagicLinkEmailTemplate({ magicLink: link }),
+      );
+      
       const mail_resp = await this.resend.getResendInstance().emails.send({
         from: 'no-reply@ccdev.space',
         to: user.email,
         subject: 'Log in to SaveThePlate',
-        react: MagicLinkEmailTemplate({ magicLink: link }),
+        html: emailHtml,
       });
 
       if (mail_resp.error) {

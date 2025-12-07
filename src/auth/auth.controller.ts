@@ -27,8 +27,8 @@ export class AuthController {
   // ENDPOINT TO REGISTER USER
   @Post('/send-magic-mail')
   @ApiOkResponse({ type: AuthMagicMailSenderDtoResponse })
-  Auth(@Body() AuthUserDto: AuthMagicMailSenderDtoRequest) {
-    return this.authService.AuthMagicMailSender(AuthUserDto);
+  async Auth(@Body() AuthUserDto: AuthMagicMailSenderDtoRequest) {
+    return await this.authService.AuthMagicMailSender(AuthUserDto);
   }
 
   @Post('/verify-magic-mail') // Added the method type
