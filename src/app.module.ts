@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { OrderModule } from './order/order.module';
 import { ContactModule } from './contact/contact.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { WebSocketModule } from './websocket/websocket.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     OrderModule,
     ContactModule,
     ScheduleModule.forRoot(),
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],

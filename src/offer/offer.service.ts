@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { AppWebSocketGateway } from '../websocket/websocket.gateway';
 import axios from 'axios';
 @Injectable()
 export class OfferService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => AppWebSocketGateway))
+    private wsGateway: AppWebSocketGateway,
+  ) {}
 
   async shortenUrl(longUrl: string): Promise<string> {
     try {
@@ -29,7 +34,7 @@ export class OfferService {
       ? await this.shortenUrl(data.mapsLink)
       : '';
 
-    return this.prisma.offer.create({
+    const offer = await this.prisma.offer.create({
       data: {
         ownerId: data.ownerId,
         title: data.title,
@@ -44,7 +49,31 @@ export class OfferService {
         images: data.images,
         quantity: data.quantity,
       },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            location: true,
+            phoneNumber: true,
+            mapsLink: true,
+            profileImage: true,
+          },
+        },
+      },
     });
+
+    // Format offer like findAll() does for consistency
+    const formattedOffer = {
+      ...offer,
+      pickupLocation: offer.owner?.location || offer.pickupLocation,
+      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+    };
+
+    // Emit real-time update
+    this.wsGateway.emitOfferUpdate(formattedOffer, 'created');
+
+    return offer;
   }
 
   async findAll() {
@@ -147,16 +176,40 @@ export class OfferService {
   async updateOfferQuantity(offerId: number, newQuantity: number) {
     await this.findOfferById(offerId);
 
-    return this.prisma.offer.update({
+    const offer = await this.prisma.offer.update({
       where: { id: offerId },
       data: {
         quantity: newQuantity,
       },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            location: true,
+            phoneNumber: true,
+            mapsLink: true,
+            profileImage: true,
+          },
+        },
+      },
     });
+
+    // Format offer like findAll() does for consistency
+    const formattedOffer = {
+      ...offer,
+      pickupLocation: offer.owner?.location || offer.pickupLocation,
+      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+    };
+
+    // Emit real-time update when quantity changes
+    this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
+
+    return offer;
   }
 
   async updateOffer(data: any) {
-    return this.prisma.offer.update({
+    const offer = await this.prisma.offer.update({
       where: { id: data.offerId },
       data: {
         title: data.title,
@@ -167,13 +220,49 @@ export class OfferService {
         pickupLocation: data.pickupLocation,
         quantity: data.quantity,
       },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            location: true,
+            phoneNumber: true,
+            mapsLink: true,
+            profileImage: true,
+          },
+        },
+      },
     });
+
+    // Format offer like findAll() does for consistency
+    const formattedOffer = {
+      ...offer,
+      pickupLocation: offer.owner?.location || offer.pickupLocation,
+      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+    };
+
+    // Emit real-time update
+    this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
+
+    return offer;
   }
 
   async deleteOffer(offerId: number) {
     try {
       const offer = await this.prisma.offer.findUnique({
         where: { id: offerId },
+        include: {
+          owner: {
+            select: {
+              id: true,
+              username: true,
+              location: true,
+              phoneNumber: true,
+              mapsLink: true,
+              profileImage: true,
+            },
+          },
+        },
       });
 
       if (!offer) {
@@ -186,6 +275,9 @@ export class OfferService {
         this.prisma.order.deleteMany({ where: { offerId } }),
         this.prisma.offer.delete({ where: { id: offerId } }),
       ]);
+
+      // Emit real-time update (before deletion, so we have the data)
+      this.wsGateway.emitOfferUpdate(offer, 'deleted');
 
       return { message: 'Offer deleted successfully' };
     } catch (error) {

@@ -3,10 +3,13 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
 import { OfferService } from '../offer/offer.service';
+import { AppWebSocketGateway } from '../websocket/websocket.gateway';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -14,6 +17,8 @@ export class OrderService {
   constructor(
     private prisma: PrismaService,
     private offerService: OfferService,
+    @Inject(forwardRef(() => AppWebSocketGateway))
+    private wsGateway: AppWebSocketGateway,
   ) {}
 
   async create(data: any) {
@@ -122,7 +127,36 @@ export class OrderService {
         quantity: data.quantity,
         qrCodeToken: qrCodeToken,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            phoneNumber: true,
+            location: true,
+            profileImage: true,
+          },
+        },
+        offer: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                username: true,
+                location: true,
+                phoneNumber: true,
+                mapsLink: true,
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    // Emit real-time update
+    this.wsGateway.emitOrderUpdate(order, 'created');
 
     return { updatedOffer, order };
   }
@@ -171,7 +205,45 @@ export class OrderService {
         order.quantity,
     );
 
-    return this.updateOrderStatus(orderId, Status.cancelled);
+    const cancelled = await this.updateOrderStatus(orderId, Status.cancelled);
+    
+    // Get full order with relations for WebSocket event
+    const fullOrder = await this.prisma.order.findUnique({
+      where: { id: orderId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            phoneNumber: true,
+            location: true,
+            profileImage: true,
+          },
+        },
+        offer: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                username: true,
+                location: true,
+                phoneNumber: true,
+                mapsLink: true,
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // Emit real-time update
+    if (fullOrder) {
+      this.wsGateway.emitOrderUpdate(fullOrder, 'updated');
+    }
+
+    return cancelled;
   }
 
   /**
@@ -335,6 +407,9 @@ export class OrderService {
       },
     });
 
+    // Emit real-time update
+    this.wsGateway.emitOrderUpdate(updated, 'updated');
+
     return {
       order: updated,
       message: 'Order confirmed successfully',
@@ -369,7 +444,36 @@ export class OrderService {
     const updated = await this.prisma.order.update({
       where: { id: orderId },
       data: { status: Status.confirmed, collectedAt: new Date() },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            phoneNumber: true,
+            location: true,
+            profileImage: true,
+          },
+        },
+        offer: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                username: true,
+                location: true,
+                phoneNumber: true,
+                mapsLink: true,
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    // Emit real-time update
+    this.wsGateway.emitOrderUpdate(updated, 'updated');
 
     return updated;
   }
