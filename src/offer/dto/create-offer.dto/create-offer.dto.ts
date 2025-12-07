@@ -16,6 +16,10 @@ export class CreateOfferDto {
   @IsNumber()
   price: number;
 
+  @IsOptional()
+  @IsNumber()
+  originalPrice?: number;
+
   @IsNotEmpty()
   @IsNumber()
   quantity: number;

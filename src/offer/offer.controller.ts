@@ -84,6 +84,7 @@ export class OfferController {
         title: createOfferDto.title,
         description: createOfferDto.description,
         price: createOfferDto.price,
+        originalPrice: createOfferDto.originalPrice,
         quantity: createOfferDto.quantity,
         expirationDate: createOfferDto.expirationDate,
         pickupLocation: user.location || '',
