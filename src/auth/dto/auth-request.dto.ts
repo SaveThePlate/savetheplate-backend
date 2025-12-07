@@ -29,6 +29,8 @@ export class AuthMagicMailVerifierDtoResponse {
   } | null;
   @ApiProperty() needsOnboarding?: boolean;
   @ApiProperty() redirectToOnboarding?: boolean;
+  @ApiProperty() redirectTo?: string; // Redirect path based on user role
+  @ApiProperty() role?: UserRole; // User role for frontend
 }
 
 export class GetUserByTokenDtoResponse {

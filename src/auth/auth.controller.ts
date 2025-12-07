@@ -38,20 +38,32 @@ export class AuthController {
   ): Promise<AuthMagicMailVerifierDtoResponse> {
     const response = await this.authService.AuthMagicMailVerifier(AuthUserDto);
 
-    // Check if user role is NONE
-    if (response.user.role === 'NONE') {
-      return {
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        needsOnboarding: true, // Indicate onboarding is needed
-      };
+    // Get user role from response (user object is always returned from service)
+    const userRole = response.user?.role || 'NONE';
+    
+    // Determine redirect path based on role
+    let redirectTo = '/';
+    if (userRole === 'PROVIDER') {
+      redirectTo = '/provider/home';
+    } else if (userRole === 'PENDING_PROVIDER') {
+      redirectTo = '/onboarding/thank-you';
+    } else if (userRole === 'CLIENT') {
+      redirectTo = '/client/home';
     }
 
-    // If user exists and role is not NONE, return tokens
+    // Return complete response with user, role, and redirect information
     return {
+      message: response.message,
       accessToken: response.accessToken,
       refreshToken: response.refreshToken,
-      needsOnboarding: false, // User does not need onboarding
+      user: response.user ? {
+        id: response.user.id,
+        email: response.user.email,
+        role: response.user.role,
+      } : null,
+      needsOnboarding: userRole === 'NONE',
+      redirectTo, // Include redirect path in response
+      role: userRole, // Include role for frontend
     };
   }
 
