@@ -107,31 +107,50 @@ async function bootstrap() {
     process.env.FRONTEND_URL,
     process.env.NEXT_PUBLIC_FRONTEND_URL,
     'https://leftover.ccdev.space',
+    'https://savetheplate.ccdev.space',
     'http://localhost:3000',
     'http://localhost:3151',
   ].filter(Boolean) as string[];
 
+  console.log('CORS allowed origins:', allowedOrigins);
+  console.log('NODE_ENV:', process.env.NODE_ENV);
+
+  // Use a function that returns true/false for better compatibility
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+      if (!origin) {
+        console.log('CORS: Allowing request with no origin');
+        callback(null, true);
+        return;
+      }
+      
+      console.log('CORS: Checking origin:', origin);
       
       // Check if origin exactly matches or is in allowed list
       if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+        console.log('CORS: Origin allowed (in list)');
+        callback(null, true);
+        return;
       }
       
-      // For development/staging, allow all origins
-      if (process.env.NODE_ENV !== 'production') {
-        return callback(null, true);
+      // For development/staging (ccdev.space domains), allow all origins
+      if (process.env.NODE_ENV !== 'production' || origin.includes('.ccdev.space')) {
+        console.log('CORS: Origin allowed (ccdev.space or non-production)');
+        callback(null, true);
+        return;
       }
       
       // Reject other origins in production
-      callback(new Error('Not allowed by CORS'));
+      console.log('CORS: Origin rejected:', origin);
+      callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    exposedHeaders: ['Content-Type', 'Authorization'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   await app.listen(3001);
