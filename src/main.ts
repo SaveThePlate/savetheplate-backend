@@ -102,48 +102,49 @@ async function bootstrap() {
   app.useStaticAssets(join(__dirname, '..', 'uploads'));
 
   // Enable CORS for the frontend and allow credentials
-  // Allow both production and staging frontend URLs
-  const allowedOrigins = [
-    process.env.FRONTEND_URL,
-    process.env.NEXT_PUBLIC_FRONTEND_URL,
-    'https://leftover.ccdev.space',
-    'https://savetheplate.ccdev.space',
-    'http://localhost:3000',
-    'http://localhost:3151',
-  ].filter(Boolean) as string[];
-
-  console.log('CORS allowed origins:', allowedOrigins);
-  console.log('NODE_ENV:', process.env.NODE_ENV);
-
-  // Use a function that returns true/false for better compatibility
+  // For staging/development, allow all ccdev.space origins
+  // For production, use specific allowed origins
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) {
-        console.log('CORS: Allowing request with no origin');
         callback(null, true);
         return;
       }
       
-      console.log('CORS: Checking origin:', origin);
+      // Always allow localhost for development
+      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+        callback(null, true);
+        return;
+      }
       
-      // Check if origin exactly matches or is in allowed list
+      // Always allow all ccdev.space domains (staging environment)
+      if (origin.includes('.ccdev.space')) {
+        callback(null, true);
+        return;
+      }
+      
+      // For other origins, check against allowed list
+      const allowedOrigins = [
+        process.env.FRONTEND_URL,
+        process.env.NEXT_PUBLIC_FRONTEND_URL,
+        'https://leftover.ccdev.space',
+        'https://savetheplate.ccdev.space',
+      ].filter(Boolean) as string[];
+      
       if (allowedOrigins.includes(origin)) {
-        console.log('CORS: Origin allowed (in list)');
         callback(null, true);
         return;
       }
       
-      // For development/staging (ccdev.space domains), allow all origins
-      if (process.env.NODE_ENV !== 'production' || origin.includes('.ccdev.space')) {
-        console.log('CORS: Origin allowed (ccdev.space or non-production)');
-        callback(null, true);
+      // In production, reject unknown origins
+      if (process.env.NODE_ENV === 'production') {
+        callback(new Error('Not allowed by CORS'), false);
         return;
       }
       
-      // Reject other origins in production
-      console.log('CORS: Origin rejected:', origin);
-      callback(new Error('Not allowed by CORS'), false);
+      // In development/staging, allow all
+      callback(null, true);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
