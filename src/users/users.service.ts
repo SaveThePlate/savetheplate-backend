@@ -97,8 +97,49 @@ export class UsersService {
   }
 
   async remove(email: string) {
-    await this.prisma.user.delete({
+    // First, find the user to get their ID
+    const user = await this.prisma.user.findUnique({
       where: { email },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Get all offers owned by this user
+    const userOffers = await this.prisma.offer.findMany({
+      where: { ownerId: user.id },
+      select: { id: true },
+    });
+
+    const offerIds = userOffers.map((offer) => offer.id);
+
+    // Use a transaction to ensure all deletions succeed or all fail
+    await this.prisma.$transaction(async (tx) => {
+      // Delete all orders associated with the user's offers
+      if (offerIds.length > 0) {
+        await tx.order.deleteMany({
+          where: { offerId: { in: offerIds } },
+        });
+      }
+
+      // Delete all orders placed by the user
+      await tx.order.deleteMany({
+        where: { userId: user.id },
+      });
+
+      // Delete all offers owned by the user
+      if (offerIds.length > 0) {
+        await tx.offer.deleteMany({
+          where: { ownerId: user.id },
+        });
+      }
+
+      // Finally, delete the user
+      await tx.user.delete({
+        where: { id: user.id },
+      });
     });
   }
 }
