@@ -8,7 +8,7 @@ import { UsersModule } from './users/users.module';
 import { OrderModule } from './order/order.module';
 import { ContactModule } from './contact/contact.module';
 import { ScheduleModule } from '@nestjs/schedule';
-// import { WebSocketModule } from './websocket/websocket.module';
+import { WebSocketModule } from './websocket/websocket.module';
 import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
@@ -21,7 +21,7 @@ import { PrismaModule } from './prisma/prisma.module';
     OrderModule,
     ContactModule,
     ScheduleModule.forRoot(),
-    // WebSocketModule, // Temporarily disabled for testing
+    WebSocketModule,
   ],
   controllers: [AppController],
   providers: [AppService],

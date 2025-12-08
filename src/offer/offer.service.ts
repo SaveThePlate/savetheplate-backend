@@ -1,13 +1,13 @@
 import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-// import { AppWebSocketGateway } from '../websocket/websocket.gateway';
+import { AppWebSocketGateway } from '../websocket/websocket.gateway';
 import axios from 'axios';
 @Injectable()
 export class OfferService {
   constructor(
     private prisma: PrismaService,
-    // @Inject(forwardRef(() => AppWebSocketGateway))
-    // private wsGateway: AppWebSocketGateway,
+    @Inject(forwardRef(() => AppWebSocketGateway))
+    private wsGateway: AppWebSocketGateway,
   ) {}
 
   async shortenUrl(longUrl: string): Promise<string> {
@@ -71,7 +71,13 @@ export class OfferService {
     };
 
     // Emit real-time update
-    // this.wsGateway.emitOfferUpdate(formattedOffer, 'created'); // Temporarily disabled
+    try {
+      console.log(`📤 Attempting to emit offer:created for offer ${formattedOffer.id}`);
+      this.wsGateway.emitOfferUpdate(formattedOffer, 'created');
+      console.log(`✅ Successfully emitted offer:created for offer ${formattedOffer.id}`);
+    } catch (error) {
+      console.error(`❌ Error emitting offer update:`, error);
+    }
 
     return offer;
   }
@@ -203,7 +209,7 @@ export class OfferService {
     };
 
     // Emit real-time update when quantity changes
-    // this.wsGateway.emitOfferUpdate(formattedOffer, 'updated'); // Temporarily disabled
+    this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
 
     return offer;
   }
@@ -242,7 +248,7 @@ export class OfferService {
     };
 
     // Emit real-time update
-    // this.wsGateway.emitOfferUpdate(formattedOffer, 'updated'); // Temporarily disabled
+    this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
 
     return offer;
   }
@@ -276,8 +282,15 @@ export class OfferService {
         this.prisma.offer.delete({ where: { id: offerId } }),
       ]);
 
+      // Format offer like findAll() does for consistency before emitting
+      const formattedOffer = {
+        ...offer,
+        pickupLocation: offer.owner?.location || offer.pickupLocation,
+        mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+      };
+
       // Emit real-time update (before deletion, so we have the data)
-      // this.wsGateway.emitOfferUpdate(offer, 'deleted'); // Temporarily disabled
+      this.wsGateway.emitOfferUpdate(formattedOffer, 'deleted');
 
       return { message: 'Offer deleted successfully' };
     } catch (error) {

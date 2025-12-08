@@ -104,16 +104,19 @@ export class AppWebSocketGateway
         client.data.userId = parseInt(payload.id);
         client.data.userRole = user.role;
         client.join(`user:${user.id}`);
+        console.log(`✅ Client ${user.id} joined room: user:${user.id}`);
         
         // Join role-based rooms
         if (user.role === 'PROVIDER') {
           client.join('providers');
+          console.log(`✅ Provider ${user.id} joined 'providers' room`);
         }
         if (user.role === 'CLIENT') {
           client.join('clients');
+          console.log(`✅ Client ${user.id} joined 'clients' room`);
         }
 
-        console.log(`Client connected: ${user.id} (${user.role})`);
+        console.log(`✅ Client connected: ${user.id} (${user.role})`);
       } catch (error) {
         console.error('Invalid token:', error);
         client.disconnect();
@@ -153,13 +156,24 @@ export class AppWebSocketGateway
 
   // Emit offer update to relevant users
   emitOfferUpdate(offer: any, eventType: 'created' | 'updated' | 'deleted') {
+    if (!this.server) {
+      console.error('❌ WebSocket server not initialized, cannot emit offer update');
+      return;
+    }
+
     console.log(`📢 Emitting offer:${eventType} for offer ${offer.id} to clients`);
+    
+    // Get all clients in the 'clients' room
+    const clientsRoom = this.server.sockets.adapter.rooms.get('clients');
+    const clientsCount = clientsRoom ? clientsRoom.size : 0;
+    console.log(`👥 Clients in 'clients' room: ${clientsCount}`);
     
     // Notify all clients about offer changes
     this.server.to('clients').emit('offer:update', {
       type: eventType,
       offer,
     });
+    console.log(`✅ Emitted offer:update to 'clients' room`);
 
     // Notify the offer owner (provider)
     if (offer.ownerId) {
@@ -167,6 +181,7 @@ export class AppWebSocketGateway
         type: eventType,
         offer,
       });
+      console.log(`✅ Emitted offer:update to provider user:${offer.ownerId}`);
     }
   }
 
