@@ -84,9 +84,10 @@ export class OrderController {
       const alreadyConfirmed = result.alreadyConfirmed || false;
 
       // Get frontend URL from environment or construct from request
-      // Try Referer header first (where the request came from), then origin, then env vars
-      let frontendUrl = '';
-      if (request.headers?.referer) {
+      // Priority: FRONT_URL env var > Referer > Origin > FRONTEND_URL
+      let frontendUrl = process.env.FRONT_URL || '';
+      
+      if (!frontendUrl && request.headers?.referer) {
         try {
           const refererUrl = new URL(request.headers.referer);
           frontendUrl = refererUrl.origin;
@@ -102,10 +103,10 @@ export class OrderController {
       }
       
       // Redirect to provider orders page with success message
-      // Use relative path if we can't determine frontend URL
+      // Always use absolute URL for better mobile browser compatibility
       const redirectUrl = frontendUrl 
         ? `${frontendUrl}/provider/orders?confirmed=true&orderId=${orderId}&alreadyConfirmed=${alreadyConfirmed}`
-        : `/provider/orders?confirmed=true&orderId=${orderId}&alreadyConfirmed=${alreadyConfirmed}`;
+        : `https://leftover.ccdev.space/provider/orders?confirmed=true&orderId=${orderId}&alreadyConfirmed=${alreadyConfirmed}`;
 
       const html = `
 <!DOCTYPE html>
@@ -165,33 +166,49 @@ export class OrderController {
     <p class="submessage">Redirecting back to app...</p>
   </div>
   <script>
-    // Try to redirect immediately
-    try {
-      // If opened in same window, redirect
-      if (window.location !== window.parent.location) {
-        // If in iframe, try to redirect parent
-        window.parent.location.href = '${redirectUrl}';
-      } else {
-        // If in same window, redirect
-        window.location.href = '${redirectUrl}';
-      }
-    } catch (e) {
-      // If cross-origin, use meta refresh
-      console.log('Using meta refresh for redirect');
-    }
-    
-    // Fallback: if still here after 1 second, try closing window
-    setTimeout(() => {
-      if (window.opener) {
-        // If opened as popup, close it and redirect opener
+    // Multiple redirect strategies for maximum compatibility
+    (function() {
+      var redirectUrl = '${redirectUrl}';
+      
+      // Strategy 1: Immediate redirect (works in most cases)
+      try {
+        if (window.top !== window.self) {
+          // In iframe - redirect parent
+          window.top.location.href = redirectUrl;
+        } else {
+          // Same window - direct redirect
+          window.location.replace(redirectUrl);
+        }
+      } catch (e) {
+        // Cross-origin error - try alternative
         try {
-          window.opener.location.href = '${redirectUrl}';
-          window.close();
-        } catch (e) {
-          window.close();
+          window.location.href = redirectUrl;
+        } catch (e2) {
+          // If all else fails, meta refresh will handle it
         }
       }
-    }, 1000);
+      
+      // Strategy 2: Fallback after short delay (for stubborn browsers)
+      setTimeout(function() {
+        try {
+          window.location.replace(redirectUrl);
+        } catch (e) {
+          window.location.href = redirectUrl;
+        }
+      }, 100);
+      
+      // Strategy 3: If opened as popup, redirect opener
+      if (window.opener) {
+        setTimeout(function() {
+          try {
+            window.opener.location.href = redirectUrl;
+            window.close();
+          } catch (e) {
+            window.close();
+          }
+        }, 500);
+      }
+    })();
   </script>
 </body>
 </html>`;
