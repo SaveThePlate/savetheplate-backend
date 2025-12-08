@@ -78,13 +78,19 @@ export class AppWebSocketGateway
     this.logger.log(`🌐 CORS enabled for .ccdev.space domains`);
     
     // Log server configuration
-    server.on('connection', (socket) => {
-      this.logger.debug(`New socket connection: ${socket.id}`);
-    });
-    
-    server.engine.on('connection_error', (err) => {
-      this.logger.error('Socket.IO connection error:', err);
-    });
+    // Note: Socket.IO connections are handled by handleConnection method
+    // Only set up engine error handler if engine exists
+    try {
+      if (server && server.engine && typeof server.engine.on === 'function') {
+        server.engine.on('connection_error', (err) => {
+          this.logger.error('Socket.IO connection error:', err);
+        });
+      } else {
+        this.logger.warn('Socket.IO engine not available for error handling');
+      }
+    } catch (error) {
+      this.logger.warn('Failed to set up Socket.IO engine error handler:', error);
+    }
   }
 
   async handleConnection(client: Socket) {

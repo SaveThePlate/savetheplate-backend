@@ -100,9 +100,14 @@ async function downloadImageToStore(
   const outPath = path.join(STORE_DIR, filename);
   const writer = fs.createWriteStream(outPath);
   await new Promise<void>((resolve, reject) => {
+    if (!res.data || !writer) {
+      reject(new Error('Invalid stream: res.data or writer is undefined'));
+      return;
+    }
     res.data.pipe(writer);
     writer.on('finish', () => resolve());
     writer.on('error', (err) => reject(err));
+    res.data.on('error', (err) => reject(err));
   });
   // return public path expected by frontend
   return { filename, publicPath: `/storage/profile-images/${filename}` };
@@ -213,9 +218,14 @@ async function downloadPhotoViaPlaces(
           const outPath = path.join(STORE_DIR, filename);
           const writer = fs.createWriteStream(outPath);
           await new Promise<void>((resolve, reject) => {
+            if (!photoRes.data || !writer) {
+              reject(new Error('Invalid stream: photoRes.data or writer is undefined'));
+              return;
+            }
             photoRes.data.pipe(writer);
             writer.on('finish', () => resolve());
             writer.on('error', (err) => reject(err));
+            photoRes.data.on('error', (err) => reject(err));
           });
           return {
             filename,

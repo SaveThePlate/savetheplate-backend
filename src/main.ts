@@ -190,18 +190,28 @@ async function bootstrap() {
   // Add a middleware to ensure CORS headers are set even on error responses
   // This runs AFTER CORS middleware to add headers to error responses
   app.use((req, res, next) => {
-    const origin = req.headers.origin;
+    // Guard against undefined req or res objects
+    if (!req || !res) {
+      return next();
+    }
     
-    // Set CORS headers for all responses (as a fallback)
-    // The main CORS middleware should handle this, but this ensures it's set on errors
-    if (origin && (origin.includes('.ccdev.space') || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
-      // Only set if not already set by CORS middleware
-      if (!res.getHeader('Access-Control-Allow-Origin')) {
-        res.setHeader('Access-Control-Allow-Origin', origin);
-        res.setHeader('Access-Control-Allow-Credentials', 'true');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Cache-Control, cache-control, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+    try {
+      const origin = req.headers?.origin;
+      
+      // Set CORS headers for all responses (as a fallback)
+      // The main CORS middleware should handle this, but this ensures it's set on errors
+      if (origin && (origin.includes('.ccdev.space') || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
+        // Only set if not already set by CORS middleware
+        if (!res.getHeader('Access-Control-Allow-Origin')) {
+          res.setHeader('Access-Control-Allow-Origin', origin);
+          res.setHeader('Access-Control-Allow-Credentials', 'true');
+          res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Cache-Control, cache-control, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+        }
       }
+    } catch (error) {
+      // Silently ignore errors in CORS header setting to prevent crashes
+      // The main CORS middleware should handle this anyway
     }
     
     // Don't handle OPTIONS here - let CORS middleware handle it
