@@ -98,6 +98,10 @@ async function bootstrap() {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
 
+    // Trust proxy - important for production deployments behind reverse proxy (Nginx, etc.)
+    // This allows Express to trust X-Forwarded-* headers from the proxy
+    app.set('trust proxy', true);
+
     // Add global exception filter to catch all errors
     app.useGlobalFilters(new AllExceptionsFilter());
 

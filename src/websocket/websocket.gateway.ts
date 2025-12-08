@@ -4,14 +4,18 @@ import {
   SubscribeMessage,
   OnGatewayConnection,
   OnGatewayDisconnect,
+  OnGatewayInit,
   ConnectedSocket,
   MessageBody,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from '../prisma/prisma.service';
 import { DecodeToken, JwtType } from '../utils/jwt';
+import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
+  path: '/socket.io/',
+  transports: ['websocket', 'polling'],
   cors: {
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps)
@@ -32,6 +36,7 @@ import { DecodeToken, JwtType } from '../utils/jwt';
         process.env.NEXT_PUBLIC_FRONTEND_URL,
         'https://leftover.ccdev.space',
         'https://savetheplate.ccdev.space',
+        'https://leftover-be.ccdev.space',
       ].filter(Boolean);
       
       if (allowedOrigins.includes(origin) || origin.includes('.ccdev.space')) {
@@ -51,17 +56,42 @@ import { DecodeToken, JwtType } from '../utils/jwt';
     methods: ['GET', 'POST'],
   },
   namespace: '/',
+  allowEIO3: true,
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  connectTimeout: 45000,
 })
 export class AppWebSocketGateway
-  implements OnGatewayConnection, OnGatewayDisconnect
+  implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
   @WebSocketServer()
   server: Server;
+  
+  private readonly logger = new Logger(AppWebSocketGateway.name);
 
   constructor(private prisma: PrismaService) {}
 
+  afterInit(server: Server) {
+    this.logger.log('🚀 WebSocket server initialized');
+    this.logger.log(`📡 Socket.IO path: /socket.io/`);
+    this.logger.log(`🔄 Transports: websocket, polling`);
+    this.logger.log(`🌐 CORS enabled for .ccdev.space domains`);
+    
+    // Log server configuration
+    server.on('connection', (socket) => {
+      this.logger.debug(`New socket connection: ${socket.id}`);
+    });
+    
+    server.engine.on('connection_error', (err) => {
+      this.logger.error('Socket.IO connection error:', err);
+    });
+  }
+
   async handleConnection(client: Socket) {
     try {
+      console.log(`🔌 WebSocket connection attempt from origin: ${client.handshake.headers.origin || 'unknown'}`);
+      console.log(`🔌 Transport: ${client.conn.transport.name}, ID: ${client.id}`);
+      
       // Extract token from handshake auth or query
       const token =
         client.handshake.auth?.token ||
@@ -70,15 +100,18 @@ export class AppWebSocketGateway
 
       // In development, allow connection without token for testing
       if (!token && process.env.NODE_ENV === 'development') {
-        console.log('WebSocket connection without token (development mode)');
+        console.log('⚠️ WebSocket connection without token (development mode)');
         client.data.userId = null;
         client.data.userRole = null;
         return;
       }
 
       if (!token) {
-        console.log('WebSocket connection rejected: No token provided');
-        client.disconnect();
+        console.log('❌ WebSocket connection rejected: No token provided');
+        // Use a small delay to ensure handshake completes before disconnecting
+        setTimeout(() => {
+          client.disconnect(true);
+        }, 100);
         return;
       }
 
@@ -87,7 +120,10 @@ export class AppWebSocketGateway
         const payload = await DecodeToken(token);
 
         if (payload.type !== JwtType.NormalToken) {
-          client.disconnect();
+          console.log('❌ WebSocket connection rejected: Invalid token type');
+          setTimeout(() => {
+            client.disconnect(true);
+          }, 100);
           return;
         }
 
@@ -97,7 +133,10 @@ export class AppWebSocketGateway
         });
 
         if (!user) {
-          client.disconnect();
+          console.log('❌ WebSocket connection rejected: User not found');
+          setTimeout(() => {
+            client.disconnect(true);
+          }, 100);
           return;
         }
 
@@ -118,12 +157,16 @@ export class AppWebSocketGateway
 
         console.log(`✅ Client connected: ${user.id} (${user.role})`);
       } catch (error) {
-        console.error('Invalid token:', error);
-        client.disconnect();
+        console.error('❌ Invalid token:', error);
+        setTimeout(() => {
+          client.disconnect(true);
+        }, 100);
       }
     } catch (error) {
-      console.error('Connection error:', error);
-      client.disconnect();
+      console.error('❌ Connection error:', error);
+      setTimeout(() => {
+        client.disconnect(true);
+      }, 100);
     }
   }
 
