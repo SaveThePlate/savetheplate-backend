@@ -97,23 +97,34 @@ export class UsersService {
   }
 
   async remove(email: string) {
-    // First, find the user to get their ID
+    // First, find the user to get their ID and role
     const user = await this.prisma.user.findUnique({
       where: { email },
-      select: { id: true },
+      select: { id: true, role: true },
     });
 
     if (!user) {
       throw new NotFoundException('User not found');
     }
 
-    // Get all offers owned by this user
+    // Get all offers owned by this user (if they're a provider)
     const userOffers = await this.prisma.offer.findMany({
       where: { ownerId: user.id },
       select: { id: true },
     });
 
     const offerIds = userOffers.map((offer) => offer.id);
+
+    // Count orders that will be deleted
+    const ordersOnOffers = offerIds.length > 0
+      ? await this.prisma.order.count({
+          where: { offerId: { in: offerIds } },
+        })
+      : 0;
+
+    const ordersByUser = await this.prisma.order.count({
+      where: { userId: user.id },
+    });
 
     // Use a transaction to ensure all deletions succeed or all fail
     await this.prisma.$transaction(async (tx) => {
@@ -145,5 +156,17 @@ export class UsersService {
         where: { id: user.id },
       });
     });
+
+    // Return summary of what was deleted
+    return {
+      message: 'User and all associated data deleted successfully',
+      deleted: {
+        user: email,
+        offers: userOffers.length,
+        ordersOnOffers: ordersOnOffers,
+        ordersByUser: ordersByUser,
+        totalOrders: ordersOnOffers + ordersByUser,
+      },
+    };
   }
 }

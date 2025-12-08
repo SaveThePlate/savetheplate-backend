@@ -132,16 +132,12 @@ async function bootstrap() {
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) {
-        logger.debug('CORS: Allowing request with no origin');
         callback(null, true);
         return;
       }
       
-      logger.log(`CORS: Checking origin: ${origin}`);
-      
       // Always allow localhost for development
       if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-        logger.log('CORS: Allowing localhost origin');
         callback(null, true);
         return;
       }
@@ -149,27 +145,23 @@ async function bootstrap() {
       // Always allow all ccdev.space domains (staging environment)
       // This is the most important check for the current setup
       if (origin.includes('.ccdev.space')) {
-        logger.log(`CORS: Allowing ccdev.space domain: ${origin}`);
         callback(null, true);
         return;
       }
       
       // Check against explicit allowed list
       if (allowedOrigins.includes(origin)) {
-        logger.log('CORS: Allowing origin from allowed list');
         callback(null, true);
         return;
       }
       
       // In production, reject unknown origins
       if (process.env.NODE_ENV === 'production') {
-        logger.warn(`CORS: Rejecting origin in production: ${origin}`);
         callback(new Error('Not allowed by CORS'), false);
         return;
       }
       
       // In development/staging, allow all
-      logger.log('CORS: Allowing origin in development/staging mode');
       callback(null, true);
     },
     credentials: true,
@@ -212,9 +204,6 @@ async function bootstrap() {
     next();
   });
   
-  logger.log(`✅ CORS enabled for origins: ${allowedOrigins.join(', ')}`);
-  logger.log(`✅ CORS will allow all .ccdev.space domains`);
-
     const port = process.env.PORT || 3001;
     await app.listen(port);
     logger.log(`🚀 Application is running on: http://localhost:${port}`);
