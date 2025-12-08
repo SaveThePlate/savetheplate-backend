@@ -23,7 +23,6 @@ export class OfferService {
       );
       return response.data; // The shortened URL
     } catch (error) {
-      console.error('Error shortening URL:', error);
       // If shortening fails, return a truncated version to fit in DB
       return longUrl.substring(0, 250); // Fallback to truncated URL
     }
@@ -72,11 +71,9 @@ export class OfferService {
 
     // Emit real-time update
     try {
-      console.log(`📤 Attempting to emit offer:created for offer ${formattedOffer.id}`);
       this.wsGateway.emitOfferUpdate(formattedOffer, 'created');
-      console.log(`✅ Successfully emitted offer:created for offer ${formattedOffer.id}`);
     } catch (error) {
-      console.error(`❌ Error emitting offer update:`, error);
+      // Silently fail - WebSocket updates are not critical
     }
 
     return offer;
@@ -215,17 +212,51 @@ export class OfferService {
   }
 
   async updateOffer(data: any) {
+    const updateData: any = {};
+
+    // Only include fields that are provided (not undefined)
+    if (data.title !== undefined) {
+      updateData.title = data.title;
+    }
+    if (data.description !== undefined) {
+      updateData.description = data.description;
+    }
+    if (data.price !== undefined) {
+      updateData.price = data.price;
+    }
+    if (data.originalPrice !== undefined) {
+      updateData.originalPrice = data.originalPrice;
+    }
+    if (data.expirationDate !== undefined) {
+      // Convert string to Date if needed
+      updateData.expirationDate = data.expirationDate instanceof Date
+        ? data.expirationDate
+        : new Date(data.expirationDate);
+    }
+    if (data.pickupLocation !== undefined) {
+      updateData.pickupLocation = data.pickupLocation;
+    }
+    if (data.quantity !== undefined) {
+      updateData.quantity = data.quantity;
+    }
+    if (data.latitude !== undefined) {
+      updateData.latitude = data.latitude;
+    }
+    if (data.longitude !== undefined) {
+      updateData.longitude = data.longitude;
+    }
+    if (data.mapsLink !== undefined) {
+      updateData.mapsLink = data.mapsLink;
+    }
+
+    // Include images if provided
+    if (data.images !== undefined) {
+      updateData.images = data.images;
+    }
+
     const offer = await this.prisma.offer.update({
       where: { id: data.offerId },
-      data: {
-        title: data.title,
-        description: data.description,
-        price: data.price,
-        originalPrice: data.originalPrice,
-        expirationDate: data.expirationDate,
-        pickupLocation: data.pickupLocation,
-        quantity: data.quantity,
-      },
+      data: updateData,
       include: {
         owner: {
           select: {
@@ -248,7 +279,11 @@ export class OfferService {
     };
 
     // Emit real-time update
-    this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
+    try {
+      this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
+    } catch (error) {
+      // Silently fail - WebSocket updates are not critical
+    }
 
     return offer;
   }

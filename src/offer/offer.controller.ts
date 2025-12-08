@@ -8,6 +8,7 @@ import {
   Req,
   Param,
   NotFoundException,
+  ForbiddenException,
   Patch,
   Delete,
 } from '@nestjs/common';
@@ -26,79 +27,83 @@ export class OfferController {
   @Post()
   @UseGuards(AuthGuard)
   async create(@Body() createOfferDto: CreateOfferDto, @Req() req) {
-    try {
-      const userId = req.user.id;
-      const user = await this.usersService.findById(userId);
+    const userId = req.user.id;
+    const user = await this.usersService.findById(userId);
 
-      // Safely parse the images
-      let images = [];
-      if (createOfferDto.images) {
-        try {
-          images = JSON.parse(createOfferDto.images);
-        } catch (error) {
-          throw new Error('Invalid images format');
-        }
-      }
-
-      // Normalize image entries so DB stores a canonical structure
-      const backendBase = (
-        process.env.BACKEND_URL ||
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
-        ''
-      ).replace(/\/$/, '');
-      const normalizedImages = (images || []).map((img: any) => {
-        // img may be a string or an object like { path: './groceries.jpg' }
-        let candidate = img;
-        if (typeof img === 'object' && img !== null) {
-          candidate =
-            img.path ||
-            img.relativePath ||
-            img.filename ||
-            img.url ||
-            img.absoluteUrl ||
-            '';
-        }
-        candidate = String(candidate || '')
-          .replace(/^\.\//, '')
-          .replace(/^\/+/, '');
-        const filename = candidate.split('/').filter(Boolean).pop() || '';
-        const url = filename
-          ? `/storage/${encodeURIComponent(filename)}`
-          : null;
-        const absoluteUrl = url
-          ? backendBase
-            ? `${backendBase}${url}`
-            : url
-          : null;
-        return {
-          filename: filename || null,
-          path: filename ? `store/${filename}` : null,
-          url,
-          absoluteUrl,
-          original: img,
-        };
-      });
-
-      const data = {
-        ownerId: userId,
-        title: createOfferDto.title,
-        description: createOfferDto.description,
-        price: createOfferDto.price,
-        originalPrice: createOfferDto.originalPrice,
-        quantity: createOfferDto.quantity,
-        expirationDate: createOfferDto.expirationDate,
-        pickupLocation: user.location || '',
-        mapsLink: user.mapsLink || '',
-        latitude: user.latitude || null,
-        longitude: user.longitude || null,
-        images: normalizedImages,
-      };
-
-      return await this.offerService.create(data);
-    } catch (error) {
-      console.error('Error creating offer:', error);
-      throw error;
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
+
+    // Safely parse the images
+    let images = [];
+    if (createOfferDto.images) {
+      try {
+        images = JSON.parse(createOfferDto.images);
+      } catch (error) {
+        throw new Error('Invalid images format');
+      }
+    }
+
+    // Normalize image entries so DB stores a canonical structure
+    const backendBase = (
+      process.env.BACKEND_URL ||
+      process.env.NEXT_PUBLIC_BACKEND_URL ||
+      ''
+    ).replace(/\/$/, '');
+    const normalizedImages = (images || []).map((img: any) => {
+      // img may be a string or an object like { path: './groceries.jpg' }
+      let candidate = img;
+      if (typeof img === 'object' && img !== null) {
+        candidate =
+          img.path ||
+          img.relativePath ||
+          img.filename ||
+          img.url ||
+          img.absoluteUrl ||
+          '';
+      }
+      candidate = String(candidate || '')
+        .replace(/^\.\//, '')
+        .replace(/^\/+/, '');
+      const filename = candidate.split('/').filter(Boolean).pop() || '';
+      const url = filename
+        ? `/storage/${encodeURIComponent(filename)}`
+        : null;
+      const absoluteUrl = url
+        ? backendBase
+          ? `${backendBase}${url}`
+          : url
+        : null;
+      return {
+        filename: filename || null,
+        path: filename ? `store/${filename}` : null,
+        url,
+        absoluteUrl,
+        original: img,
+      };
+    });
+
+    const data = {
+      ownerId: userId,
+      title: createOfferDto.title,
+      description: createOfferDto.description,
+      price: createOfferDto.price,
+      originalPrice: createOfferDto.originalPrice,
+      quantity: createOfferDto.quantity,
+      expirationDate: createOfferDto.expirationDate,
+      pickupLocation: user.location || '',
+      mapsLink: user.mapsLink || '',
+      latitude: user.latitude || null,
+      longitude: user.longitude || null,
+      images: normalizedImages,
+    };
+
+    return await this.offerService.create(data);
+  }
+
+  @Get()
+  async findAll() {
+    return this.offerService.findAll();
   }
 
   @Get('owner/:id')
@@ -111,22 +116,8 @@ export class OfferController {
     return this.offerService.findAllByOwnerId(ownerIdNumber);
   }
 
-  @Get()
-  async findAll() {
-    return this.offerService.findAll();
-  }
-
-  @Patch(':id/quantity')
-  async updateOfferQuantity(
-    @Param('id') offerId: number,
-    @Body('quantity') newQuantity: number,
-  ) {
-    return this.offerService.updateOfferQuantity(Number(offerId), newQuantity);
-  }
-
   @Get(':id')
-  @UseGuards(AuthGuard)
-  async getCurrentUser(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     const offerId = parseInt(id, 10);
     if (isNaN(offerId)) {
       throw new NotFoundException('Invalid offer id');
@@ -134,10 +125,39 @@ export class OfferController {
     return this.offerService.findOfferById(offerId);
   }
 
+  @Patch(':id/quantity')
   @UseGuards(AuthGuard)
+  async updateOfferQuantity(
+    @Param('id') offerId: string,
+    @Body('quantity') newQuantity: number,
+    @Req() req,
+  ) {
+    const id = parseInt(offerId, 10);
+    if (isNaN(id)) {
+      throw new NotFoundException('Invalid offer id');
+    }
+
+    const offer = await this.offerService.findOfferById(id);
+    if (offer.ownerId !== req.user.id) {
+      throw new ForbiddenException('You cannot update this offer');
+    }
+
+    return this.offerService.updateOfferQuantity(id, newQuantity);
+  }
+
   @Delete(':id')
-  async deleteOffer(@Param('id') id: string) {
+  @UseGuards(AuthGuard)
+  async deleteOffer(@Param('id') id: string, @Req() req) {
     const offerId = parseInt(id, 10);
+    if (isNaN(offerId)) {
+      throw new NotFoundException('Invalid offer id');
+    }
+
+    const offer = await this.offerService.findOfferById(offerId);
+    if (offer.ownerId !== req.user.id) {
+      throw new ForbiddenException('You cannot delete this offer');
+    }
+
     await this.offerService.deleteOffer(offerId);
     return { message: 'Offer deleted successfully' };
   }
@@ -150,14 +170,98 @@ export class OfferController {
     @Req() req,
   ) {
     const offerId = parseInt(id, 10);
-    if (isNaN(offerId)) throw new NotFoundException('Invalid offer id');
+    if (isNaN(offerId)) {
+      throw new NotFoundException('Invalid offer id');
+    }
 
     const offer = await this.offerService.findOfferById(offerId);
-    if (!offer) throw new NotFoundException('Offer not found');
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
 
-    if (offer.ownerId !== req.user.id)
-      throw new NotFoundException('You cannot edit this offer');
+    if (offer.ownerId !== req.user.id) {
+      throw new ForbiddenException('You cannot edit this offer');
+    }
 
-    return this.offerService.updateOffer({ ...updateData, offerId });
+    // Handle images if provided
+    let images = undefined;
+    if (updateData.images !== undefined && updateData.images !== null && updateData.images !== '') {
+      try {
+        // If images is a string, parse it; otherwise use it directly
+        let parsedImages;
+        if (typeof updateData.images === 'string') {
+          parsedImages = JSON.parse(updateData.images);
+        } else if (Array.isArray(updateData.images)) {
+          parsedImages = updateData.images;
+        } else {
+          parsedImages = null;
+        }
+
+        if (parsedImages && Array.isArray(parsedImages) && parsedImages.length > 0) {
+          // Normalize image entries like in create
+          const backendBase = (
+            process.env.BACKEND_URL ||
+            process.env.NEXT_PUBLIC_BACKEND_URL ||
+            ''
+          ).replace(/\/$/, '');
+          const normalizedImages = parsedImages.map((img: any) => {
+            let candidate = img;
+            if (typeof img === 'object' && img !== null) {
+              candidate =
+                img.path ||
+                img.relativePath ||
+                img.filename ||
+                img.url ||
+                img.absoluteUrl ||
+                '';
+            }
+            candidate = String(candidate || '')
+              .replace(/^\.\//, '')
+              .replace(/^\/+/, '');
+            const filename = candidate.split('/').filter(Boolean).pop() || '';
+            const url = filename
+              ? `/storage/${encodeURIComponent(filename)}`
+              : null;
+            const absoluteUrl = url
+              ? backendBase
+                ? `${backendBase}${url}`
+                : url
+              : null;
+            return {
+              filename: filename || null,
+              path: filename ? `store/${filename}` : null,
+              url,
+              absoluteUrl,
+              original: img,
+            };
+          });
+          images = normalizedImages;
+        } else {
+          // Empty array or invalid format - don't update images
+          images = undefined;
+        }
+      } catch (error) {
+        // If parsing fails, keep existing images (don't update)
+        images = undefined;
+      }
+    }
+
+    const dataToUpdate: any = { ...updateData };
+    // Remove images from updateData before passing to service
+    delete dataToUpdate.images;
+    
+    // Add offerId and images if provided
+    dataToUpdate.offerId = offerId;
+    if (images !== undefined) {
+      dataToUpdate.images = images;
+    }
+
+    try {
+      return await this.offerService.updateOffer(dataToUpdate);
+    } catch (error) {
+      throw new NotFoundException(
+        error.message || 'Failed to update offer',
+      );
+    }
   }
 }
