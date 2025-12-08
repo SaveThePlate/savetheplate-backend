@@ -130,6 +130,14 @@ export class OrderController {
         ? `${frontendUrl}/provider/orders?confirmed=true&orderId=${orderId}&alreadyConfirmed=${alreadyConfirmed}`
         : `https://leftover.ccdev.space/provider/orders?confirmed=true&orderId=${orderId}&alreadyConfirmed=${alreadyConfirmed}`;
 
+      // Escape the redirect URL for safe use in JavaScript and HTML
+      const escapedRedirectUrl = redirectUrl
+        .replace(/\\/g, '\\\\')
+        .replace(/'/g, "\\'")
+        .replace(/"/g, '&quot;')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r');
+
       const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -137,7 +145,7 @@ export class OrderController {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmed - Leftover</title>
-  <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+  <meta http-equiv="refresh" content="3;url=${escapedRedirectUrl.replace(/\\/g, '')}">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -178,55 +186,108 @@ export class OrderController {
     .submessage {
       color: #6b7280;
       font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .link {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 12px 24px;
+      background: #10b981;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    .link:hover {
+      background: #059669;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="spinner"></div>
-    <p class="message">${message}</p>
+    <p class="message">${message.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>
     <p class="submessage">Redirecting back to app...</p>
+    <a href="${escapedRedirectUrl.replace(/\\/g, '')}" class="link" id="redirectLink">Click here if you are not redirected</a>
   </div>
   <script>
-    // Multiple redirect strategies for maximum compatibility
+    // Safe redirect with proper error handling to prevent client-side exceptions
     (function() {
-      var redirectUrl = '${redirectUrl}';
+      'use strict';
       
-      // Strategy 1: Immediate redirect (works in most cases)
-      try {
-        if (window.top !== window.self) {
-          // In iframe - redirect parent
-          window.top.location.href = redirectUrl;
-        } else {
-          // Same window - direct redirect
-          window.location.replace(redirectUrl);
-        }
-      } catch (e) {
-        // Cross-origin error - try alternative
+      var redirectUrl = '${redirectUrl.replace(/'/g, "\\'").replace(/\\/g, '\\\\')}';
+      var redirected = false;
+      
+      // Helper function to safely redirect
+      function safeRedirect(url) {
+        if (redirected) return;
         try {
-          window.location.href = redirectUrl;
-        } catch (e2) {
-          // If all else fails, meta refresh will handle it
+          if (window.location && window.location.replace) {
+            window.location.replace(url);
+            redirected = true;
+            return true;
+          }
+        } catch (e) {
+          // Silently catch errors
         }
+        return false;
       }
       
-      // Strategy 2: Fallback after short delay (for stubborn browsers)
-      setTimeout(function() {
+      // Helper function to safely redirect using href
+      function safeRedirectHref(url) {
+        if (redirected) return;
         try {
-          window.location.replace(redirectUrl);
+          if (window.location && window.location.href !== undefined) {
+            window.location.href = url;
+            redirected = true;
+            return true;
+          }
         } catch (e) {
-          window.location.href = redirectUrl;
+          // Silently catch errors
+        }
+        return false;
+      }
+      
+      // Strategy 1: Try immediate redirect (safest method)
+      if (!safeRedirect(redirectUrl)) {
+        safeRedirectHref(redirectUrl);
+      }
+      
+      // Strategy 2: Fallback after short delay
+      setTimeout(function() {
+        if (!redirected) {
+          if (!safeRedirect(redirectUrl)) {
+            safeRedirectHref(redirectUrl);
+          }
         }
       }, 100);
       
-      // Strategy 3: If opened as popup, redirect opener
-      if (window.opener) {
+      // Strategy 3: Final fallback after longer delay
+      setTimeout(function() {
+        if (!redirected) {
+          safeRedirectHref(redirectUrl);
+        }
+      }, 1000);
+      
+      // Strategy 4: Handle popup case (only if opener exists and is accessible)
+      if (window.opener && !window.opener.closed) {
         setTimeout(function() {
           try {
-            window.opener.location.href = redirectUrl;
-            window.close();
+            // Only try to redirect opener if we can access it
+            if (window.opener && !window.opener.closed) {
+              window.opener.location.href = redirectUrl;
+              window.close();
+            }
           } catch (e) {
-            window.close();
+            // Cross-origin error - just close the popup
+            try {
+              if (window.close) {
+                window.close();
+              }
+            } catch (closeError) {
+              // Ignore close errors
+            }
           }
         }, 500);
       }
