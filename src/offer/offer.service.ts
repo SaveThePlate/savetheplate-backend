@@ -72,10 +72,11 @@ export class OfferService {
     });
 
     // Format offer like findAll() does for consistency
+    // Prioritize offer's specific pickupLocation over owner's general location
     const formattedOffer = {
       ...offer,
-      pickupLocation: offer.owner?.location || offer.pickupLocation,
-      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
 
     // Emit real-time update
@@ -85,7 +86,7 @@ export class OfferService {
       // Silently fail - WebSocket updates are not critical
     }
 
-    return offer;
+    return formattedOffer;
   }
 
   async findAll() {
@@ -115,10 +116,10 @@ export class OfferService {
       return {
         ...offer,
         imageFileName,
-        // Use current owner location if available, otherwise fallback to stored pickupLocation
-        pickupLocation: offer.owner?.location || offer.pickupLocation,
-        // Use current owner mapsLink if available, otherwise fallback to stored mapsLink
-        mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+        // Prioritize offer's specific pickupLocation over owner's general location
+        pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+        // Prioritize offer's specific mapsLink over owner's general mapsLink
+        mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
         // Include owner info for frontend
         owner: offer.owner,
       };
@@ -145,11 +146,11 @@ export class OfferService {
       },
     });
 
-    // Update offers with current owner location and mapsLink
+    // Prioritize offer's specific pickupLocation over owner's general location
     return offers.map((offer) => ({
       ...offer,
-      pickupLocation: offer.owner?.location || offer.pickupLocation,
-      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     }));
   }
 
@@ -177,11 +178,11 @@ export class OfferService {
       throw new NotFoundException('Offer not found');
     }
 
-    // Use current owner location if available, otherwise fallback to stored pickupLocation
+    // Prioritize offer's specific pickupLocation over owner's general location
     return {
       ...offer,
-      pickupLocation: offer.owner?.location || offer.pickupLocation,
-      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
   }
 
@@ -210,8 +211,8 @@ export class OfferService {
     // Format offer like findAll() does for consistency
     const formattedOffer = {
       ...offer,
-      pickupLocation: offer.owner?.location || offer.pickupLocation,
-      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
 
     // Emit real-time update when quantity changes
@@ -296,10 +297,11 @@ export class OfferService {
     });
 
     // Format offer like findAll() does for consistency
+    // Use offer's pickupLocation if it exists and is not empty, otherwise fallback to owner's location
     const formattedOffer = {
       ...offer,
-      pickupLocation: offer.owner?.location || offer.pickupLocation,
-      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
 
     // Emit real-time update
@@ -310,10 +312,11 @@ export class OfferService {
     }
 
     // Return formatted offer with owner info, matching findOfferById format
+    // Prioritize offer's specific pickupLocation over owner's general location
     return {
       ...offer,
-      pickupLocation: offer.owner?.location || offer.pickupLocation,
-      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
   }
 
