@@ -285,7 +285,12 @@ export class OfferService {
       // Silently fail - WebSocket updates are not critical
     }
 
-    return offer;
+    // Return formatted offer with owner info, matching findOfferById format
+    return {
+      ...offer,
+      pickupLocation: offer.owner?.location || offer.pickupLocation,
+      mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+    };
   }
 
   async deleteOffer(offerId: number) {

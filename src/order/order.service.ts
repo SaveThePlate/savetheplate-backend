@@ -32,15 +32,77 @@ export class OrderService {
   }
 
   async findAll() {
-    return await this.prisma.order.findMany();
+    return await this.prisma.order.findMany({
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            phoneNumber: true,
+            location: true,
+            profileImage: true,
+          },
+        },
+        offer: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                username: true,
+                location: true,
+                phoneNumber: true,
+                mapsLink: true,
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
   }
 
   async findOrderById(id: number) {
-    return this.prisma.order.findUnique({
+    const order = await this.prisma.order.findUnique({
       where: {
         id: id,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            username: true,
+            phoneNumber: true,
+            location: true,
+            profileImage: true,
+          },
+        },
+        offer: {
+          include: {
+            owner: {
+              select: {
+                id: true,
+                username: true,
+                location: true,
+                phoneNumber: true,
+                mapsLink: true,
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    if (!order) {
+      throw new NotFoundException(`Order with ID ${id} not found`);
+    }
+
+    return order;
   }
 
   async findOrderByUser(id: number) {
@@ -83,50 +145,6 @@ export class OrderService {
       where: {
         offerId: offerId,
       },
-    });
-  }
-
-  async updateOrderStatus(id: number, status: Status) {
-    return this.prisma.order.update({
-      where: { id },
-      data: { status },
-    });
-  }
-
-  /**
-   * Generate a unique QR code token for an order
-   */
-  private generateQrCodeToken(): string {
-    // Generate a secure random token: order-{timestamp}-{randomBytes}
-    const timestamp = Date.now();
-    const randomPart = randomBytes(16).toString('hex');
-    return `order-${timestamp}-${randomPart}`;
-  }
-
-  async placeOrder(data: any) {
-    const offer = await this.offerService.findOfferById(data.offerId);
-
-    if (offer.quantity < data.quantity) {
-      throw new BadRequestException(
-        'Requested quantity exceeds available stock',
-      );
-    }
-
-    const updatedOffer = await this.offerService.updateOfferQuantity(
-      data.offerId,
-      offer.quantity - data.quantity,
-    );
-
-    // Generate unique QR code token for this order
-    const qrCodeToken = this.generateQrCodeToken();
-
-    const order = await this.prisma.order.create({
-      data: {
-        userId: data.userId,
-        offerId: data.offerId,
-        quantity: data.quantity,
-        qrCodeToken: qrCodeToken,
-      },
       include: {
         user: {
           select: {
@@ -153,12 +171,112 @@ export class OrderService {
           },
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async updateOrderStatus(id: number, status: Status) {
+    return this.prisma.order.update({
+      where: { id },
+      data: { status },
+    });
+  }
+
+  /**
+   * Generate a unique QR code token for an order
+   */
+  private generateQrCodeToken(): string {
+    // Generate a secure random token: order-{timestamp}-{randomBytes}
+    const timestamp = Date.now();
+    const randomPart = randomBytes(16).toString('hex');
+    return `order-${timestamp}-${randomPart}`;
+  }
+
+  async placeOrder(data: any) {
+    // Validate input
+    if (!data.offerId || !data.quantity || data.quantity <= 0) {
+      throw new BadRequestException('Invalid order data: offerId and quantity are required');
+    }
+
+    // Check if offer exists
+    const offer = await this.offerService.findOfferById(data.offerId);
+    if (!offer) {
+      throw new NotFoundException('Offer not found');
+    }
+
+    // Check if offer has enough quantity
+    if (offer.quantity < data.quantity) {
+      throw new BadRequestException(
+        'Requested quantity exceeds available stock',
+      );
+    }
+
+    // Check if offer is expired
+    if (new Date(offer.expirationDate) < new Date()) {
+      throw new BadRequestException('Cannot place order for expired offer');
+    }
+
+    // Use transaction to ensure atomicity
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Update offer quantity
+      const updatedOffer = await tx.offer.update({
+        where: { id: data.offerId },
+        data: { quantity: offer.quantity - data.quantity },
+      });
+
+      // Generate unique QR code token for this order
+      const qrCodeToken = this.generateQrCodeToken();
+
+      // Create order
+      const order = await tx.order.create({
+        data: {
+          userId: data.userId,
+          offerId: data.offerId,
+          quantity: data.quantity,
+          qrCodeToken: qrCodeToken,
+          status: Status.pending,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              phoneNumber: true,
+              location: true,
+              profileImage: true,
+            },
+          },
+          offer: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  username: true,
+                  location: true,
+                  phoneNumber: true,
+                  mapsLink: true,
+                  profileImage: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return { updatedOffer, order };
     });
 
     // Emit real-time update
-    this.wsGateway.emitOrderUpdate(order, 'created');
+    try {
+      this.wsGateway.emitOrderUpdate(result.order, 'created');
+    } catch (error) {
+      // Silently fail - WebSocket updates are not critical
+    }
 
-    return { updatedOffer, order };
+    return result;
   }
 
   // @Cron(CronExpression.EVERY_MINUTE)
@@ -192,58 +310,77 @@ export class OrderService {
   //   console.log(`${deleted.count} orders were deleted.`);
   // }
 
-  async cancelOrder(orderId: number) {
+  async cancelOrder(orderId: number, userId?: number) {
     const order = await this.findOrderById(orderId);
 
-    if (!order) {
-      throw new BadRequestException(`Order with ID ${orderId} not found`);
+    // Check if order can be cancelled
+    if (order.status === Status.cancelled) {
+      throw new BadRequestException('Order is already cancelled');
     }
 
-    await this.offerService.updateOfferQuantity(
-      order.offerId,
-      (await this.offerService.findOfferById(order.offerId)).quantity +
-        order.quantity,
-    );
+    if (order.status === Status.confirmed) {
+      throw new BadRequestException('Cannot cancel a confirmed order');
+    }
 
-    const cancelled = await this.updateOrderStatus(orderId, Status.cancelled);
-    
-    // Get full order with relations for WebSocket event
-    const fullOrder = await this.prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            username: true,
-            phoneNumber: true,
-            location: true,
-            profileImage: true,
+    // If userId is provided, verify ownership
+    if (userId && order.userId !== userId) {
+      throw new ForbiddenException('You can only cancel your own orders');
+    }
+
+    // Get offer to restore quantity
+    const offer = await this.offerService.findOfferById(order.offerId);
+
+    // Use transaction to ensure atomicity
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Restore quantity to offer
+      await tx.offer.update({
+        where: { id: order.offerId },
+        data: { quantity: offer.quantity + order.quantity },
+      });
+
+      // Update order status
+      const cancelled = await tx.order.update({
+        where: { id: orderId },
+        data: { status: Status.cancelled },
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              username: true,
+              phoneNumber: true,
+              location: true,
+              profileImage: true,
+            },
           },
-        },
-        offer: {
-          include: {
-            owner: {
-              select: {
-                id: true,
-                username: true,
-                location: true,
-                phoneNumber: true,
-                mapsLink: true,
-                profileImage: true,
+          offer: {
+            include: {
+              owner: {
+                select: {
+                  id: true,
+                  username: true,
+                  location: true,
+                  phoneNumber: true,
+                  mapsLink: true,
+                  profileImage: true,
+                },
               },
             },
           },
         },
-      },
+      });
+
+      return cancelled;
     });
 
     // Emit real-time update
-    if (fullOrder) {
-      this.wsGateway.emitOrderUpdate(fullOrder, 'updated');
+    try {
+      this.wsGateway.emitOrderUpdate(result, 'updated');
+    } catch (error) {
+      // Silently fail - WebSocket updates are not critical
     }
 
-    return cancelled;
+    return result;
   }
 
   /**
@@ -408,7 +545,11 @@ export class OrderService {
     });
 
     // Emit real-time update
-    this.wsGateway.emitOrderUpdate(updated, 'updated');
+    try {
+      this.wsGateway.emitOrderUpdate(updated, 'updated');
+    } catch (error) {
+      // Silently fail - WebSocket updates are not critical
+    }
 
     return {
       order: updated,
@@ -473,7 +614,11 @@ export class OrderService {
     });
 
     // Emit real-time update
-    this.wsGateway.emitOrderUpdate(updated, 'updated');
+    try {
+      this.wsGateway.emitOrderUpdate(updated, 'updated');
+    } catch (error) {
+      // Silently fail - WebSocket updates are not critical
+    }
 
     return updated;
   }

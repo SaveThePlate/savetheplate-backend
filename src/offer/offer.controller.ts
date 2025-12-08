@@ -257,7 +257,10 @@ export class OfferController {
     }
 
     try {
-      return await this.offerService.updateOffer(dataToUpdate);
+      // Return the updated offer with all fields including images array
+      // This ensures the frontend receives the complete updated offer data
+      const updatedOffer = await this.offerService.updateOffer(dataToUpdate);
+      return updatedOffer;
     } catch (error) {
       throw new NotFoundException(
         error.message || 'Failed to update offer',

@@ -8,6 +8,7 @@ import {
   UseGuards,
   NotFoundException,
   ForbiddenException,
+  BadRequestException,
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
@@ -35,18 +36,39 @@ export class OrderController {
   @Post()
   @UseGuards(AuthGuard)
   async create(@Body() createOrderDto: CreateOrderDto, @Req() request) {
-    const userId = request.user.id;
-    const data = {
-      userId: userId,
-      offerId: createOrderDto.offerId,
-      quantity: createOrderDto.quantity,
-    };
-    return this.orderService.placeOrder(data);
+    try {
+      const userId = request.user.id;
+      
+      // Validate input
+      if (!createOrderDto.offerId || !createOrderDto.quantity) {
+        throw new BadRequestException('offerId and quantity are required');
+      }
+
+      if (createOrderDto.quantity <= 0) {
+        throw new BadRequestException('Quantity must be greater than 0');
+      }
+
+      const data = {
+        userId: userId,
+        offerId: createOrderDto.offerId,
+        quantity: createOrderDto.quantity,
+      };
+      
+      return await this.orderService.placeOrder(data);
+    } catch (error) {
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException(error.message || 'Failed to create order');
+    }
   }
 
   @Get()
-  async getAll() {
-    return this.orderService.findAll();
+  @UseGuards(AuthGuard)
+  async getAll(@Req() request) {
+    // Only return orders for the authenticated user
+    const userId = request.user.id;
+    return this.orderService.findOrderByUser(userId);
   }
 
   /**
@@ -223,25 +245,62 @@ export class OrderController {
 
   @Get('user/:userId')
   @UseGuards(AuthGuard)
-  async getOrderByUser(@Param('userId') userId: number) {
-    return this.orderService.findOrderByUser(Number(userId));
+  async getOrderByUser(@Param('userId') userId: string, @Req() request) {
+    const userIdNum = parseInt(userId, 10);
+    if (isNaN(userIdNum)) {
+      throw new BadRequestException('Invalid user id');
+    }
+
+    // Users can only view their own orders
+    if (request.user.id !== userIdNum) {
+      throw new ForbiddenException('You can only view your own orders');
+    }
+
+    return this.orderService.findOrderByUser(userIdNum);
   }
 
   @Get('offer/:offerId')
   @UseGuards(AuthGuard)
-  async getOrderByOffer(@Param('offerId') offerId: number) {
-    return this.orderService.findOrderByOffer(Number(offerId));
+  async getOrderByOffer(@Param('offerId') offerId: string, @Req() request) {
+    const offerIdNum = parseInt(offerId, 10);
+    if (isNaN(offerIdNum)) {
+      throw new BadRequestException('Invalid offer id');
+    }
+
+    return this.orderService.findOrderByOffer(offerIdNum);
   }
 
   @Get(':id')
   @UseGuards(AuthGuard)
-  async getOrderById(@Param('id') id: number) {
-    return this.orderService.findOrderById(Number(id));
+  async getOrderById(@Param('id') id: string, @Req() request) {
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      throw new BadRequestException('Invalid order id');
+    }
+
+    const order = await this.orderService.findOrderById(orderId);
+    
+    // Users can only view their own orders or providers can view orders for their offers
+    const isOwner = order.userId === request.user.id;
+    const isProvider = order.offer?.ownerId === request.user.id;
+    
+    if (!isOwner && !isProvider) {
+      throw new ForbiddenException('You can only view your own orders');
+    }
+
+    return order;
   }
 
   @Post(':id/cancel')
-  async cancelOrder(@Param('id') id: number) {
-    return this.orderService.cancelOrder(Number(id));
+  @UseGuards(AuthGuard)
+  async cancelOrder(@Param('id') id: string, @Req() request) {
+    const orderId = parseInt(id, 10);
+    if (isNaN(orderId)) {
+      throw new BadRequestException('Invalid order id');
+    }
+
+    const userId = request.user.id;
+    return this.orderService.cancelOrder(orderId, userId);
   }
 
   /**
