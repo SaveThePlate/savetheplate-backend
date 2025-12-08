@@ -28,6 +28,12 @@ export class CreateOfferDto {
   expirationDate: string;
 
   @IsOptional()
+  pickupStartTime?: string;
+
+  @IsOptional()
+  pickupEndTime?: string;
+
+  @IsOptional()
   @IsString()
   mapsLink?: string;
 

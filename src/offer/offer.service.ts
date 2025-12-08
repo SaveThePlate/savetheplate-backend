@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppWebSocketGateway } from '../websocket/websocket.gateway';
 import axios from 'axios';
@@ -41,6 +46,10 @@ export class OfferService {
         price: data.price,
         originalPrice: data.originalPrice,
         expirationDate: data.expirationDate,
+        pickupStartTime: data.pickupStartTime
+          ? new Date(data.pickupStartTime)
+          : null,
+        pickupEndTime: data.pickupEndTime ? new Date(data.pickupEndTime) : null,
         pickupLocation: data.pickupLocation,
         mapsLink: shortenedLink,
         latitude: data.latitude,
@@ -229,9 +238,24 @@ export class OfferService {
     }
     if (data.expirationDate !== undefined) {
       // Convert string to Date if needed
-      updateData.expirationDate = data.expirationDate instanceof Date
-        ? data.expirationDate
-        : new Date(data.expirationDate);
+      updateData.expirationDate =
+        data.expirationDate instanceof Date
+          ? data.expirationDate
+          : new Date(data.expirationDate);
+    }
+    if (data.pickupStartTime !== undefined) {
+      updateData.pickupStartTime = data.pickupStartTime
+        ? data.pickupStartTime instanceof Date
+          ? data.pickupStartTime
+          : new Date(data.pickupStartTime)
+        : null;
+    }
+    if (data.pickupEndTime !== undefined) {
+      updateData.pickupEndTime = data.pickupEndTime
+        ? data.pickupEndTime instanceof Date
+          ? data.pickupEndTime
+          : new Date(data.pickupEndTime)
+        : null;
     }
     if (data.pickupLocation !== undefined) {
       updateData.pickupLocation = data.pickupLocation;

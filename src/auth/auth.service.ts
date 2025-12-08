@@ -67,7 +67,7 @@ export class AuthService {
       const emailHtml = await render(
         MagicLinkEmailTemplate({ magicLink: link }),
       );
-      
+
       const mail_resp = await this.resend.getResendInstance().emails.send({
         from: 'no-reply@ccdev.space',
         to: user.email,

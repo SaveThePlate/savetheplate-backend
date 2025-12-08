@@ -219,7 +219,11 @@ async function downloadPhotoViaPlaces(
           const writer = fs.createWriteStream(outPath);
           await new Promise<void>((resolve, reject) => {
             if (!photoRes.data || !writer) {
-              reject(new Error('Invalid stream: photoRes.data or writer is undefined'));
+              reject(
+                new Error(
+                  'Invalid stream: photoRes.data or writer is undefined',
+                ),
+              );
               return;
             }
             photoRes.data.pipe(writer);

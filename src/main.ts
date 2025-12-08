@@ -92,7 +92,7 @@ import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  
+
   try {
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
@@ -105,119 +105,137 @@ async function bootstrap() {
     // Add global exception filter to catch all errors
     app.useGlobalFilters(new AllExceptionsFilter());
 
-  const config = new DocumentBuilder()
-    .setTitle('Cats example')
-    .setDescription('The cats API description')
-    .setVersion('1.0')
-    .addTag('cats')
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+    const config = new DocumentBuilder()
+      .setTitle('Cats example')
+      .setDescription('The cats API description')
+      .setVersion('1.0')
+      .addTag('cats')
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api', app, document);
 
-  app.useStaticAssets(join(__dirname, '..', 'uploads'));
+    app.useStaticAssets(join(__dirname, '..', 'uploads'));
 
-  // Enable CORS for the frontend and allow credentials
-  // Explicitly allow all ccdev.space domains and configured frontend URLs
-  const allowedOrigins = [
-    'https://leftover.ccdev.space',
-    'https://savetheplate.ccdev.space',
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://127.0.0.1:3000',
-    'http://127.0.0.1:3001',
-    process.env.FRONTEND_URL,
-    process.env.NEXT_PUBLIC_FRONTEND_URL,
-    process.env.FRONT_URL,
-  ].filter(Boolean) as string[];
+    // Enable CORS for the frontend and allow credentials
+    // Explicitly allow all ccdev.space domains and configured frontend URLs
+    const allowedOrigins = [
+      'https://leftover.ccdev.space',
+      'https://savetheplate.ccdev.space',
+      'http://localhost:3000',
+      'http://localhost:3001',
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:3001',
+      process.env.FRONTEND_URL,
+      process.env.NEXT_PUBLIC_FRONTEND_URL,
+      process.env.FRONT_URL,
+    ].filter(Boolean) as string[];
 
-  // Use a simpler, more explicit CORS configuration
-  // This ensures CORS headers are always sent, even for errors
-  app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-      
-      // Always allow localhost for development
-      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
-        callback(null, true);
-        return;
-      }
-      
-      // Always allow all ccdev.space domains (staging environment)
-      // This is the most important check for the current setup
-      if (origin.includes('.ccdev.space')) {
-        callback(null, true);
-        return;
-      }
-      
-      // Check against explicit allowed list
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-        return;
-      }
-      
-      // In production, reject unknown origins
-      if (process.env.NODE_ENV === 'production') {
-        callback(new Error('Not allowed by CORS'), false);
-        return;
-      }
-      
-      // In development/staging, allow all
-      callback(null, true);
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
-    allowedHeaders: [
-      'Content-Type', 
-      'Authorization', 
-      'Accept', 
-      'Cache-Control', 
-      'cache-control',
-      'X-Requested-With',
-      'Origin',
-      'Access-Control-Request-Method',
-      'Access-Control-Request-Headers'
-    ],
-    exposedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin'],
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
-    maxAge: 86400, // 24 hours
-  });
-  
-  // Add a middleware to ensure CORS headers are set even on error responses
-  // This runs AFTER CORS middleware to add headers to error responses
-  app.use((req, res, next) => {
-    // Guard against undefined req or res objects
-    if (!req || !res) {
-      return next();
-    }
-    
-    try {
-      const origin = req.headers?.origin;
-      
-      // Set CORS headers for all responses (as a fallback)
-      // The main CORS middleware should handle this, but this ensures it's set on errors
-      if (origin && (origin.includes('.ccdev.space') || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'))) {
-        // Only set if not already set by CORS middleware
-        if (!res.getHeader('Access-Control-Allow-Origin')) {
-          res.setHeader('Access-Control-Allow-Origin', origin);
-          res.setHeader('Access-Control-Allow-Credentials', 'true');
-          res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD');
-          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Cache-Control, cache-control, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers');
+    // Use a simpler, more explicit CORS configuration
+    // This ensures CORS headers are always sent, even for errors
+    app.enableCors({
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) {
+          callback(null, true);
+          return;
         }
+
+        // Always allow localhost for development
+        if (
+          origin.startsWith('http://localhost:') ||
+          origin.startsWith('http://127.0.0.1:')
+        ) {
+          callback(null, true);
+          return;
+        }
+
+        // Always allow all ccdev.space domains (staging environment)
+        // This is the most important check for the current setup
+        if (origin.includes('.ccdev.space')) {
+          callback(null, true);
+          return;
+        }
+
+        // Check against explicit allowed list
+        if (allowedOrigins.includes(origin)) {
+          callback(null, true);
+          return;
+        }
+
+        // In production, reject unknown origins
+        if (process.env.NODE_ENV === 'production') {
+          callback(new Error('Not allowed by CORS'), false);
+          return;
+        }
+
+        // In development/staging, allow all
+        callback(null, true);
+      },
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+      allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Accept',
+        'Cache-Control',
+        'cache-control',
+        'X-Requested-With',
+        'Origin',
+        'Access-Control-Request-Method',
+        'Access-Control-Request-Headers',
+      ],
+      exposedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'Access-Control-Allow-Origin',
+      ],
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
+      maxAge: 86400, // 24 hours
+    });
+
+    // Add a middleware to ensure CORS headers are set even on error responses
+    // This runs AFTER CORS middleware to add headers to error responses
+    app.use((req, res, next) => {
+      // Guard against undefined req or res objects
+      if (!req || !res) {
+        return next();
       }
-    } catch (error) {
-      // Silently ignore errors in CORS header setting to prevent crashes
-      // The main CORS middleware should handle this anyway
-    }
-    
-    // Don't handle OPTIONS here - let CORS middleware handle it
-    next();
-  });
-  
+
+      try {
+        const origin = req.headers?.origin;
+
+        // Set CORS headers for all responses (as a fallback)
+        // The main CORS middleware should handle this, but this ensures it's set on errors
+        if (
+          origin &&
+          (origin.includes('.ccdev.space') ||
+            origin.startsWith('http://localhost:') ||
+            origin.startsWith('http://127.0.0.1:'))
+        ) {
+          // Only set if not already set by CORS middleware
+          if (!res.getHeader('Access-Control-Allow-Origin')) {
+            res.setHeader('Access-Control-Allow-Origin', origin);
+            res.setHeader('Access-Control-Allow-Credentials', 'true');
+            res.setHeader(
+              'Access-Control-Allow-Methods',
+              'GET, POST, PUT, DELETE, PATCH, OPTIONS, HEAD',
+            );
+            res.setHeader(
+              'Access-Control-Allow-Headers',
+              'Content-Type, Authorization, Accept, Cache-Control, cache-control, X-Requested-With, Origin, Access-Control-Request-Method, Access-Control-Request-Headers',
+            );
+          }
+        }
+      } catch (error) {
+        // Silently ignore errors in CORS header setting to prevent crashes
+        // The main CORS middleware should handle this anyway
+      }
+
+      // Don't handle OPTIONS here - let CORS middleware handle it
+      next();
+    });
+
     const port = process.env.PORT || 3001;
     await app.listen(port);
     logger.log(`🚀 Application is running on: http://localhost:${port}`);

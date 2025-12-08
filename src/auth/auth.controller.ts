@@ -40,7 +40,7 @@ export class AuthController {
 
     // Get user role from response (user object is always returned from service)
     const userRole = response.user?.role || 'NONE';
-    
+
     // Determine redirect path based on role
     let redirectTo = '/';
     if (userRole === 'PROVIDER') {
@@ -56,11 +56,13 @@ export class AuthController {
       message: response.message,
       accessToken: response.accessToken,
       refreshToken: response.refreshToken,
-      user: response.user ? {
-        id: response.user.id,
-        email: response.user.email,
-        role: response.user.role,
-      } : null,
+      user: response.user
+        ? {
+            id: response.user.id,
+            email: response.user.email,
+            role: response.user.role,
+          }
+        : null,
       needsOnboarding: userRole === 'NONE',
       redirectTo, // Include redirect path in response
       role: userRole, // Include role for frontend

@@ -66,9 +66,7 @@ export class OfferController {
         .replace(/^\.\//, '')
         .replace(/^\/+/, '');
       const filename = candidate.split('/').filter(Boolean).pop() || '';
-      const url = filename
-        ? `/storage/${encodeURIComponent(filename)}`
-        : null;
+      const url = filename ? `/storage/${encodeURIComponent(filename)}` : null;
       const absoluteUrl = url
         ? backendBase
           ? `${backendBase}${url}`
@@ -91,6 +89,8 @@ export class OfferController {
       originalPrice: createOfferDto.originalPrice,
       quantity: createOfferDto.quantity,
       expirationDate: createOfferDto.expirationDate,
+      pickupStartTime: createOfferDto.pickupStartTime,
+      pickupEndTime: createOfferDto.pickupEndTime,
       pickupLocation: user.location || '',
       mapsLink: user.mapsLink || '',
       latitude: user.latitude || null,
@@ -185,7 +185,11 @@ export class OfferController {
 
     // Handle images if provided
     let images = undefined;
-    if (updateData.images !== undefined && updateData.images !== null && updateData.images !== '') {
+    if (
+      updateData.images !== undefined &&
+      updateData.images !== null &&
+      updateData.images !== ''
+    ) {
       try {
         // If images is a string, parse it; otherwise use it directly
         let parsedImages;
@@ -197,7 +201,11 @@ export class OfferController {
           parsedImages = null;
         }
 
-        if (parsedImages && Array.isArray(parsedImages) && parsedImages.length > 0) {
+        if (
+          parsedImages &&
+          Array.isArray(parsedImages) &&
+          parsedImages.length > 0
+        ) {
           // Normalize image entries like in create
           const backendBase = (
             process.env.BACKEND_URL ||
@@ -249,7 +257,20 @@ export class OfferController {
     const dataToUpdate: any = { ...updateData };
     // Remove images from updateData before passing to service
     delete dataToUpdate.images;
-    
+
+    // Handle mapsLink - shorten it if provided (similar to create)
+    if (dataToUpdate.mapsLink !== undefined && dataToUpdate.mapsLink) {
+      try {
+        const shortenedLink = await this.offerService.shortenUrl(
+          dataToUpdate.mapsLink,
+        );
+        dataToUpdate.mapsLink = shortenedLink;
+      } catch (error) {
+        // If shortening fails, truncate to fit in DB
+        dataToUpdate.mapsLink = dataToUpdate.mapsLink.substring(0, 250);
+      }
+    }
+
     // Add offerId and images if provided
     dataToUpdate.offerId = offerId;
     if (images !== undefined) {
@@ -262,9 +283,7 @@ export class OfferController {
       const updatedOffer = await this.offerService.updateOffer(dataToUpdate);
       return updatedOffer;
     } catch (error) {
-      throw new NotFoundException(
-        error.message || 'Failed to update offer',
-      );
+      throw new NotFoundException(error.message || 'Failed to update offer');
     }
   }
 }

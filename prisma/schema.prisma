@@ -52,6 +52,8 @@ model Offer {
   price          Float?
   originalPrice  Float?
   expirationDate DateTime
+  pickupStartTime DateTime?
+  pickupEndTime   DateTime?
   pickupLocation String
   mapsLink       String?  @db.Text
   latitude       Float?

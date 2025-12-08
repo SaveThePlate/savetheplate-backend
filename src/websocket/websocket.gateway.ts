@@ -23,13 +23,16 @@ import { Logger } from '@nestjs/common';
         callback(null, true);
         return;
       }
-      
+
       // Always allow localhost for development
-      if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      if (
+        origin.startsWith('http://localhost:') ||
+        origin.startsWith('http://127.0.0.1:')
+      ) {
         callback(null, true);
         return;
       }
-      
+
       // Allow configured frontend URLs
       const allowedOrigins = [
         process.env.FRONTEND_URL,
@@ -38,18 +41,18 @@ import { Logger } from '@nestjs/common';
         'https://savetheplate.ccdev.space',
         'https://leftover-be.ccdev.space',
       ].filter(Boolean);
-      
+
       if (allowedOrigins.includes(origin) || origin.includes('.ccdev.space')) {
         callback(null, true);
         return;
       }
-      
+
       // In development/staging, allow all
       if (process.env.NODE_ENV !== 'production') {
         callback(null, true);
         return;
       }
-      
+
       callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
@@ -66,7 +69,7 @@ export class AppWebSocketGateway
 {
   @WebSocketServer()
   server: Server;
-  
+
   private readonly logger = new Logger(AppWebSocketGateway.name);
 
   constructor(private prisma: PrismaService) {}
@@ -76,7 +79,7 @@ export class AppWebSocketGateway
     this.logger.log(`📡 Socket.IO path: /socket.io/`);
     this.logger.log(`🔄 Transports: websocket, polling`);
     this.logger.log(`🌐 CORS enabled for .ccdev.space domains`);
-    
+
     // Log server configuration
     // Note: Socket.IO connections are handled by handleConnection method
     // Only set up engine error handler if engine exists
@@ -89,15 +92,22 @@ export class AppWebSocketGateway
         this.logger.warn('Socket.IO engine not available for error handling');
       }
     } catch (error) {
-      this.logger.warn('Failed to set up Socket.IO engine error handler:', error);
+      this.logger.warn(
+        'Failed to set up Socket.IO engine error handler:',
+        error,
+      );
     }
   }
 
   async handleConnection(client: Socket) {
     try {
-      console.log(`🔌 WebSocket connection attempt from origin: ${client.handshake.headers.origin || 'unknown'}`);
-      console.log(`🔌 Transport: ${client.conn.transport.name}, ID: ${client.id}`);
-      
+      console.log(
+        `🔌 WebSocket connection attempt from origin: ${client.handshake.headers.origin || 'unknown'}`,
+      );
+      console.log(
+        `🔌 Transport: ${client.conn.transport.name}, ID: ${client.id}`,
+      );
+
       // Extract token from handshake auth or query
       const token =
         client.handshake.auth?.token ||
@@ -150,7 +160,7 @@ export class AppWebSocketGateway
         client.data.userRole = user.role;
         client.join(`user:${user.id}`);
         console.log(`✅ Client ${user.id} joined room: user:${user.id}`);
-        
+
         // Join role-based rooms
         if (user.role === 'PROVIDER') {
           client.join('providers');
@@ -206,17 +216,21 @@ export class AppWebSocketGateway
   // Emit offer update to relevant users
   emitOfferUpdate(offer: any, eventType: 'created' | 'updated' | 'deleted') {
     if (!this.server) {
-      console.error('❌ WebSocket server not initialized, cannot emit offer update');
+      console.error(
+        '❌ WebSocket server not initialized, cannot emit offer update',
+      );
       return;
     }
 
-    console.log(`📢 Emitting offer:${eventType} for offer ${offer.id} to clients`);
-    
+    console.log(
+      `📢 Emitting offer:${eventType} for offer ${offer.id} to clients`,
+    );
+
     // Get all clients in the 'clients' room
     const clientsRoom = this.server.sockets.adapter.rooms.get('clients');
     const clientsCount = clientsRoom ? clientsRoom.size : 0;
     console.log(`👥 Clients in 'clients' room: ${clientsCount}`);
-    
+
     // Notify all clients about offer changes
     this.server.to('clients').emit('offer:update', {
       type: eventType,
@@ -249,4 +263,3 @@ export class AppWebSocketGateway
     client.join('offers');
   }
 }
-

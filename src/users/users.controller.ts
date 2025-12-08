@@ -210,7 +210,10 @@ export class UsersController {
   private async expandGoogleMapsUrl(shortUrl: string): Promise<string> {
     try {
       // If it's already a full URL, return as-is
-      if (shortUrl.includes('maps.google.com') || shortUrl.includes('google.com/maps')) {
+      if (
+        shortUrl.includes('maps.google.com') ||
+        shortUrl.includes('google.com/maps')
+      ) {
         return shortUrl;
       }
 
@@ -228,10 +231,17 @@ export class UsersController {
           });
 
           // Check if there's a redirect
-          if (response.status === 301 || response.status === 302 || response.status === 307 || response.status === 308) {
+          if (
+            response.status === 301 ||
+            response.status === 302 ||
+            response.status === 307 ||
+            response.status === 308
+          ) {
             const location = response.headers.get('location');
             if (location) {
-              currentUrl = location.startsWith('http') ? location : `https://${location}`;
+              currentUrl = location.startsWith('http')
+                ? location
+                : `https://${location}`;
               finalUrl = currentUrl;
               redirectCount++;
             } else {
@@ -282,7 +292,9 @@ export class UsersController {
     const nameMatch1 = googleMapsUrl.match(nameRegex1);
     if (nameMatch1) {
       try {
-        locationName = decodeURIComponent(nameMatch1[1]).replace(/\+/g, ' ').trim();
+        locationName = decodeURIComponent(nameMatch1[1])
+          .replace(/\+/g, ' ')
+          .trim();
         // Remove trailing slashes or special characters
         locationName = locationName.replace(/\/+$/, '').replace(/^\/+/, '');
       } catch (e) {
@@ -297,11 +309,17 @@ export class UsersController {
       const qMatch = googleMapsUrl.match(qRegex);
       if (qMatch) {
         try {
-          locationName = decodeURIComponent(qMatch[1]).replace(/\+/g, ' ').trim();
+          locationName = decodeURIComponent(qMatch[1])
+            .replace(/\+/g, ' ')
+            .trim();
           // Remove coordinates if present in query (format: "Name @lat,lng")
           locationName = locationName.split('@')[0].trim();
         } catch (e) {
-          locationName = qMatch[1].replace(/\+/g, ' ').trim().split('@')[0].trim();
+          locationName = qMatch[1]
+            .replace(/\+/g, ' ')
+            .trim()
+            .split('@')[0]
+            .trim();
         }
       }
     }
@@ -313,7 +331,9 @@ export class UsersController {
       const nameMatch2 = googleMapsUrl.match(nameRegex2);
       if (nameMatch2) {
         try {
-          locationName = decodeURIComponent(nameMatch2[1]).replace(/\+/g, ' ').trim();
+          locationName = decodeURIComponent(nameMatch2[1])
+            .replace(/\+/g, ' ')
+            .trim();
         } catch (e) {
           locationName = nameMatch2[1].replace(/\+/g, ' ').trim();
         }
@@ -327,7 +347,9 @@ export class UsersController {
       const dataMatch = googleMapsUrl.match(dataRegex);
       if (dataMatch) {
         try {
-          locationName = decodeURIComponent(dataMatch[1]).replace(/\+/g, ' ').trim();
+          locationName = decodeURIComponent(dataMatch[1])
+            .replace(/\+/g, ' ')
+            .trim();
         } catch (e) {
           locationName = dataMatch[1].replace(/\+/g, ' ').trim();
         }
@@ -353,7 +375,9 @@ export class UsersController {
       const llQMatch = googleMapsUrl.match(llQRegex);
       if (llQMatch) {
         try {
-          locationName = decodeURIComponent(llQMatch[1]).replace(/\+/g, ' ').trim();
+          locationName = decodeURIComponent(llQMatch[1])
+            .replace(/\+/g, ' ')
+            .trim();
         } catch (e) {
           locationName = llQMatch[1].replace(/\+/g, ' ').trim();
         }
@@ -367,11 +391,17 @@ export class UsersController {
       const daddrMatch = googleMapsUrl.match(daddrRegex);
       if (daddrMatch) {
         try {
-          locationName = decodeURIComponent(daddrMatch[1]).replace(/\+/g, ' ').trim();
+          locationName = decodeURIComponent(daddrMatch[1])
+            .replace(/\+/g, ' ')
+            .trim();
           // Remove coordinates if present
           locationName = locationName.split('@')[0].trim();
         } catch (e) {
-          locationName = daddrMatch[1].replace(/\+/g, ' ').trim().split('@')[0].trim();
+          locationName = daddrMatch[1]
+            .replace(/\+/g, ' ')
+            .trim()
+            .split('@')[0]
+            .trim();
         }
       }
     }
@@ -382,10 +412,16 @@ export class UsersController {
       const saddrMatch = googleMapsUrl.match(saddrRegex);
       if (saddrMatch) {
         try {
-          locationName = decodeURIComponent(saddrMatch[1]).replace(/\+/g, ' ').trim();
+          locationName = decodeURIComponent(saddrMatch[1])
+            .replace(/\+/g, ' ')
+            .trim();
           locationName = locationName.split('@')[0].trim();
         } catch (e) {
-          locationName = saddrMatch[1].replace(/\+/g, ' ').trim().split('@')[0].trim();
+          locationName = saddrMatch[1]
+            .replace(/\+/g, ' ')
+            .trim()
+            .split('@')[0]
+            .trim();
         }
       }
     }
@@ -416,7 +452,7 @@ export class UsersController {
       try {
         // First, try to expand if it's a short link
         const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
-        
+
         // Extract location data from the expanded URL
         const data = this.extractLocationData(expandedUrl);
         locationName = data.locationName || '';

@@ -197,7 +197,9 @@ export class OrderService {
   async placeOrder(data: any) {
     // Validate input
     if (!data.offerId || !data.quantity || data.quantity <= 0) {
-      throw new BadRequestException('Invalid order data: offerId and quantity are required');
+      throw new BadRequestException(
+        'Invalid order data: offerId and quantity are required',
+      );
     }
 
     // Check if offer exists

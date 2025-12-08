@@ -116,11 +116,12 @@ export class UsersService {
     const offerIds = userOffers.map((offer) => offer.id);
 
     // Count orders that will be deleted
-    const ordersOnOffers = offerIds.length > 0
-      ? await this.prisma.order.count({
-          where: { offerId: { in: offerIds } },
-        })
-      : 0;
+    const ordersOnOffers =
+      offerIds.length > 0
+        ? await this.prisma.order.count({
+            where: { offerId: { in: offerIds } },
+          })
+        : 0;
 
     const ordersByUser = await this.prisma.order.count({
       where: { userId: user.id },

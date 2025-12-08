@@ -38,7 +38,7 @@ export class OrderController {
   async create(@Body() createOrderDto: CreateOrderDto, @Req() request) {
     try {
       const userId = request.user.id;
-      
+
       // Validate input
       if (!createOrderDto.offerId || !createOrderDto.quantity) {
         throw new BadRequestException('offerId and quantity are required');
@@ -53,10 +53,13 @@ export class OrderController {
         offerId: createOrderDto.offerId,
         quantity: createOrderDto.quantity,
       };
-      
+
       return await this.orderService.placeOrder(data);
     } catch (error) {
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
         throw error;
       }
       throw new BadRequestException(error.message || 'Failed to create order');
@@ -92,7 +95,10 @@ export class OrderController {
 
     // Automatically confirm the order when QR code is scanned
     // This prevents redirect to error page and ensures order is confirmed
-    const result = await this.orderService.scanAndConfirmOrder(token, providerId);
+    const result = await this.orderService.scanAndConfirmOrder(
+      token,
+      providerId,
+    );
 
     // Check if request is from a browser (Accept header contains text/html)
     const acceptHeader = request.headers?.accept || '';
@@ -108,7 +114,7 @@ export class OrderController {
       // Get frontend URL from environment or construct from request
       // Priority: FRONT_URL env var > Referer > Origin > FRONTEND_URL
       let frontendUrl = process.env.FRONT_URL || '';
-      
+
       if (!frontendUrl && request.headers?.referer) {
         try {
           const refererUrl = new URL(request.headers.referer);
@@ -121,12 +127,15 @@ export class OrderController {
         frontendUrl = request.headers.origin;
       }
       if (!frontendUrl) {
-        frontendUrl = process.env.FRONTEND_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || '';
+        frontendUrl =
+          process.env.FRONTEND_URL ||
+          process.env.NEXT_PUBLIC_FRONTEND_URL ||
+          '';
       }
-      
+
       // Redirect to provider orders page with success message
       // Always use absolute URL for better mobile browser compatibility
-      const redirectUrl = frontendUrl 
+      const redirectUrl = frontendUrl
         ? `${frontendUrl}/provider/orders?confirmed=true&orderId=${orderId}&alreadyConfirmed=${alreadyConfirmed}`
         : `https://leftover.ccdev.space/provider/orders?confirmed=true&orderId=${orderId}&alreadyConfirmed=${alreadyConfirmed}`;
 
@@ -331,11 +340,11 @@ export class OrderController {
     }
 
     const order = await this.orderService.findOrderById(orderId);
-    
+
     // Users can only view their own orders or providers can view orders for their offers
     const isOwner = order.userId === request.user.id;
     const isProvider = order.offer?.ownerId === request.user.id;
-    
+
     if (!isOwner && !isProvider) {
       throw new ForbiddenException('You can only view your own orders');
     }
