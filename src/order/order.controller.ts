@@ -145,7 +145,7 @@ export class OrderController {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Order Confirmed - Leftover</title>
-  <meta http-equiv="refresh" content="3;url=${escapedRedirectUrl.replace(/\\/g, '')}">
+  <meta http-equiv="refresh" content="0;url=${escapedRedirectUrl.replace(/\\/g, '')}">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -254,43 +254,34 @@ export class OrderController {
         safeRedirectHref(redirectUrl);
       }
       
-      // Strategy 2: Fallback after short delay
+      // Strategy 2: Handle popup case immediately (only if opener exists and is accessible)
+      if (window.opener && !window.opener.closed) {
+        try {
+          // Only try to redirect opener if we can access it
+          if (window.opener && !window.opener.closed) {
+            window.opener.location.href = redirectUrl;
+            window.close();
+          }
+        } catch (e) {
+          // Cross-origin error - just close the popup
+          try {
+            if (window.close) {
+              window.close();
+            }
+          } catch (closeError) {
+            // Ignore close errors
+          }
+        }
+      }
+      
+      // Strategy 3: Fallback after minimal delay (only if initial redirect failed)
       setTimeout(function() {
         if (!redirected) {
           if (!safeRedirect(redirectUrl)) {
             safeRedirectHref(redirectUrl);
           }
         }
-      }, 100);
-      
-      // Strategy 3: Final fallback after longer delay
-      setTimeout(function() {
-        if (!redirected) {
-          safeRedirectHref(redirectUrl);
-        }
-      }, 1000);
-      
-      // Strategy 4: Handle popup case (only if opener exists and is accessible)
-      if (window.opener && !window.opener.closed) {
-        setTimeout(function() {
-          try {
-            // Only try to redirect opener if we can access it
-            if (window.opener && !window.opener.closed) {
-              window.opener.location.href = redirectUrl;
-              window.close();
-            }
-          } catch (e) {
-            // Cross-origin error - just close the popup
-            try {
-              if (window.close) {
-                window.close();
-              }
-            } catch (closeError) {
-              // Ignore close errors
-            }
-          }
-        }, 500);
-      }
+      }, 50);
     })();
   </script>
 </body>
