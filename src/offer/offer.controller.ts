@@ -81,21 +81,23 @@ export class OfferController {
       };
     });
 
+    // Always use user's profile mapsLink (location comes from user profile, not stored in offer)
     const data = {
       ownerId: userId,
       title: createOfferDto.title,
-      description: createOfferDto.description,
+      description: createOfferDto.description || '', // Allow empty description
       price: createOfferDto.price,
       originalPrice: createOfferDto.originalPrice,
       quantity: createOfferDto.quantity,
       expirationDate: createOfferDto.expirationDate,
       pickupStartTime: createOfferDto.pickupStartTime,
       pickupEndTime: createOfferDto.pickupEndTime,
-      pickupLocation: user.location || '',
-      mapsLink: user.mapsLink || '',
+      mapsLink: user.mapsLink || '', // Always from user profile
       latitude: user.latitude || null,
       longitude: user.longitude || null,
       images: normalizedImages,
+      foodType: createOfferDto.foodType,
+      taste: createOfferDto.taste,
     };
 
     return await this.offerService.create(data);
@@ -257,6 +259,25 @@ export class OfferController {
     const dataToUpdate: any = { ...updateData };
     // Remove images from updateData before passing to service
     delete dataToUpdate.images;
+    
+    // Remove mapsLink - it should always come from user's profile
+    delete dataToUpdate.mapsLink;
+    
+    // Handle foodType and taste if provided
+    if (updateData.foodType !== undefined) {
+      dataToUpdate.foodType = updateData.foodType;
+    }
+    if (updateData.taste !== undefined) {
+      dataToUpdate.taste = updateData.taste;
+    }
+    
+    // Always use user's profile mapsLink for updates
+    const user = await this.usersService.findById(req.user.id);
+    if (user) {
+      dataToUpdate.mapsLink = user.mapsLink || '';
+      dataToUpdate.latitude = user.latitude || null;
+      dataToUpdate.longitude = user.longitude || null;
+    }
 
     // Handle mapsLink - shorten it if provided (similar to create)
     if (dataToUpdate.mapsLink !== undefined && dataToUpdate.mapsLink) {

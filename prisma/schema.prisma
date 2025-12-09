@@ -28,6 +28,20 @@ enum UserRole {
   NONE
 }
 
+enum FoodType {
+  snack
+  meal
+  beverage
+  other
+}
+
+enum Taste {
+  sweet
+  salty
+  both
+  neutral
+}
+
 
 model User {
   id           Int     @id @default(autoincrement())
@@ -54,12 +68,13 @@ model Offer {
   expirationDate DateTime
   pickupStartTime DateTime?
   pickupEndTime   DateTime?
-  pickupLocation String
   mapsLink       String?  @db.Text
   latitude       Float?
   longitude      Float?
   images         Json
   quantity       Int
+  foodType       FoodType? @default(other)
+  taste          Taste?    @default(neutral)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   orders         Order[]

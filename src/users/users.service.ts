@@ -37,7 +37,7 @@ export class UsersService {
     const parsedPhoneNumber =
       typeof phoneNumber === 'string' ? parseInt(phoneNumber, 10) : phoneNumber;
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { id },
       data: {
         latitude,
@@ -47,6 +47,24 @@ export class UsersService {
         mapsLink,
       },
     });
+
+    // Update all offers for this provider with the new mapsLink
+    // Note: pickupLocation is no longer stored in offers - always uses owner.location
+    try {
+      await this.prisma.offer.updateMany({
+        where: { ownerId: id },
+        data: {
+          mapsLink: mapsLink || '',
+          latitude: latitude || null,
+          longitude: longitude || null,
+        },
+      });
+    } catch (error) {
+      // Log error but don't fail the profile update
+      console.error('Error updating offers after profile mapsLink change:', error);
+    }
+
+    return updatedUser;
   }
 
   async updateUserProfile(email: string, profileData: any) {
@@ -66,10 +84,31 @@ export class UsersService {
       updateData.mapsLink = profileData.mapsLink;
     }
 
-    return this.prisma.user.update({
+    const updatedUser = await this.prisma.user.update({
       where: { email },
       data: updateData,
     });
+
+    // If mapsLink changed, update all offers for this provider
+    // Note: pickupLocation is no longer stored in offers - always uses owner.location
+    if (profileData.mapsLink !== undefined) {
+      try {
+        // Update all offers for this user with the new mapsLink
+        await this.prisma.offer.updateMany({
+          where: { ownerId: updatedUser.id },
+          data: {
+            mapsLink: updatedUser.mapsLink || '',
+            latitude: updatedUser.latitude || null,
+            longitude: updatedUser.longitude || null,
+          },
+        });
+      } catch (error) {
+        // Log error but don't fail the profile update
+        console.error('Error updating offers after profile mapsLink change:', error);
+      }
+    }
+
+    return updatedUser;
   }
 
   async findAll() {

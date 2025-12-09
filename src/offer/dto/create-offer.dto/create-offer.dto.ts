@@ -1,4 +1,18 @@
-import { IsNotEmpty, IsNumber, IsString, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsOptional, IsEnum } from 'class-validator';
+
+enum FoodType {
+  snack = 'snack',
+  meal = 'meal',
+  beverage = 'beverage',
+  other = 'other',
+}
+
+enum Taste {
+  sweet = 'sweet',
+  salty = 'salty',
+  both = 'both',
+  neutral = 'neutral',
+}
 
 export class CreateOfferDto {
   // ownerId is set from the authenticated user, not from the request body
@@ -8,9 +22,9 @@ export class CreateOfferDto {
   @IsString()
   title: string;
 
-  @IsNotEmpty()
+  @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @IsNotEmpty()
   @IsNumber()
@@ -38,10 +52,6 @@ export class CreateOfferDto {
   mapsLink?: string;
 
   @IsOptional()
-  @IsString()
-  pickupLocation?: string;
-
-  @IsOptional()
   @IsNumber()
   latitude?: number;
 
@@ -51,4 +61,12 @@ export class CreateOfferDto {
 
   @IsNotEmpty()
   images: string;
+
+  @IsOptional()
+  @IsEnum(FoodType)
+  foodType?: FoodType;
+
+  @IsOptional()
+  @IsEnum(Taste)
+  taste?: Taste;
 }

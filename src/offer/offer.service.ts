@@ -50,12 +50,13 @@ export class OfferService {
           ? new Date(data.pickupStartTime)
           : null,
         pickupEndTime: data.pickupEndTime ? new Date(data.pickupEndTime) : null,
-        pickupLocation: data.pickupLocation,
         mapsLink: shortenedLink,
         latitude: data.latitude,
         longitude: data.longitude,
         images: data.images,
         quantity: data.quantity,
+        foodType: data.foodType || 'other',
+        taste: data.taste || 'neutral',
       },
       include: {
         owner: {
@@ -72,10 +73,10 @@ export class OfferService {
     });
 
     // Format offer like findAll() does for consistency
-    // Prioritize offer's specific pickupLocation over owner's general location
+    // Use owner's location (no pickupLocation field in offer)
     const formattedOffer = {
       ...offer,
-      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      pickupLocation: offer.owner?.location || '',
       mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
 
@@ -116,8 +117,8 @@ export class OfferService {
       return {
         ...offer,
         imageFileName,
-        // Prioritize offer's specific pickupLocation over owner's general location
-        pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+        // Use owner's location (no pickupLocation field in offer)
+        pickupLocation: offer.owner?.location || '',
         // Prioritize offer's specific mapsLink over owner's general mapsLink
         mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
         // Include owner info for frontend
@@ -146,10 +147,10 @@ export class OfferService {
       },
     });
 
-    // Prioritize offer's specific pickupLocation over owner's general location
+    // Use owner's location (no pickupLocation field in offer)
     return offers.map((offer) => ({
       ...offer,
-      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      pickupLocation: offer.owner?.location || '',
       mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     }));
   }
@@ -211,7 +212,7 @@ export class OfferService {
     // Format offer like findAll() does for consistency
     const formattedOffer = {
       ...offer,
-      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      pickupLocation: offer.owner?.location || '',
       mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
 
@@ -229,7 +230,7 @@ export class OfferService {
       updateData.title = data.title;
     }
     if (data.description !== undefined) {
-      updateData.description = data.description;
+      updateData.description = data.description || ''; // Allow empty description
     }
     if (data.price !== undefined) {
       updateData.price = data.price;
@@ -258,9 +259,8 @@ export class OfferService {
           : new Date(data.pickupEndTime)
         : null;
     }
-    if (data.pickupLocation !== undefined) {
-      updateData.pickupLocation = data.pickupLocation;
-    }
+    // pickupLocation is always set from user's profile in controller, don't allow override here
+    // pickupLocation removed - always use owner's location
     if (data.quantity !== undefined) {
       updateData.quantity = data.quantity;
     }
@@ -270,8 +270,13 @@ export class OfferService {
     if (data.longitude !== undefined) {
       updateData.longitude = data.longitude;
     }
-    if (data.mapsLink !== undefined) {
-      updateData.mapsLink = data.mapsLink;
+    // mapsLink is always set from user's profile in controller, don't allow override here
+    // (removed - mapsLink comes from user profile)
+    if (data.foodType !== undefined) {
+      updateData.foodType = data.foodType;
+    }
+    if (data.taste !== undefined) {
+      updateData.taste = data.taste;
     }
 
     // Include images if provided
@@ -297,10 +302,10 @@ export class OfferService {
     });
 
     // Format offer like findAll() does for consistency
-    // Use offer's pickupLocation if it exists and is not empty, otherwise fallback to owner's location
+    // Use owner's location (no pickupLocation field in offer)
     const formattedOffer = {
       ...offer,
-      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      pickupLocation: offer.owner?.location || '',
       mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
 
@@ -312,10 +317,10 @@ export class OfferService {
     }
 
     // Return formatted offer with owner info, matching findOfferById format
-    // Prioritize offer's specific pickupLocation over owner's general location
+    // Use owner's location (no pickupLocation field in offer)
     return {
       ...offer,
-      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      pickupLocation: offer.owner?.location || '',
       mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
   }
@@ -352,8 +357,8 @@ export class OfferService {
       // Format offer like findAll() does for consistency before emitting
       const formattedOffer = {
         ...offer,
-        pickupLocation: offer.owner?.location || offer.pickupLocation,
-        mapsLink: offer.owner?.mapsLink || offer.mapsLink,
+        pickupLocation: offer.owner?.location || '',
+        mapsLink: offer.owner?.mapsLink || offer.mapsLink || '',
       };
 
       // Emit real-time update (before deletion, so we have the data)
