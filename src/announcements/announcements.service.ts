@@ -69,8 +69,8 @@ export class AnnouncementsService {
         title: dto.title || '🎉 Exciting News from Save The Plate!',
         description: dto.description,
         details: dto.details || [],
-        buttonText: dto.buttonText || 'Get Started',
-        buttonLink: dto.buttonLink || '',
+        buttonText: dto.buttonText || 'Create Your Account Now',
+        buttonLink: dto.buttonLink || 'https://leftover.ccdev.space/',
       }),
     );
 

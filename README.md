@@ -32,6 +32,9 @@ We prefer documentation as README files in this repo. However, we have a conflue
 
 📑https://codecooperation.atlassian.net
 
+### Feature Documentation
+- [Announcements Feature](./ANNOUNCEMENTS_README.md) - Send promotional emails to users
+
 ## Code of conduct and best practices
 
 🛡️https://github.com/CodeCooperation/CC-Guidelines

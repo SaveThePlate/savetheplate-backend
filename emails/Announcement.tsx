@@ -5,8 +5,8 @@ function AnnouncementEmailTemplate({
   title = '🎉 Exciting News from Save The Plate!',
   description = 'We have some amazing updates to share with you!',
   details = [],
-  buttonText = 'Get Started',
-  buttonLink = '',
+  buttonText = 'Create Account Now',
+  buttonLink = 'https://leftover.ccdev.space/',
 }) {
   return (
     <MainTemplate
