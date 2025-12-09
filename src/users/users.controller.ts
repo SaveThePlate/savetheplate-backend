@@ -20,8 +20,6 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { UserRole } from '@prisma/client';
 import { ResendService } from 'src/utils/mailing/resend.service';
-import AnnouncementEmailTemplate from '../../emails/Announcement';
-import { render } from '@react-email/render';
 
 interface ProfileData {
   username?: string;
@@ -32,7 +30,6 @@ interface ProfileData {
   profileImage?: string;
   mapsLink?: string;
 }
-@UseGuards(AuthGuard)
 @Controller('users')
 export class UsersController {
   constructor(
@@ -603,103 +600,6 @@ export class UsersController {
         error?.message
           ? `Failed to update profile: ${error.message}`
           : 'Failed to update profile',
-      );
-    }
-  }
-
-  @Post('send-promotional-email')
-  async sendPromotionalEmail(
-    @Body()
-    body: {
-      title?: string;
-      description: string;
-      details?: string[];
-      buttonText?: string;
-      buttonLink?: string;
-      subject: string;
-      role?: UserRole; // Optional: filter by role (CLIENT, PROVIDER, etc.) or send to all if not specified
-    },
-  ) {
-    try {
-      // Get users based on role filter
-      const users = await this.usersService.findAllByRole(body.role);
-
-      if (users.length === 0) {
-        return {
-          message: 'No users found to send emails to',
-          sent: 0,
-          failed: 0,
-        };
-      }
-
-      // Render email template
-      const emailHtml = await render(
-        AnnouncementEmailTemplate({
-          title: body.title || '🎉 Exciting News from Save The Plate!',
-          description: body.description,
-          details: body.details || [],
-          buttonText: body.buttonText || 'Get Started',
-          buttonLink: body.buttonLink || '',
-        }),
-      );
-
-      // For local dev: Log instead of sending
-      if (process.env.NODE_ENV === 'development') {
-        console.log('\n📧 Promotional Email (Local Dev):');
-        console.log('Subject:', body.subject);
-        console.log('Recipients:', users.length);
-        console.log('Users:', users.map((u) => u.email).join(', '));
-        console.log('Title:', body.title || '🎉 Exciting News from Save The Plate!');
-        console.log('Description:', body.description);
-        return {
-          message: `Email would be sent to ${users.length} users in production`,
-          sent: 0,
-          failed: 0,
-          recipients: users.length,
-          users: users.map((u) => ({ email: u.email, username: u.username })),
-        };
-      }
-
-      // Production: Send emails
-      let sent = 0;
-      let failed = 0;
-      const errors: string[] = [];
-
-      for (const user of users) {
-        try {
-          const mail_resp = await this.resendService
-            .getResendInstance()
-            .emails.send({
-              from: 'Save The Plate <no-reply@ccdev.space>',
-              to: user.email,
-              subject: body.subject,
-              html: emailHtml,
-            });
-
-          if (mail_resp.error) {
-            failed++;
-            errors.push(`${user.email}: ${mail_resp.error.message}`);
-          } else {
-            sent++;
-          }
-        } catch (error) {
-          failed++;
-          errors.push(`${user.email}: ${error.message}`);
-        }
-      }
-
-      return {
-        message: `Email campaign completed`,
-        sent,
-        failed,
-        total: users.length,
-        errors: errors.length > 0 ? errors : undefined,
-      };
-    } catch (error) {
-      throw new InternalServerErrorException(
-        error?.message
-          ? `Failed to send promotional emails: ${error.message}`
-          : 'Failed to send promotional emails',
       );
     }
   }

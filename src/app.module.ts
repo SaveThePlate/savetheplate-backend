@@ -10,6 +10,7 @@ import { ContactModule } from './contact/contact.module';
 import { ScheduleModule } from '@nestjs/schedule';
 import { WebSocketModule } from './websocket/websocket.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PrismaModule } from './prisma/prisma.module';
     UsersModule,
     OrderModule,
     ContactModule,
+    AnnouncementsModule,
     ScheduleModule.forRoot(),
     WebSocketModule,
   ],
