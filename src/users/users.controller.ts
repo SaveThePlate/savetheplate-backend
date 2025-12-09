@@ -187,7 +187,7 @@ export class UsersController {
       const mail_resp = await this.resendService
         .getResendInstance()
         .emails.send({
-          from: 'no-reply@ccdev.space',
+          from: 'Save The Plate <no-reply@ccdev.space>',
           to: adminEmail,
           subject: subject,
           html: emailBody,

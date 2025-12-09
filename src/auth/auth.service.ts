@@ -69,7 +69,7 @@ export class AuthService {
       );
 
       const mail_resp = await this.resend.getResendInstance().emails.send({
-        from: 'no-reply@ccdev.space',
+        from: 'Save The Plate <no-reply@ccdev.space>',
         to: user.email,
         subject: 'Log in to SaveThePlate',
         html: emailHtml,
