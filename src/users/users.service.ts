@@ -119,6 +119,18 @@ export class UsersService {
     return await this.prisma.user.findMany({ where: { role: 'PROVIDER' } });
   }
 
+  async findAllByRole(role?: UserRole) {
+    if (role) {
+      return await this.prisma.user.findMany({ 
+        where: { role },
+        select: { id: true, email: true, username: true, role: true }
+      });
+    }
+    return await this.prisma.user.findMany({
+      select: { id: true, email: true, username: true, role: true }
+    });
+  }
+
   async findOne(email: string) {
     const user = this.prisma.user.findUnique({ where: { email } });
     if (!user) {
