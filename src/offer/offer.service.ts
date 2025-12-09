@@ -179,10 +179,10 @@ export class OfferService {
       throw new NotFoundException('Offer not found');
     }
 
-    // Prioritize offer's specific pickupLocation over owner's general location
+    // Use owner's location (pickupLocation field removed - always use owner's location)
     return {
       ...offer,
-      pickupLocation: (offer.pickupLocation && offer.pickupLocation.trim() !== '') ? offer.pickupLocation : (offer.owner?.location || offer.pickupLocation),
+      pickupLocation: offer.owner?.location || '',
       mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
   }
