@@ -103,16 +103,29 @@ export class UsersController {
 
     // Safely check for id property - use hasOwnProperty to be extra safe
     let userId: number | undefined = undefined;
-    if (user && typeof user === 'object' && 'id' in user) {
-      userId = user.id;
+    if (user && typeof user === 'object') {
+      // Try multiple ways to access the id
+      if ('id' in user) {
+        const idValue = (user as any).id;
+        // Handle both string and number IDs (JWT might have string, DB has number)
+        if (typeof idValue === 'number') {
+          userId = idValue;
+        } else if (typeof idValue === 'string') {
+          const parsed = parseInt(idValue, 10);
+          if (!isNaN(parsed)) {
+            userId = parsed;
+          }
+        }
+      }
     }
     
-    if (!userId || typeof userId !== 'number') {
+    if (!userId || typeof userId !== 'number' || isNaN(userId)) {
       console.error('User authentication failed - no valid user ID:', {
         user: user,
         userId: userId,
         userIdType: typeof userId,
         userKeys: user && typeof user === 'object' ? Object.keys(user) : 'N/A',
+        userStringified: JSON.stringify(user, null, 2),
       });
       throw new BadRequestException('User not authenticated - user ID not found or invalid');
     }
@@ -131,8 +144,11 @@ export class UsersController {
       // Check if user exists before updating
       const dbUser = await this.usersService.findById(userId);
       if (!dbUser) {
+        console.error(`User not found for ID: ${userId}`);
         throw new NotFoundException('User not found');
       }
+
+      console.log(`Updating role for user ${userId} (${dbUser.email}) from ${dbUser.role} to ${upperRole}`);
 
       let redirectTo = '/';
       // For providers, set role to PENDING_PROVIDER instead of PROVIDER
@@ -146,7 +162,16 @@ export class UsersController {
         throw new BadRequestException(`Invalid role: ${upperRole}`);
       }
 
-      await this.usersService.updateRole(userId, roleToSet);
+      console.log(`Setting role to: ${roleToSet} for user ID: ${userId}`);
+      
+      // Validate roleToSet is a valid enum value before calling service
+      if (!Object.values(UserRole).includes(roleToSet)) {
+        console.error(`Invalid role value: ${roleToSet}. Valid values: ${Object.values(UserRole).join(', ')}`);
+        throw new BadRequestException(`Invalid role value: ${roleToSet}`);
+      }
+
+      const updatedUser = await this.usersService.updateRole(userId, roleToSet);
+      console.log(`Role updated successfully. User ID: ${userId}, New role: ${updatedUser.role}`);
 
       if (upperRole === 'PROVIDER') {
         redirectTo = '/onboarding/fillDetails';
@@ -160,10 +185,23 @@ export class UsersController {
         role: roleToSet,
       };
     } catch (error) {
-      console.error('Error updating user role:', error);
-      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+      console.error('Error updating user role:', {
+        error: error?.message || error,
+        stack: error?.stack,
+        userId,
+        role: upperRole,
+        errorName: error?.name,
+        errorCode: error?.code,
+        errorConstructor: error?.constructor?.name,
+        isHttpException: error instanceof BadRequestException || error instanceof NotFoundException || error instanceof InternalServerErrorException,
+      });
+      
+      // Re-throw HttpExceptions as-is
+      if (error instanceof BadRequestException || error instanceof NotFoundException || error instanceof InternalServerErrorException) {
         throw error;
       }
+      
+      // Wrap other errors in InternalServerErrorException
       throw new InternalServerErrorException(
         `Failed to update user role: ${error?.message || 'Unknown error'}`,
       );

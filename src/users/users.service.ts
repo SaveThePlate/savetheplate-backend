@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@prisma/client';
 
@@ -19,10 +19,54 @@ export class UsersService {
   }
 
   async updateRole(userId: number, role: UserRole) {
-    return this.prisma.user.update({
-      where: { id: userId },
-      data: { role: role },
-    });
+    try {
+      // First verify the user exists
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      
+      if (!user) {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+
+      // Validate the role is a valid enum value
+      if (!Object.values(UserRole).includes(role)) {
+        throw new BadRequestException(`Invalid role value: ${role}. Valid values are: ${Object.values(UserRole).join(', ')}`);
+      }
+
+      // Update the role
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: { role: role },
+      });
+      
+      console.log(`Successfully updated user ${userId} role from ${user.role} to ${role}`);
+      return updatedUser;
+    } catch (error) {
+      console.error(`Error updating role for user ${userId} to ${role}:`, {
+        error: error?.message,
+        code: error?.code,
+        meta: error?.meta,
+        stack: error?.stack,
+      });
+      
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
+        throw error;
+      }
+      
+      // Handle Prisma-specific errors
+      if (error?.code === 'P2002') {
+        throw new BadRequestException('Unique constraint violation');
+      }
+      if (error?.code === 'P2025') {
+        throw new NotFoundException(`User with ID ${userId} not found`);
+      }
+      
+      // Re-throw with more context as InternalServerErrorException
+      throw new InternalServerErrorException(
+        `Failed to update user role: ${error?.message || 'Unknown error'}. User ID: ${userId}, Role: ${role}, Error Code: ${error?.code || 'N/A'}`,
+      );
+    }
   }
 
   async updateDetails(
