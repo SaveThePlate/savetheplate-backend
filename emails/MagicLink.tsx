@@ -3,7 +3,17 @@ import MainTemplate from './MainTemplate';
 
 function MagicLinkEmailTemplate({ magicLink }) {
   return (
-    <MainTemplate buttonLink={magicLink} />
+    <MainTemplate
+      preview="Connect to Save The Plate"
+      mainTitle="Happy to see you, again!"
+      description="Just click the button below to log in."
+      centeredDescription={true}
+      details={[]}
+      buttonText="Login"
+      buttonLink={magicLink}
+      withThank={true}
+      withButton={true}
+    />
   );
 }
 
