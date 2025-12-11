@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   InternalServerErrorException,
+  NotFoundException,
   Param,
   Post,
   Req,
@@ -39,27 +40,115 @@ export class UsersController {
 
   @Post()
   async create(@Body('email') email: string) {
-    const username = email.split('@')[0];
-    const data = {
-      email: email,
-      username: username,
-      role: UserRole.NONE,
-    };
-    return this.usersService.create(data);
+    if (!email || typeof email !== 'string') {
+      throw new BadRequestException('Email is required and must be a string');
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('Invalid email format');
+    }
+
+    try {
+      const username = email.split('@')[0];
+      const data = {
+        email: email,
+        username: username,
+        role: UserRole.NONE,
+      };
+      return await this.usersService.create(data);
+    } catch (error) {
+      console.error('Error creating user:', error);
+      if (error.code === 'P2002') {
+        // Prisma unique constraint violation
+        throw new BadRequestException('User with this email already exists');
+      }
+      throw new InternalServerErrorException(
+        `Failed to create user: ${error?.message || 'Unknown error'}`,
+      );
+    }
   }
 
   @Post('set-role')
-  async setRole(@Body('role') role: 'CLIENT' | 'PROVIDER', @Req() req) {
-    const userId = req.user.id;
+  @UseGuards(AuthGuard)
+  async setRole(@Body('role') role: string, @Req() req: Request) {
+    // Validate request object exists
+    if (!req) {
+      throw new BadRequestException('Invalid request object');
+    }
+
+    // Validate that user is authenticated
+    // The AuthGuard sets req['user'], try both access methods
+    let user: any = undefined;
+    
+    // Try to get user from request - handle both dot and bracket notation
+    if (req.user) {
+      user = req.user;
+    } else if ((req as any)['user']) {
+      user = (req as any)['user'];
+    }
+    
+    // Defensive check - ensure user exists
+    if (user === undefined || user === null) {
+      console.error('User authentication failed - user is null/undefined:', {
+        hasReq: !!req,
+        hasDotUser: !!req?.user,
+        hasBracketUser: !!(req as any)?.['user'],
+        reqType: typeof req,
+        userType: typeof user,
+      });
+      throw new BadRequestException('User not authenticated - no user found in request');
+    }
+
+    // Safely check for id property - use hasOwnProperty to be extra safe
+    let userId: number | undefined = undefined;
+    if (user && typeof user === 'object' && 'id' in user) {
+      userId = user.id;
+    }
+    
+    if (!userId || typeof userId !== 'number') {
+      console.error('User authentication failed - no valid user ID:', {
+        user: user,
+        userId: userId,
+        userIdType: typeof userId,
+        userKeys: user && typeof user === 'object' ? Object.keys(user) : 'N/A',
+      });
+      throw new BadRequestException('User not authenticated - user ID not found or invalid');
+    }
+
+    // Validate role parameter
+    if (!role || typeof role !== 'string') {
+      throw new BadRequestException('Role is required and must be a string');
+    }
+
+    const upperRole = role.toUpperCase();
+    if (upperRole !== 'CLIENT' && upperRole !== 'PROVIDER') {
+      throw new BadRequestException('Role must be either CLIENT or PROVIDER');
+    }
+
     try {
+      // Check if user exists before updating
+      const dbUser = await this.usersService.findById(userId);
+      if (!dbUser) {
+        throw new NotFoundException('User not found');
+      }
+
       let redirectTo = '/';
       // For providers, set role to PENDING_PROVIDER instead of PROVIDER
       // They need to complete details and wait for admin approval
-      const roleToSet =
-        role === 'PROVIDER' ? UserRole.PENDING_PROVIDER : UserRole[role];
+      let roleToSet: UserRole;
+      if (upperRole === 'PROVIDER') {
+        roleToSet = UserRole.PENDING_PROVIDER;
+      } else if (upperRole === 'CLIENT') {
+        roleToSet = UserRole.CLIENT;
+      } else {
+        throw new BadRequestException(`Invalid role: ${upperRole}`);
+      }
+
       await this.usersService.updateRole(userId, roleToSet);
 
-      if (role === 'PROVIDER') {
+      if (upperRole === 'PROVIDER') {
         redirectTo = '/onboarding/fillDetails';
       } else {
         redirectTo = '/client/home';
@@ -68,20 +157,32 @@ export class UsersController {
       return {
         message: 'Role updated successfully',
         redirectTo,
+        role: roleToSet,
       };
     } catch (error) {
       console.error('Error updating user role:', error);
-      return { message: 'Failed to update user role', error: error.message };
+      if (error instanceof BadRequestException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException(
+        `Failed to update user role: ${error?.message || 'Unknown error'}`,
+      );
     }
   }
 
   @Get('get-role')
+  @UseGuards(AuthGuard)
   async getCurrentUserRole(@Req() req) {
+    // Validate that user is authenticated
+    if (!req.user?.id) {
+      throw new BadRequestException('User not authenticated');
+    }
+
     const userId = req.user.id;
     try {
       const user = await this.usersService.findById(userId);
       if (!user) {
-        return { message: 'User not found' };
+        throw new NotFoundException('User not found');
       }
       return {
         role: user.role,
@@ -89,7 +190,10 @@ export class UsersController {
       };
     } catch (error) {
       console.error('Error retrieving user role:', error);
-      return { message: 'Failed to retrieve user role', error: error.message };
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to retrieve user role');
     }
   }
 
@@ -108,7 +212,13 @@ export class UsersController {
   // }
 
   @Post('update-details')
+  @UseGuards(AuthGuard)
   async updateLocation(@Body() updateDetailsDto: any, @Req() req) {
+    // Validate that user is authenticated
+    if (!req.user?.id) {
+      throw new BadRequestException('User not authenticated');
+    }
+
     const userId = req.user.id;
 
     // Get user info to check if they're a pending provider
@@ -499,7 +609,13 @@ export class UsersController {
   }
 
   @Get('me')
+  @UseGuards(AuthGuard)
   async getCurrentUser(@Req() req: Request) {
+    // Validate that user is authenticated
+    if (!req.user || !(req.user as any).email) {
+      throw new BadRequestException('User not authenticated');
+    }
+
     const user = req.user as { email: string };
     return this.usersService.findOne(user.email);
   }
@@ -511,6 +627,7 @@ export class UsersController {
   }
 
   @Post('me')
+  @UseGuards(AuthGuard)
   @UseInterceptors(
     FileInterceptor('profileImage', {
       storage: diskStorage({
@@ -541,6 +658,11 @@ export class UsersController {
     @Body() profileData: ProfileData,
     @Req() req: Request,
   ) {
+    // Validate that user is authenticated
+    if (!req.user || !(req.user as any).email) {
+      throw new BadRequestException('User not authenticated');
+    }
+
     const user = req.user as { email: string };
 
     const updatedData: Partial<ProfileData> = {

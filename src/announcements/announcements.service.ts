@@ -64,13 +64,15 @@ export class AnnouncementsService {
     }
 
     // Render email template
+    const language = dto.language || 'en';
     const emailHtml = await render(
       AnnouncementEmailTemplate({
-        title: dto.title || '🎉 Exciting News from Save The Plate!',
+        title: dto.title || (language === 'fr' ? '🎉 Des nouvelles excitantes de Save The Plate !' : '🎉 Exciting News from Save The Plate!'),
         description: dto.description,
         details: dto.details || [],
-        buttonText: dto.buttonText || 'Create Your Account Now',
+        buttonText: dto.buttonText || (language === 'fr' ? 'Créer votre compte maintenant' : 'Create Your Account Now'),
         buttonLink: dto.buttonLink || 'https://leftover.ccdev.space/',
+        language: language,
       }),
     );
 
@@ -96,7 +98,17 @@ export class AnnouncementsService {
     let failed = 0;
     const errors: string[] = [];
 
-    for (const user of users) {
+    // Rate limit: Resend allows 2 requests per second, so we'll send 1 per 600ms to be safe
+    const delayBetweenEmails = 600; // milliseconds
+
+    for (let i = 0; i < users.length; i++) {
+      const user = users[i];
+      
+      // Add delay between emails (except for the first one)
+      if (i > 0) {
+        await new Promise(resolve => setTimeout(resolve, delayBetweenEmails));
+      }
+
       try {
         const mail_resp = await this.resendService
           .getResendInstance()

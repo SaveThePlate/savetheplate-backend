@@ -37,4 +37,8 @@ export class SendAnnouncementDto {
   @IsOptional()
   @IsBoolean()
   forceProduction?: boolean;
+
+  @IsOptional()
+  @IsString()
+  language?: string;
 }

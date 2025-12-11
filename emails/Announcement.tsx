@@ -7,6 +7,7 @@ function AnnouncementEmailTemplate({
   details = [],
   buttonText = 'Create Account Now',
   buttonLink = 'https://leftover.ccdev.space/',
+  language = 'en',
 }) {
   return (
     <MainTemplate
@@ -17,8 +18,9 @@ function AnnouncementEmailTemplate({
       details={details}
       buttonText={buttonText}
       buttonLink={buttonLink}
-      withThank={true}
+      withThank={false}
       withButton={buttonLink ? true : false}
+      language={language}
     />
   );
 }
