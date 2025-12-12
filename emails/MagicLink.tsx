@@ -4,12 +4,16 @@ import MainTemplate from './MainTemplate';
 function MagicLinkEmailTemplate({ magicLink }) {
   return (
     <MainTemplate
-      preview="Welcome back to Save The Plate! 🍽️"
-      mainTitle="🌟 Welcome Back!"
-      description="We're thrilled to have you back! Click the button below to securely log in to your account and continue your journey with us."
+      preview="Connectez-vous à Save The Plate en un clic ! 🚀"
+      mainTitle="Bonjour ! 👋"
+      description="Cliquez sur le bouton ci-dessous pour vous connecter de manière sécurisée à votre compte. C'est rapide, simple et sans mot de passe !"
       centeredDescription={true}
-      details={[]}
-      buttonText="Log In to Your Account"
+      details={[
+        '✨ Connexion instantanée en un seul clic',
+        '🔒 Sécurisé et sans mot de passe',
+        '⏱️ Ce lien expire dans 10 minutes'
+      ]}
+      buttonText="Se connecter"
       buttonLink={magicLink}
       withThank={true}
       withButton={true}

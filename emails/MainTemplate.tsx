@@ -63,6 +63,17 @@ function MainTemplate({
               </Button>
             </div>
           )}
+
+          {withThank && (
+            <div style={footerContainerStyle}>
+              <Text style={footerText}>
+                Si vous n'avez pas demandé ce lien, vous pouvez ignorer cet email en toute sécurité.
+              </Text>
+              <Text style={footerSmallText}>
+                Merci de faire partie de la communauté Save The Plate ! 🌱
+              </Text>
+            </div>
+          )}
         </Container>
       </Body>
     </Html>
@@ -71,26 +82,26 @@ function MainTemplate({
 
 
 
-// Styles
+// Styles - Matching frontend design system
 
 const main = {
-  backgroundColor: '#0a0e27',
-  background: 'linear-gradient(135deg, #0a0e27 0%, #1a1f3a 30%, #2a2f4a 60%, #1a1f3a 100%)',
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',
-  padding: '30px 0',
+  backgroundColor: '#F9FAF5',
+  background: 'linear-gradient(135deg, #F9FAF5 0%, #F0F7F4 50%, #E8F4EE 100%)',
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  padding: '40px 20px',
 };
 
 const container = {
   margin: '0 auto',
-  padding: '50px 45px',
-  borderRadius: '25px',
+  padding: '48px 40px',
+  borderRadius: '24px',
   background: '#ffffff',
-  boxShadow: '0 25px 80px rgba(88, 178, 160, 0.15), 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
-  maxWidth: '800px',
+  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.1)',
+  maxWidth: '600px',
   width: '100%',
   position: 'relative' as const,
   overflow: 'hidden',
-  border: '1px solid rgba(88, 178, 160, 0.2)',
+  border: '1px solid rgba(229, 231, 235, 0.8)',
 };
 
 const heading = {
@@ -98,10 +109,9 @@ const heading = {
   alignItems: 'center !important',
   width: '100%',
   justifyContent: 'center',
-  paddingBottom: '30px',
-  borderBottom: '4px solid',
-  borderImage: 'linear-gradient(90deg, #58B2A0 0%, #7DD3C0 25%, #FFD93D 50%, #7DD3C0 75%, #58B2A0 100%) 1',
-  marginBottom: '35px',
+  paddingBottom: '24px',
+  borderBottom: '2px solid #E5E7EB',
+  marginBottom: '32px',
   position: 'relative' as const,
 };
 
@@ -113,17 +123,13 @@ const logo = {
 };
 
 const headingText = {
-  fontSize: '48px',
-  lineHeight: '48px',
+  fontSize: '32px',
+  lineHeight: '40px',
   margin: '0px',
-  background: 'linear-gradient(135deg, #58B2A0 0%, #7DD3C0 30%, #FFD93D 60%, #7DD3C0 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-  fontWeight: '900',
-  letterSpacing: '-2px',
-  textTransform: 'uppercase',
-  textShadow: '0 0 30px rgba(88, 178, 160, 0.3)',
+  color: '#059669',
+  fontWeight: '800',
+  letterSpacing: '-0.5px',
+  textAlign: 'center' as const,
 };
 
 const mainTitleContainer = {
@@ -131,56 +137,52 @@ const mainTitleContainer = {
   alignItems: 'center !important',
   justifyContent: 'center !important',
   width: '100%',
-  marginBottom: '25px',
+  marginBottom: '24px',
 };
 
 const mainTitleStyle = {
   margin: '0px auto',
-  fontSize: '36px',
-  lineHeight: '44px',
-  background: 'linear-gradient(135deg, #1a202c 0%, #2d3748 50%, #4a5568 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-  fontWeight: '900',
+  fontSize: '28px',
+  lineHeight: '36px',
+  color: '#1B4332',
+  fontWeight: '700',
   textAlign: 'center' as const,
-  letterSpacing: '-1px',
+  letterSpacing: '-0.3px',
   padding: '0 10px',
 };
 
 const contentContainerStyle = {
-  margin: '40px 0px 25px 0px',
-  padding: '30px',
-  background: 'linear-gradient(135deg, #f7fafc 0%, #edf2f7 50%, #e2e8f0 100%)',
-  borderRadius: '20px',
-  border: '3px solid',
-  borderImage: 'linear-gradient(135deg, rgba(88, 178, 160, 0.3) 0%, rgba(125, 211, 192, 0.3) 50%, rgba(88, 178, 160, 0.3) 100%) 1',
-  boxShadow: 'inset 0 2px 10px rgba(88, 178, 160, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05)',
+  margin: '32px 0px 24px 0px',
+  padding: '32px 28px',
+  background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 50%, #D1FAE5 100%)',
+  borderRadius: '16px',
+  border: '2px solid #A7F3D0',
+  boxShadow: 'inset 0 1px 3px rgba(5, 150, 105, 0.08)',
 };
 
 const paragraph = {
-  fontSize: '18px',
-  lineHeight: '28px',
-  color: '#2d3748',
-  marginBottom: '15px',
+  fontSize: '16px',
+  lineHeight: '24px',
+  color: '#374151',
+  marginBottom: '12px',
 };
 
 const centeredParagraph = {
-  fontSize: '20px',
-  lineHeight: '32px',
+  fontSize: '17px',
+  lineHeight: '26px',
   textAlign: 'center' as const,
-  color: '#1a202c',
-  marginBottom: '20px',
-  fontWeight: '600',
-  letterSpacing: '0.2px',
+  color: '#1F2937',
+  marginBottom: '16px',
+  fontWeight: '500',
+  letterSpacing: '0.1px',
 };
 
 const detailStyle = {
-  fontSize: '18px',
-  lineHeight: '28px',
-  color: '#2d3748',
-  marginBottom: '16px',
-  fontWeight: '600',
+  fontSize: '16px',
+  lineHeight: '24px',
+  color: '#374151',
+  marginBottom: '12px',
+  fontWeight: '500',
   paddingLeft: '8px',
 };
 
@@ -188,53 +190,46 @@ const buttonContainerStyle = {
   display: 'flex',
   alignItems: 'center !important',
   justifyContent: 'center !important',
-  margin: '35px 0px',
+  margin: '32px 0px',
 };
 
 const buttonStyle = {
   color: '#ffffff',
-  padding: '18px 45px',
-  background: 'linear-gradient(135deg, #58B2A0 0%, #7DD3C0 40%, #FFD93D 60%, #7DD3C0 100%)',
-  backgroundSize: '200% 200%',
-  borderRadius: '50px',
-  fontWeight: '800',
+  padding: '16px 32px',
+  background: '#059669',
+  borderRadius: '12px',
+  fontWeight: '700',
   margin: 'auto',
   textDecoration: 'none',
-  fontSize: '19px',
-  boxShadow: '0 10px 30px rgba(88, 178, 160, 0.5), 0 5px 15px rgba(255, 217, 61, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-  transition: 'all 0.3s ease',
+  fontSize: '16px',
+  boxShadow: '0 4px 6px rgba(5, 150, 105, 0.3), 0 2px 4px rgba(5, 150, 105, 0.2)',
   display: 'inline-block',
-  letterSpacing: '1px',
-  textTransform: 'uppercase',
-  border: '2px solid rgba(255, 255, 255, 0.2)',
-  textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)',
+  letterSpacing: '0.3px',
+  border: 'none',
 };
 
 const tankStyle = {
   width: '100%',
   marginTop: '30px',
   paddingTop: '25px',
-  borderTop: '2px dashed #e2e8f0',
+  borderTop: '2px dashed #E5E7EB',
 };
 
 const smallParagraph = {
-  fontSize: '17px',
-  lineHeight: '26px',
-  fontWeight: '500',
-  color: '#4a5568',
+  fontSize: '15px',
+  lineHeight: '22px',
+  fontWeight: '400',
+  color: '#6B7280',
   textAlign: 'center' as const,
   letterSpacing: '0.1px',
 };
 
 const linkContact = {
-  color: '#58B2A0',
+  color: '#059669',
   textDecoration: 'none',
-  fontWeight: '700',
-  borderBottom: '2px solid #58B2A0',
-  paddingBottom: '2px',
-  background: 'linear-gradient(135deg, rgba(88, 178, 160, 0.1) 0%, rgba(125, 211, 192, 0.1) 100%)',
-  padding: '2px 6px',
-  borderRadius: '4px',
+  fontWeight: '600',
+  borderBottom: '1px solid #059669',
+  paddingBottom: '1px',
 };
 
 const accentBar = {
@@ -242,10 +237,32 @@ const accentBar = {
   top: '0',
   left: '0',
   right: '0',
-  height: '6px',
-  background: 'linear-gradient(90deg, #58B2A0 0%, #7DD3C0 20%, #FFD93D 40%, #FF6B6B 60%, #FFD93D 80%, #7DD3C0 100%)',
-  borderRadius: '25px 25px 0 0',
-  boxShadow: '0 2px 10px rgba(88, 178, 160, 0.4)',
+  height: '4px',
+  background: 'linear-gradient(90deg, #059669 0%, #10B981 50%, #059669 100%)',
+  borderRadius: '24px 24px 0 0',
+};
+
+const footerContainerStyle = {
+  marginTop: '40px',
+  paddingTop: '24px',
+  borderTop: '1px solid #E5E7EB',
+  textAlign: 'center' as const,
+};
+
+const footerText = {
+  fontSize: '14px',
+  lineHeight: '20px',
+  color: '#6B7280',
+  marginBottom: '12px',
+  fontWeight: '400',
+};
+
+const footerSmallText = {
+  fontSize: '13px',
+  lineHeight: '18px',
+  color: '#9CA3AF',
+  marginTop: '8px',
+  fontWeight: '400',
 };
 
 
