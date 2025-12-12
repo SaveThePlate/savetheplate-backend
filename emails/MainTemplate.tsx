@@ -33,7 +33,7 @@ function MainTemplate({
           <div style={accentBar}></div>
           <Heading style={heading}>
             {/* <Img src={mainImage} alt="Save The Plate Logo" style={logo} /> */}
-            <Text style={headingText}>Save The Plate</Text>
+            <Text style={headingText}>SaveThePlate!</Text>
           </Heading>
 
           <div style={mainTitleContainer}>
@@ -74,6 +74,14 @@ function MainTemplate({
               </Text>
             </div>
           )}
+
+          {!withThank && (
+            <div style={footerContainerStyle}>
+              <Text style={footerSmallText}>
+                Ce lien expire dans 10 minutes ❤️
+              </Text>
+            </div>
+          )}
         </Container>
       </Body>
     </Html>
@@ -82,11 +90,11 @@ function MainTemplate({
 
 
 
-// Styles - Matching frontend design system
+// Styles - Warm, minimalistic design matching the reference image
 
 const main = {
-  backgroundColor: '#F9FAF5',
-  background: 'linear-gradient(135deg, #F9FAF5 0%, #F0F7F4 50%, #E8F4EE 100%)',
+  backgroundColor: '#FFFFFF',
+  background: 'linear-gradient(135deg, #FFF8F5 0%, #FFF5F0 30%, #FFFFFF 100%)',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   padding: '40px 20px',
 };
@@ -94,14 +102,14 @@ const main = {
 const container = {
   margin: '0 auto',
   padding: '48px 40px',
-  borderRadius: '24px',
+  borderRadius: '20px',
   background: '#ffffff',
-  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05), 0 10px 15px rgba(0, 0, 0, 0.1)',
+  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04)',
   maxWidth: '600px',
   width: '100%',
   position: 'relative' as const,
   overflow: 'hidden',
-  border: '1px solid rgba(229, 231, 235, 0.8)',
+  border: 'none',
 };
 
 const heading = {
@@ -109,8 +117,8 @@ const heading = {
   alignItems: 'center !important',
   width: '100%',
   justifyContent: 'center',
-  paddingBottom: '24px',
-  borderBottom: '2px solid #E5E7EB',
+  paddingBottom: '0px',
+  borderBottom: 'none',
   marginBottom: '32px',
   position: 'relative' as const,
 };
@@ -123,10 +131,10 @@ const logo = {
 };
 
 const headingText = {
-  fontSize: '32px',
-  lineHeight: '40px',
+  fontSize: '36px',
+  lineHeight: '44px',
   margin: '0px',
-  color: '#059669',
+  color: '#2D7A3F',
   fontWeight: '800',
   letterSpacing: '-0.5px',
   textAlign: 'center' as const,
@@ -142,39 +150,39 @@ const mainTitleContainer = {
 
 const mainTitleStyle = {
   margin: '0px auto',
-  fontSize: '28px',
-  lineHeight: '36px',
-  color: '#1B4332',
-  fontWeight: '700',
+  fontSize: '32px',
+  lineHeight: '40px',
+  color: '#2D7A3F',
+  fontWeight: '800',
   textAlign: 'center' as const,
   letterSpacing: '-0.3px',
   padding: '0 10px',
 };
 
 const contentContainerStyle = {
-  margin: '32px 0px 24px 0px',
-  padding: '32px 28px',
-  background: 'linear-gradient(135deg, #F0FDF4 0%, #ECFDF5 50%, #D1FAE5 100%)',
-  borderRadius: '16px',
-  border: '2px solid #A7F3D0',
-  boxShadow: 'inset 0 1px 3px rgba(5, 150, 105, 0.08)',
+  margin: '24px 0px 32px 0px',
+  padding: '0px',
+  background: 'transparent',
+  borderRadius: '0px',
+  border: 'none',
+  boxShadow: 'none',
 };
 
 const paragraph = {
   fontSize: '16px',
   lineHeight: '24px',
-  color: '#374151',
-  marginBottom: '12px',
+  color: '#1F2937',
+  marginBottom: '16px',
 };
 
 const centeredParagraph = {
-  fontSize: '17px',
-  lineHeight: '26px',
+  fontSize: '16px',
+  lineHeight: '24px',
   textAlign: 'center' as const,
   color: '#1F2937',
-  marginBottom: '16px',
-  fontWeight: '500',
-  letterSpacing: '0.1px',
+  marginBottom: '24px',
+  fontWeight: '400',
+  letterSpacing: '0px',
 };
 
 const detailStyle = {
@@ -182,29 +190,29 @@ const detailStyle = {
   lineHeight: '24px',
   color: '#374151',
   marginBottom: '12px',
-  fontWeight: '500',
-  paddingLeft: '8px',
+  fontWeight: '400',
+  paddingLeft: '0px',
 };
 
 const buttonContainerStyle = {
   display: 'flex',
   alignItems: 'center !important',
   justifyContent: 'center !important',
-  margin: '32px 0px',
+  margin: '32px 0px 24px 0px',
 };
 
 const buttonStyle = {
-  color: '#ffffff',
-  padding: '16px 32px',
-  background: '#059669',
+  color: '#FFFFFF',
+  padding: '14px 32px',
+  background: '#FFC09F',
   borderRadius: '12px',
   fontWeight: '700',
   margin: 'auto',
   textDecoration: 'none',
   fontSize: '16px',
-  boxShadow: '0 4px 6px rgba(5, 150, 105, 0.3), 0 2px 4px rgba(5, 150, 105, 0.2)',
+  boxShadow: '0 2px 8px rgba(255, 192, 159, 0.3)',
   display: 'inline-block',
-  letterSpacing: '0.3px',
+  letterSpacing: '0.2px',
   border: 'none',
 };
 
@@ -237,9 +245,9 @@ const accentBar = {
   top: '0',
   left: '0',
   right: '0',
-  height: '4px',
-  background: 'linear-gradient(90deg, #059669 0%, #10B981 50%, #059669 100%)',
-  borderRadius: '24px 24px 0 0',
+  height: '0px',
+  background: 'transparent',
+  borderRadius: '20px 20px 0 0',
 };
 
 const footerContainerStyle = {

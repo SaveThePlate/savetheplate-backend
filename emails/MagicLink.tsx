@@ -4,12 +4,12 @@ import MainTemplate from './MainTemplate';
 function MagicLinkEmailTemplate({ magicLink }) {
   return (
     <MainTemplate
-      preview="Connectez-vous à Save The Plate"
-      mainTitle="Connexion à Save The Plate"
-      description="Cliquez sur le bouton ci-dessous pour accéder à votre compte de manière sécurisée. Ce lien expire dans 10 minutes."
+      preview="Bienvenue sur SaveThePlate!"
+      mainTitle="Bienvenue sur SaveThePlate! 🎉"
+      description="Rejoignez-nous pour réduire le gaspillage alimentaire et sauver la planète, un repas à la fois 🌍"
       centeredDescription={true}
       details={[]}
-      buttonText="Se connecter"
+      buttonText="Se connecter avec l'email"
       buttonLink={magicLink}
       withThank={false}
       withButton={true}
