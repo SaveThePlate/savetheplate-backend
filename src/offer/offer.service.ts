@@ -119,16 +119,81 @@ export class OfferService {
       },
     });
     const formattedOffers = offers.map((offer) => {
-      // images may be undefined or an empty array for some offers.
-      // Guard access to avoid runtime errors and provide a sensible fallback.
+      // Ensure images is always an array and properly formatted
+      let images = [];
+      if (offer.images) {
+        // Handle case where images might be stored as JSON string (old offers)
+        if (typeof offer.images === 'string') {
+          try {
+            images = JSON.parse(offer.images);
+          } catch {
+            // If parsing fails, try to construct from the string itself
+            images = [];
+          }
+        } else if (Array.isArray(offer.images)) {
+          images = offer.images;
+        }
+      }
+
+      // Ensure each image has the proper structure
+      const normalizedImages = images.map((img: any) => {
+        // If image is already in the correct format, return it
+        if (img && typeof img === 'object' && (img.filename || img.url || img.absoluteUrl)) {
+          return img;
+        }
+        
+        // If image is just a string (filename or URL), convert to proper format
+        if (typeof img === 'string') {
+          const backendBase = (
+            process.env.BACKEND_URL ||
+            process.env.NEXT_PUBLIC_BACKEND_URL ||
+            ''
+          ).replace(/\/$/, '');
+          
+          // Check if it's already a full URL
+          if (/^https?:\/\//i.test(img)) {
+            return {
+              filename: img.split('/').pop() || null,
+              url: img.includes('/storage/') ? img.match(/\/storage\/.+$/)?.[0] || null : null,
+              absoluteUrl: img,
+              original: { url: img },
+            };
+          }
+          
+          // Check if it's a storage path
+          if (img.startsWith('/storage/')) {
+            return {
+              filename: img.split('/').pop() || null,
+              url: img,
+              absoluteUrl: backendBase ? `${backendBase}${img}` : img,
+              original: { url: img },
+            };
+          }
+          
+          // Assume it's a filename
+          const url = `/storage/${encodeURIComponent(img)}`;
+          return {
+            filename: img,
+            path: `store/${img}`,
+            url,
+            absoluteUrl: backendBase ? `${backendBase}${url}` : url,
+            original: { url: img },
+          };
+        }
+        
+        return img;
+      });
+
+      // Extract imageFileName for backward compatibility
       const imageFileName =
-        Array.isArray(offer.images) && offer.images.length > 0
-          ? ((offer.images as any)[0]?.filename ?? null)
+        normalizedImages.length > 0
+          ? (normalizedImages[0]?.filename ?? null)
           : null;
 
       return {
         ...offer,
-        imageFileName,
+        images: normalizedImages, // Always include full images array
+        imageFileName, // Keep for backward compatibility
         // Use owner's location (no pickupLocation field in offer)
         pickupLocation: offer.owner?.location || '',
         // Prioritize offer's specific mapsLink over owner's general mapsLink
@@ -388,7 +453,7 @@ export class OfferService {
       });
 
       if (!offer) {
-        throw new Error('Offer not found');
+        throw new NotFoundException('Offer not found');
       }
 
       // Delete dependent orders first to avoid foreign key constraint errors.
@@ -406,13 +471,30 @@ export class OfferService {
       };
 
       // Emit real-time update (before deletion, so we have the data)
-      this.wsGateway.emitOfferUpdate(formattedOffer, 'deleted');
+      // Wrap in try-catch so WebSocket errors don't cause the deletion to fail
+      try {
+        this.wsGateway.emitOfferUpdate(formattedOffer, 'deleted');
+      } catch (error) {
+        // Silently fail - WebSocket updates are not critical
+        console.error('Failed to emit WebSocket update for deleted offer:', error);
+      }
 
       // Invalidate cache
-      await this.cacheService.invalidateOffers(offerId);
+      // Wrap in try-catch so cache errors don't cause the deletion to fail
+      try {
+        await this.cacheService.invalidateOffers(offerId);
+      } catch (error) {
+        // Silently fail - cache invalidation is not critical
+        console.error('Failed to invalidate cache for deleted offer:', error);
+      }
 
       return { message: 'Offer deleted successfully' };
     } catch (error) {
+      // If it's already a NestJS exception, re-throw it
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      // Otherwise, wrap in a more descriptive error
       throw new Error(`Failed to delete offer: ${error.message}`);
     }
   }
