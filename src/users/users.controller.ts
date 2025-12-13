@@ -277,7 +277,9 @@ export class UsersController {
         latitude = data.latitude;
         longitude = data.longitude;
       }
-      if (data.locationName) {
+      // Only extract location name if it wasn't manually provided
+      // This allows users to edit the extracted name and have it preserved
+      if (data.locationName && !locationName) {
         locationName = data.locationName;
       }
     }
