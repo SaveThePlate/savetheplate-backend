@@ -192,18 +192,35 @@ export class AppWebSocketGateway
 
   // Emit order update to relevant users
   emitOrderUpdate(order: any, eventType: 'created' | 'updated' | 'deleted') {
-    // Notify the order owner (client)
-    this.server.to(`user:${order.userId}`).emit('order:update', {
-      type: eventType,
-      order,
-    });
+    if (!this.server) {
+      this.logger.error('WebSocket server not initialized, cannot emit order update');
+      return;
+    }
 
-    // Notify the offer owner (provider) if order is for their offer
-    if (order.offer?.ownerId) {
-      this.server.to(`user:${order.offer.ownerId}`).emit('order:update', {
+    const orderId = order?.id;
+    const orderUserId = order?.userId;
+    const offerOwnerId = order?.offer?.ownerId;
+
+    this.logger.log(
+      `📦 Emitting order:${eventType} for order ${orderId} (userId: ${orderUserId}, offerOwnerId: ${offerOwnerId})`,
+    );
+
+    // Notify the order owner (client)
+    if (orderUserId) {
+      this.server.to(`user:${orderUserId}`).emit('order:update', {
         type: eventType,
         order,
       });
+      this.logger.log(`✅ Emitted order:update to client user:${orderUserId}`);
+    }
+
+    // Notify the offer owner (provider) if order is for their offer
+    if (offerOwnerId) {
+      this.server.to(`user:${offerOwnerId}`).emit('order:update', {
+        type: eventType,
+        order,
+      });
+      this.logger.log(`✅ Emitted order:update to provider user:${offerOwnerId}`);
     }
 
     // Also emit to all providers for their dashboard
@@ -211,6 +228,7 @@ export class AppWebSocketGateway
       type: eventType,
       order,
     });
+    this.logger.log(`✅ Emitted order:update to 'providers' room`);
   }
 
   // Emit offer update to relevant users
