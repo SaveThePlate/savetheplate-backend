@@ -151,11 +151,10 @@ export class UsersController {
       console.log(`Updating role for user ${userId} (${dbUser.email}) from ${dbUser.role} to ${upperRole}`);
 
       let redirectTo = '/';
-      // For providers, set role to PENDING_PROVIDER instead of PROVIDER
-      // They need to complete details and wait for admin approval
+      // Set role to PROVIDER (not PENDING_PROVIDER) - they become PENDING_PROVIDER only after submitting location details
       let roleToSet: UserRole;
       if (upperRole === 'PROVIDER') {
-        roleToSet = UserRole.PENDING_PROVIDER;
+        roleToSet = UserRole.PROVIDER;
       } else if (upperRole === 'CLIENT') {
         roleToSet = UserRole.CLIENT;
       } else {
@@ -259,9 +258,9 @@ export class UsersController {
 
     const userId = req.user.id;
 
-    // Get user info to check if they're a pending provider
+    // Get user info to check if they're a provider (not yet pending)
     const user = await this.usersService.findById(userId);
-    const isPendingProvider = user?.role === UserRole.PENDING_PROVIDER;
+    const isProvider = user?.role === UserRole.PROVIDER;
 
     // Expand and extract data if a Google Maps link is provided
     let latitude = updateDetailsDto.latitude;
@@ -293,9 +292,12 @@ export class UsersController {
       mapsLink,
     );
 
-    // If this is a pending provider completing their details, send email to admin
-    if (isPendingProvider) {
-      await this.sendProviderApprovalEmail(updatedUser);
+    // If this is a provider completing their location details, change role to PENDING_PROVIDER and send email to admin
+    if (isProvider) {
+      // Change role from PROVIDER to PENDING_PROVIDER after submitting location details
+      const userWithPendingRole = await this.usersService.updateRole(userId, UserRole.PENDING_PROVIDER);
+      await this.sendProviderApprovalEmail(userWithPendingRole);
+      return userWithPendingRole;
     }
 
     return updatedUser;
