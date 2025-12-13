@@ -88,17 +88,18 @@ export class OrderController {
     @Req() request: any,
     @Res() res: Response,
   ) {
-    const providerId = request.user?.id;
-    if (!providerId) {
-      throw new ForbiddenException('Authentication required.');
-    }
+    try {
+      const providerId = request.user?.id;
+      if (!providerId) {
+        throw new ForbiddenException('Authentication required.');
+      }
 
-    // Automatically confirm the order when QR code is scanned
-    // This prevents redirect to error page and ensures order is confirmed
-    const result = await this.orderService.scanAndConfirmOrder(
-      token,
-      providerId,
-    );
+      // Automatically confirm the order when QR code is scanned
+      // This prevents redirect to error page and ensures order is confirmed
+      const result = await this.orderService.scanAndConfirmOrder(
+        token,
+        providerId,
+      );
 
     // Check if request is from a browser (Accept header contains text/html)
     const acceptHeader = request.headers?.accept || '';
@@ -301,6 +302,36 @@ export class OrderController {
     } else {
       // Return JSON for API requests
       return res.json(result);
+    }
+    } catch (error) {
+      // Handle errors gracefully
+      const acceptHeader = request.headers?.accept || '';
+      const isBrowserRequest = acceptHeader.includes('text/html');
+      
+      if (isBrowserRequest) {
+        // For browser requests, redirect to orders page with error message
+        let frontendUrl = process.env.FRONT_URL || 
+          process.env.FRONTEND_URL || 
+          process.env.NEXT_PUBLIC_FRONTEND_URL ||
+          'https://leftover.ccdev.space';
+        
+        if (request.headers?.referer) {
+          try {
+            const refererUrl = new URL(request.headers.referer);
+            frontendUrl = refererUrl.origin;
+          } catch (e) {
+            // Invalid referer URL, use default
+          }
+        }
+        
+        const errorMessage = error instanceof Error ? error.message : 'An error occurred';
+        const redirectUrl = `${frontendUrl}/provider/orders?error=${encodeURIComponent(errorMessage)}`;
+        
+        return res.redirect(302, redirectUrl);
+      } else {
+        // For API requests, throw the error normally
+        throw error;
+      }
     }
   }
 
