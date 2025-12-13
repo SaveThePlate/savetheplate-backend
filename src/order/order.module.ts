@@ -5,10 +5,11 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { PrismaService } from 'nestjs-prisma';
 import { OfferModule } from 'src/offer/offer.module';
 import { WebSocketModule } from 'src/websocket/websocket.module';
+import { CacheModule } from '../cache/cache.module';
 
 @Module({
   controllers: [OrderController],
   providers: [OrderService, PrismaService],
-  imports: [PrismaModule, OfferModule, forwardRef(() => WebSocketModule)],
+  imports: [PrismaModule, OfferModule, forwardRef(() => WebSocketModule), CacheModule],
 })
 export class OrderModule {}

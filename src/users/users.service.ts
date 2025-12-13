@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { UserRole } from '@prisma/client';
+import { CacheService } from '../cache/cache.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async create(data: any) {
     return this.prisma.user.create({
@@ -39,6 +43,9 @@ export class UsersService {
         where: { id: userId },
         data: { role: role },
       });
+      
+      // Invalidate cache
+      await this.cacheService.invalidateUsers(userId, user.email);
       
       console.log(`Successfully updated user ${userId} role from ${user.role} to ${role}`);
       return updatedUser;
@@ -108,6 +115,10 @@ export class UsersService {
       console.error('Error updating offers after profile mapsLink change:', error);
     }
 
+    // Invalidate cache
+    await this.cacheService.invalidateUsers(id);
+    await this.cacheService.invalidateOffers(); // Offers may have changed
+
     return updatedUser;
   }
 
@@ -152,6 +163,10 @@ export class UsersService {
       }
     }
 
+    // Invalidate cache
+    await this.cacheService.invalidateUsers(updatedUser.id, email);
+    await this.cacheService.invalidateOffers(); // Offers may have changed
+
     return updatedUser;
   }
 
@@ -176,19 +191,43 @@ export class UsersService {
   }
 
   async findOne(email: string) {
-    const user = this.prisma.user.findUnique({ where: { email } });
+    const cacheKey = this.cacheService.getUserKey(undefined, email);
+    const cached = await this.cacheService.get<any>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
+    const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    // Cache for 5 minutes
+    await this.cacheService.set(cacheKey, user, 300);
     return user;
   }
 
-  findById(userId: number) {
-    return this.prisma.user.findUnique({
+  async findById(userId: number) {
+    const cacheKey = this.cacheService.getUserKey(userId);
+    const cached = await this.cacheService.get<any>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
+    const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
       },
     });
+
+    if (user) {
+      // Cache for 5 minutes
+      await this.cacheService.set(cacheKey, user, 300);
+    }
+
+    return user;
   }
 
   async remove(email: string) {

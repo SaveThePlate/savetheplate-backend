@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AppWebSocketGateway } from '../websocket/websocket.gateway';
+import { CacheService } from '../cache/cache.service';
 import axios from 'axios';
 @Injectable()
 export class OfferService {
@@ -13,6 +14,7 @@ export class OfferService {
     private prisma: PrismaService,
     @Inject(forwardRef(() => AppWebSocketGateway))
     private wsGateway: AppWebSocketGateway,
+    private cacheService: CacheService,
   ) {}
 
   async shortenUrl(longUrl: string): Promise<string> {
@@ -87,10 +89,20 @@ export class OfferService {
       // Silently fail - WebSocket updates are not critical
     }
 
+    // Invalidate cache
+    await this.cacheService.invalidateOffers();
+
     return formattedOffer;
   }
 
   async findAll() {
+    const cacheKey = this.cacheService.getOfferKey();
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
     const offers = await this.prisma.offer.findMany({
       include: {
         // Include owner (provider) information to always get fresh data
@@ -106,7 +118,7 @@ export class OfferService {
         },
       },
     });
-    return offers.map((offer) => {
+    const formattedOffers = offers.map((offer) => {
       // images may be undefined or an empty array for some offers.
       // Guard access to avoid runtime errors and provide a sensible fallback.
       const imageFileName =
@@ -125,9 +137,20 @@ export class OfferService {
         owner: offer.owner,
       };
     });
+
+    // Cache for 5 minutes
+    await this.cacheService.set(cacheKey, formattedOffers, 300);
+    return formattedOffers;
   }
 
   async findAllByOwnerId(ownerId: number) {
+    const cacheKey = this.cacheService.getOffersByOwnerKey(ownerId);
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
     const offers = await this.prisma.offer.findMany({
       where: {
         ownerId,
@@ -148,14 +171,25 @@ export class OfferService {
     });
 
     // Use owner's location (no pickupLocation field in offer)
-    return offers.map((offer) => ({
+    const formattedOffers = offers.map((offer) => ({
       ...offer,
       pickupLocation: offer.owner?.location || '',
       mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     }));
+
+    // Cache for 5 minutes
+    await this.cacheService.set(cacheKey, formattedOffers, 300);
+    return formattedOffers;
   }
 
   async findOfferById(id: number) {
+    const cacheKey = this.cacheService.getOfferKey(id);
+    const cached = await this.cacheService.get<any>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
     const offer = await this.prisma.offer.findUnique({
       where: {
         id,
@@ -180,11 +214,15 @@ export class OfferService {
     }
 
     // Use owner's location (pickupLocation field removed - always use owner's location)
-    return {
+    const formattedOffer = {
       ...offer,
       pickupLocation: offer.owner?.location || '',
       mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
     };
+
+    // Cache for 5 minutes
+    await this.cacheService.set(cacheKey, formattedOffer, 300);
+    return formattedOffer;
   }
 
   async updateOfferQuantity(offerId: number, newQuantity: number) {
@@ -218,6 +256,9 @@ export class OfferService {
 
     // Emit real-time update when quantity changes
     this.wsGateway.emitOfferUpdate(formattedOffer, 'updated');
+
+    // Invalidate cache
+    await this.cacheService.invalidateOffers(offerId);
 
     return offer;
   }
@@ -316,6 +357,9 @@ export class OfferService {
       // Silently fail - WebSocket updates are not critical
     }
 
+    // Invalidate cache
+    await this.cacheService.invalidateOffers(data.offerId);
+
     // Return formatted offer with owner info, matching findOfferById format
     // Use owner's location (no pickupLocation field in offer)
     return {
@@ -363,6 +407,9 @@ export class OfferService {
 
       // Emit real-time update (before deletion, so we have the data)
       this.wsGateway.emitOfferUpdate(formattedOffer, 'deleted');
+
+      // Invalidate cache
+      await this.cacheService.invalidateOffers(offerId);
 
       return { message: 'Offer deleted successfully' };
     } catch (error) {

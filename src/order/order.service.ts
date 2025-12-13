@@ -10,6 +10,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
 import { OfferService } from '../offer/offer.service';
 import { AppWebSocketGateway } from '../websocket/websocket.gateway';
+import { CacheService } from '../cache/cache.service';
 import { randomBytes } from 'crypto';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class OrderService {
     private offerService: OfferService,
     @Inject(forwardRef(() => AppWebSocketGateway))
     private wsGateway: AppWebSocketGateway,
+    private cacheService: CacheService,
   ) {}
 
   async create(data: any) {
@@ -32,7 +34,14 @@ export class OrderService {
   }
 
   async findAll() {
-    return await this.prisma.order.findMany({
+    const cacheKey = this.cacheService.getOrderKey();
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
+    const orders = await this.prisma.order.findMany({
       include: {
         user: {
           select: {
@@ -63,9 +72,20 @@ export class OrderService {
         createdAt: 'desc',
       },
     });
+
+    // Cache for 2 minutes (orders change more frequently)
+    await this.cacheService.set(cacheKey, orders, 120);
+    return orders;
   }
 
   async findOrderById(id: number) {
+    const cacheKey = this.cacheService.getOrderKey(id);
+    const cached = await this.cacheService.get<any>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
     const order = await this.prisma.order.findUnique({
       where: {
         id: id,
@@ -102,11 +122,20 @@ export class OrderService {
       throw new NotFoundException(`Order with ID ${id} not found`);
     }
 
+    // Cache for 2 minutes
+    await this.cacheService.set(cacheKey, order, 120);
     return order;
   }
 
   async findOrderByUser(id: number) {
-    return this.prisma.order.findMany({
+    const cacheKey = this.cacheService.getOrdersByUserKey(id);
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
+    const orders = await this.prisma.order.findMany({
       where: {
         userId: id,
       },
@@ -138,10 +167,21 @@ export class OrderService {
         },
       },
     });
+
+    // Cache for 2 minutes
+    await this.cacheService.set(cacheKey, orders, 120);
+    return orders;
   }
 
   async findOrderByOffer(offerId: number) {
-    return this.prisma.order.findMany({
+    const cacheKey = this.cacheService.getOrdersByOfferKey(offerId);
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
+    const orders = await this.prisma.order.findMany({
       where: {
         offerId: offerId,
       },
@@ -175,6 +215,10 @@ export class OrderService {
         createdAt: 'desc',
       },
     });
+
+    // Cache for 2 minutes
+    await this.cacheService.set(cacheKey, orders, 120);
+    return orders;
   }
 
   async updateOrderStatus(id: number, status: Status) {
@@ -277,6 +321,14 @@ export class OrderService {
     } catch (error) {
       // Silently fail - WebSocket updates are not critical
     }
+
+    // Invalidate cache
+    await this.cacheService.invalidateOrders(
+      result.order.id,
+      result.order.userId,
+      result.order.offerId,
+      result.order.offer?.ownerId,
+    );
 
     return result;
   }
@@ -382,6 +434,14 @@ export class OrderService {
       // Silently fail - WebSocket updates are not critical
     }
 
+    // Invalidate cache
+    await this.cacheService.invalidateOrders(
+      result.id,
+      result.userId,
+      result.offerId,
+      result.offer?.ownerId,
+    );
+
     return result;
   }
 
@@ -389,6 +449,13 @@ export class OrderService {
    * Find all orders for offers published by the given provider (ownerId)
    */
   async findOrdersForProvider(providerId: number) {
+    const cacheKey = this.cacheService.getOrdersByProviderKey(providerId);
+    const cached = await this.cacheService.get<any[]>(cacheKey);
+    
+    if (cached) {
+      return cached;
+    }
+
     // Find all offers by this provider
     const offers = await this.prisma.offer.findMany({
       where: { ownerId: providerId },
@@ -398,7 +465,7 @@ export class OrderService {
     if (offerIds.length === 0) return [];
     // Find all orders for these offers
     // Explicitly include user fields to ensure fresh data (no caching)
-    return this.prisma.order.findMany({
+    const orders = await this.prisma.order.findMany({
       where: { offerId: { in: offerIds } },
       include: {
         user: {
@@ -431,12 +498,17 @@ export class OrderService {
         createdAt: 'desc',
       },
     });
+
+    // Cache for 2 minutes
+    await this.cacheService.set(cacheKey, orders, 120);
+    return orders;
   }
 
   /**
    * Find order by QR code token
    */
   async findOrderByQrToken(qrCodeToken: string) {
+    // QR token lookups should not be cached for security reasons
     return this.prisma.order.findUnique({
       where: { qrCodeToken },
       include: {
@@ -553,6 +625,14 @@ export class OrderService {
       // Silently fail - WebSocket updates are not critical
     }
 
+    // Invalidate cache
+    await this.cacheService.invalidateOrders(
+      updated.id,
+      updated.userId,
+      updated.offerId,
+      updated.offer?.ownerId,
+    );
+
     return {
       order: updated,
       message: 'Order confirmed successfully',
@@ -621,6 +701,14 @@ export class OrderService {
     } catch (error) {
       // Silently fail - WebSocket updates are not critical
     }
+
+    // Invalidate cache
+    await this.cacheService.invalidateOrders(
+      updated.id,
+      updated.userId,
+      updated.offerId,
+      updated.offer?.ownerId,
+    );
 
     return updated;
   }

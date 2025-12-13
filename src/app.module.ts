@@ -11,9 +11,11 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { WebSocketModule } from './websocket/websocket.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
+    CacheModule,
     PrismaModule,
     AuthModule,
     OfferModule,
