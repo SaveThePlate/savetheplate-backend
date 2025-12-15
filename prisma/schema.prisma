@@ -1,0 +1,108 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Status {
+  expired
+  confirmed
+  cancelled
+  pending
+}
+
+
+enum UserRole {
+  CLIENT
+  PROVIDER
+  PENDING_PROVIDER
+  NONE
+}
+
+enum FoodType {
+  snack
+  meal
+  beverage
+  other
+}
+
+enum Taste {
+  sweet
+  salty
+  both
+  neutral
+}
+
+
+model User {
+  id           Int     @id @default(autoincrement())
+  email        String  @unique
+  username     String
+  location     String?
+  mapsLink     String? @db.Text
+  longitude    Float?
+  latitude     Float?
+  phoneNumber  Int?
+  profileImage String?
+  orders       Order[]
+  offers       Offer[]
+  role         UserRole
+}
+
+model Offer {
+  id             Int      @id @default(autoincrement())
+  ownerId        Int?
+  title          String
+  description    String
+  price          Float?
+  originalPrice  Float?
+  expirationDate DateTime
+  pickupStartTime DateTime?
+  pickupEndTime   DateTime?
+  mapsLink       String?  @db.Text
+  latitude       Float?
+  longitude      Float?
+  images         Json
+  quantity       Int
+  foodType       FoodType? @default(other)
+  taste          Taste?    @default(neutral)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  orders         Order[]
+  owner          User?    @relation(fields: [ownerId], references: [id])
+}
+
+model Order {
+  id        Int      @id @default(autoincrement())
+  quantity  Int
+  userId    Int
+  offerId   Int
+  status      Status    @default(pending)
+  qrCodeToken String?  @unique
+  user      User     @relation(fields: [userId], references: [id])
+  offer     Offer    @relation(fields: [offerId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt   DateTime  @updatedAt
+  collectedAt DateTime?
+}
+
+model ContactMessage {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  userRole  String?  // CLIENT, PROVIDER, or GUEST
+  userId   Int?     // Optional: link to user if logged in
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+}
