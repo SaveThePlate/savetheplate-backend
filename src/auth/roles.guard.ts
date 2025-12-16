@@ -3,43 +3,43 @@ import {
   ExecutionContext,
   Injectable,
   ForbiddenException,
-  SetMetadata,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { Request } from 'express';
-import { UserRole } from '@prisma/client';
-
-export const ROLES_KEY = 'roles';
-export const Roles = (...roles: UserRole[]) => SetMetadata(ROLES_KEY, roles);
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
-      ROLES_KEY,
-      [context.getHandler(), context.getClass()],
-    );
+    const requiredRoles =
+      this.reflector.get<string[]>('roles', context.getHandler()) || [];
 
-    if (!requiredRoles) {
-      // If no roles are specified, allow access (let AuthGuard handle authentication)
+    if (requiredRoles.length === 0) {
       return true;
     }
 
-    const request: Request = context.switchToHttp().getRequest();
-    const user = request['user'];
+    const request = context.switchToHttp().getRequest();
+    const user = request['user'] as any;
 
     if (!user) {
       throw new ForbiddenException('User not found in request');
     }
 
-    const hasRole = requiredRoles.some((role) => user.role === role);
+    // Normalize user roles into a string array
+    const userRoles: string[] = (() => {
+      if (Array.isArray(user.role)) return user.role.map(String);
+      if (typeof user.role === 'string') return [user.role];
+      if (Array.isArray(user.roles)) return user.roles.map(String);
+      if (typeof user.roles === 'string') return [user.roles];
+      return [];
+    })().map((r) => r.trim());
+
+    const hasRole = requiredRoles.some((role) =>
+      userRoles.includes(role as string),
+    );
 
     if (!hasRole) {
-      throw new ForbiddenException(
-        `Access denied. Required roles: ${requiredRoles.join(', ')}`,
-      );
+      throw new ForbiddenException('Access denied. Insufficient role.');
     }
 
     return true;

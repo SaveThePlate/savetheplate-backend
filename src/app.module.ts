@@ -12,6 +12,7 @@ import { WebSocketModule } from './websocket/websocket.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { CacheModule } from './cache/cache.module';
+import { GoogleAuthModule } from './google-auth/google-auth.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { CacheModule } from './cache/cache.module';
     AnnouncementsModule,
     ScheduleModule.forRoot(),
     WebSocketModule,
+    GoogleAuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

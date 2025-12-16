@@ -304,4 +304,12 @@ export class UsersService {
       },
     };
   }
+
+  async findOneByGoogleId(googleId: string) {
+    const user = await this.prisma.user.findUnique({ where: { googleId } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
 }
