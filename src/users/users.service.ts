@@ -312,4 +312,46 @@ export class UsersService {
     }
     return user;
   }
+
+  async updateGoogleId(userId: number, data: { googleId: string }) {
+    try {
+      return await this.prisma.user.update({
+        where: { id: userId },
+        data: { googleId: data.googleId },
+      });
+    } catch (error) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+  }
+
+  async findOrCreateGoogleUser(data: {
+    email: string;
+    googleId: string;
+  }) {
+    let user = await this.prisma.user.findUnique({
+      where: { email: data.email },
+    });
+
+    const username = data.email.split('@')[0];
+
+    if (!user) {
+      user = await this.prisma.user.create({
+        data: {
+          email: data.email,
+          username,
+          googleId: data.googleId,
+          role: 'NONE',
+        },
+      });
+    } else if (!user.googleId) {
+      // User exists but didn’t previously sign in with Google
+      user = await this.prisma.user.update({
+        where: { email: data.email },
+        data: { googleId: data.googleId },
+      });
+    }
+
+    return user;
+  }
+
 }

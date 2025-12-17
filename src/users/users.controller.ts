@@ -207,31 +207,53 @@ export class UsersController {
     }
   }
 
+  // @Get('get-role')
+  // @UseGuards(AuthGuard)
+  // async getCurrentUserRole(@Req() req) {
+  //   console.log('Received user ', req.user);
+  //   // Validate that user is authenticated
+  //   if (!req.user?.id) {
+  //     throw new BadRequestException('User not authenticated');
+  //   }
+
+  //   const userId = req.user.id;
+  //   try {
+  //     const user = await this.usersService.findById(userId);
+  //     if (!user) {
+  //       throw new NotFoundException('User not found');
+  //     }
+  //     return {
+  //       role: user.role,
+  //       message: 'User role retrieved successfully',
+  //     };
+  //   } catch (error) {
+  //     console.error('Error retrieving user role:', error);
+  //     if (error instanceof NotFoundException) {
+  //       throw error;
+  //     }
+  //     throw new InternalServerErrorException('Failed to retrieve user role');
+  //   }
+  // }
+
   @Get('get-role')
   @UseGuards(AuthGuard)
-  async getCurrentUserRole(@Req() req) {
-    // Validate that user is authenticated
-    if (!req.user?.id) {
+  async getCurrentUserRole(@Req() req: Request) {
+    const user = req.user as any;
+
+    if (!user || !user.id) {
       throw new BadRequestException('User not authenticated');
     }
 
-    const userId = req.user.id;
-    try {
-      const user = await this.usersService.findById(userId);
-      if (!user) {
-        throw new NotFoundException('User not found');
-      }
-      return {
-        role: user.role,
-        message: 'User role retrieved successfully',
-      };
-    } catch (error) {
-      console.error('Error retrieving user role:', error);
-      if (error instanceof NotFoundException) {
-        throw error;
-      }
-      throw new InternalServerErrorException('Failed to retrieve user role');
+    const dbUser = await this.usersService.findById(user.id);
+
+    if (!dbUser) {
+      throw new NotFoundException('User not found');
     }
+
+    return {
+      role: dbUser.role,
+      message: 'User role retrieved successfully',
+    };
   }
 
   // @Post('update-details')
