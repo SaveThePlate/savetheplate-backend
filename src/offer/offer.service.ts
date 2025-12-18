@@ -40,12 +40,15 @@ export class OfferService {
       ? await this.shortenUrl(data.mapsLink)
       : '';
 
+    // Add 1 dinar commission to the price
+    const finalPrice = Number(data.price) + 1;
+
     const offer = await this.prisma.offer.create({
       data: {
         ownerId: data.ownerId,
         title: data.title,
         description: data.description,
-        price: data.price,
+        price: finalPrice,
         originalPrice: data.originalPrice,
         expirationDate: data.expirationDate,
         pickupStartTime: data.pickupStartTime
@@ -339,7 +342,8 @@ export class OfferService {
       updateData.description = data.description || ''; // Allow empty description
     }
     if (data.price !== undefined) {
-      updateData.price = data.price;
+      // Add 1 dinar commission to the price
+      updateData.price = Number(data.price) + 1;
     }
     if (data.originalPrice !== undefined) {
       updateData.originalPrice = data.originalPrice;

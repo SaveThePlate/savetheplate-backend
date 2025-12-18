@@ -17,6 +17,12 @@ import {
   AuthMagicMailVerifierDtoRequest,
   AuthMagicMailVerifierDtoResponse,
   GetUserByTokenDtoResponse,
+  GoogleAuthDtoRequest,
+  GoogleAuthDtoResponse,
+  FacebookAuthDtoRequest,
+  FacebookAuthDtoResponse,
+  FacebookCallbackDtoRequest,
+  FacebookCallbackDtoResponse,
 } from './dto/auth-request.dto';
 
 @Controller('auth')
@@ -75,5 +81,32 @@ export class AuthController {
   @ApiOkResponse({ type: GetUserByTokenDtoResponse })
   GetUserByToken(@Req() request: Request) {
     return this.authService.GetUserByToken(request);
+  }
+
+  // ENDPOINT TO AUTHENTICATE WITH GOOGLE
+  @Post('/google')
+  @ApiOkResponse({ type: GoogleAuthDtoResponse })
+  async authenticateWithGoogle(
+    @Body() googleAuthDto: GoogleAuthDtoRequest,
+  ): Promise<GoogleAuthDtoResponse> {
+    return await this.authService.authenticateWithGoogle(googleAuthDto);
+  }
+
+  // ENDPOINT TO AUTHENTICATE WITH FACEBOOK (JavaScript SDK flow)
+  @Post('/facebook')
+  @ApiOkResponse({ type: FacebookAuthDtoResponse })
+  async authenticateWithFacebook(
+    @Body() facebookAuthDto: FacebookAuthDtoRequest,
+  ): Promise<FacebookAuthDtoResponse> {
+    return await this.authService.authenticateWithFacebook(facebookAuthDto);
+  }
+
+  // ENDPOINT TO HANDLE FACEBOOK OAUTH CALLBACK (Server-side OAuth flow)
+  @Post('/facebook/callback')
+  @ApiOkResponse({ type: FacebookCallbackDtoResponse })
+  async authenticateWithFacebookCallback(
+    @Body() facebookCallbackDto: FacebookCallbackDtoRequest,
+  ): Promise<FacebookCallbackDtoResponse> {
+    return await this.authService.authenticateWithFacebookCallback(facebookCallbackDto);
   }
 }

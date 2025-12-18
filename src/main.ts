@@ -90,6 +90,11 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { Logger } from '@nestjs/common';
 
+// Load environment variables from .env file
+// This is needed for local development and when .env file is present
+import * as dotenv from 'dotenv';
+dotenv.config();
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 

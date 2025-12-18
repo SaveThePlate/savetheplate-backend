@@ -164,5 +164,27 @@ export class CacheService {
     await this.del(this.getUserKey());
     await this.delPattern('users:providers');
   }
+
+  /**
+   * Generate cache key for provider ratings
+   */
+  getProviderRatingsKey(providerId: number): string {
+    return `ratings:provider:${providerId}`;
+  }
+
+  /**
+   * Generate cache key for provider average rating
+   */
+  getProviderAverageRatingKey(providerId: number): string {
+    return `ratings:provider:${providerId}:average`;
+  }
+
+  /**
+   * Invalidate provider ratings cache
+   */
+  async invalidateProviderRatings(providerId: number): Promise<void> {
+    await this.del(this.getProviderRatingsKey(providerId));
+    await this.del(this.getProviderAverageRatingKey(providerId));
+  }
 }
 
