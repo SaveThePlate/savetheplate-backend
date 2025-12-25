@@ -12,6 +12,7 @@ import { WebSocketModule } from './websocket/websocket.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { CacheModule } from './cache/cache.module';
+import { RatingModule } from './rating/rating.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CacheModule } from './cache/cache.module';
     OrderModule,
     ContactModule,
     AnnouncementsModule,
+    RatingModule,
     ScheduleModule.forRoot(),
     WebSocketModule,
   ],

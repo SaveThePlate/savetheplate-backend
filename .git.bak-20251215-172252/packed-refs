@@ -1,0 +1,16 @@
+# pack-refs with: peeled fully-peeled sorted 
+f2671202ada25ff1c0a6c2f9da331c2201401c71 refs/remotes/origin/backup-dev-before-reset
+b1a55d613610891ecc94d16414de9049e18fa9fb refs/remotes/origin/dependabot/npm_and_yarn/npm_and_yarn-14d90beb80
+2905672ed8b2c5631b8c4ff910ccef279e5b0a32 refs/remotes/origin/dev
+a70c34e625ab611a9a59c3225959a980cfb2958c refs/remotes/origin/feature/addOffers
+074fd3aed310f83bd5046b1eff84a3a27a490351 refs/remotes/origin/feature/auth
+bb53d052462cf3c592206baf65e159a321bbd1ee refs/remotes/origin/feature/order
+4e928084a28dc15331f3febd59fe6a79d0faeb2c refs/remotes/origin/feature/order2
+a7edac52d6baba77ebd4c1ac01e182498ec2d63a refs/remotes/origin/feature/product
+3103415742521cd5810616a80b9a9d20edc18de1 refs/remotes/origin/feature/profile
+8c7aa212471ddcc062991bde7bf139beae4cb6bb refs/remotes/origin/feature/provider
+ae079311abe9035cd28015c05dbd170f7391755f refs/remotes/origin/feature/roles
+dad728a51cdf34ef4a5616cc5b77f4ffa620d50e refs/remotes/origin/feature/usersProfiles
+20a13109d82bee4fa25c8b249553f98f05e1c5a1 refs/remotes/origin/main
+a3685b9c9dd5994b8113b89b9a21a15b14f90085 refs/remotes/origin/recovery/pre-reset
+7d080a97b02f2f86bdec0435701a141a0538c06c refs/remotes/origin/revert-3-feature/product

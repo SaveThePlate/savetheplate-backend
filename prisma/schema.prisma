@@ -93,6 +93,7 @@ model Order {
   createdAt DateTime @default(now())
   updatedAt   DateTime  @updatedAt
   collectedAt DateTime?
+  rating    Rating?
 }
 
 model ContactMessage {
@@ -105,4 +106,17 @@ model ContactMessage {
   userId   Int?     // Optional: link to user if logged in
   createdAt DateTime @default(now())
   read      Boolean  @default(false)
+}
+
+model Rating {
+  id         Int      @id @default(autoincrement())
+  orderId    Int      @unique
+  providerId Int
+  userId     Int      // The user who gave the rating
+  rating     Int      // 1-5 stars
+  tags       Json?    // Array of tag strings (e.g., ["great_value", "fresh_food"])
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
 }
