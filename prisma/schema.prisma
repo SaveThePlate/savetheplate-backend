@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -47,12 +47,14 @@ model User {
   id           Int     @id @default(autoincrement())
   email        String  @unique
   username     String
+  password     String?
   location     String?
   mapsLink     String? @db.Text
   longitude    Float?
   latitude     Float?
   phoneNumber  Int?
   profileImage String?
+  emailVerified Boolean @default(false)
   orders       Order[]
   offers       Offer[]
   role         UserRole

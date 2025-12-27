@@ -88,7 +88,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -104,6 +104,33 @@ async function bootstrap() {
 
     // Add global exception filter to catch all errors
     app.useGlobalFilters(new AllExceptionsFilter());
+
+    // Enable global validation pipe for DTOs
+    app.useGlobalPipes(
+      new ValidationPipe({
+        whitelist: true, // Strip properties that don't have decorators
+        forbidNonWhitelisted: false, // Don't throw error if non-whitelisted properties are present (more lenient)
+        transform: true, // Automatically transform payloads to DTO instances
+        transformOptions: {
+          enableImplicitConversion: true, // Enable implicit type conversion
+        },
+        exceptionFactory: (errors) => {
+          // Format validation errors to be more readable
+          const messages = errors.map((error) => {
+            const constraints = error.constraints || {};
+            return Object.values(constraints).join(', ');
+          });
+          return new HttpException(
+            {
+              statusCode: HttpStatus.BAD_REQUEST,
+              message: messages.length === 1 ? messages[0] : messages,
+              error: 'Validation failed',
+            },
+            HttpStatus.BAD_REQUEST,
+          );
+        },
+      }),
+    );
 
     const config = new DocumentBuilder()
       .setTitle('Cats example')

@@ -17,12 +17,35 @@ import {
   AuthMagicMailVerifierDtoRequest,
   AuthMagicMailVerifierDtoResponse,
   GetUserByTokenDtoResponse,
+  SignupDtoRequest,
+  SignupDtoResponse,
+  SendVerificationEmailDtoRequest,
+  SendVerificationEmailDtoResponse,
+  VerifyEmailCodeDtoRequest,
+  VerifyEmailCodeDtoResponse,
 } from './dto/auth-request.dto';
 
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  // ENDPOINT TO REGISTER USER WITH PASSWORD
+  @Post('/signup')
+  @ApiOkResponse({ type: SignupDtoResponse })
+  async signup(@Body() signupDto: SignupDtoRequest) {
+    try {
+      return await this.authService.signup(signupDto);
+    } catch (error) {
+      // Log the error for debugging
+      console.error('Signup controller error:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+      });
+      throw error;
+    }
+  }
 
   // ENDPOINT TO REGISTER USER
   @Post('/send-magic-mail')
@@ -36,37 +59,82 @@ export class AuthController {
   async AuthMagicMailVerifier(
     @Body() AuthUserDto: AuthMagicMailVerifierDtoRequest,
   ): Promise<AuthMagicMailVerifierDtoResponse> {
-    const response = await this.authService.AuthMagicMailVerifier(AuthUserDto);
+    try {
+      const response = await this.authService.AuthMagicMailVerifier(AuthUserDto);
 
-    // Get user role from response (user object is always returned from service)
-    const userRole = response.user?.role || 'NONE';
+      // Get user role from response (user object is always returned from service)
+      const userRole = response.user?.role || 'NONE';
 
-    // Determine redirect path based on role
-    let redirectTo = '/';
-    if (userRole === 'PROVIDER') {
-      redirectTo = '/provider/home';
-    } else if (userRole === 'PENDING_PROVIDER') {
-      redirectTo = '/onboarding/thank-you';
-    } else if (userRole === 'CLIENT') {
-      redirectTo = '/client/home';
+      // Determine redirect path based on role
+      let redirectTo = '/';
+      if (userRole === 'PROVIDER') {
+        redirectTo = '/provider/home';
+      } else if (userRole === 'PENDING_PROVIDER') {
+        redirectTo = '/onboarding/thank-you';
+      } else if (userRole === 'CLIENT') {
+        redirectTo = '/client/home';
+      }
+
+      // Return complete response with user, role, and redirect information
+      return {
+        message: response.message,
+        accessToken: response.accessToken,
+        refreshToken: response.refreshToken,
+        user: response.user
+          ? {
+              id: response.user.id,
+              email: response.user.email,
+              role: response.user.role,
+            }
+          : null,
+        needsOnboarding: userRole === 'NONE',
+        redirectTo, // Include redirect path in response
+        role: userRole, // Include role for frontend
+      };
+    } catch (error) {
+      // Log the error for debugging
+      console.error('Verify magic mail controller error:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+        token: AuthUserDto?.token ? 'present' : 'missing',
+      });
+      throw error;
     }
+  }
 
-    // Return complete response with user, role, and redirect information
-    return {
-      message: response.message,
-      accessToken: response.accessToken,
-      refreshToken: response.refreshToken,
-      user: response.user
-        ? {
-            id: response.user.id,
-            email: response.user.email,
-            role: response.user.role,
-          }
-        : null,
-      needsOnboarding: userRole === 'NONE',
-      redirectTo, // Include redirect path in response
-      role: userRole, // Include role for frontend
-    };
+  // ENDPOINT TO SEND VERIFICATION EMAIL
+  @Post('/send-verification-email')
+  @ApiOkResponse({ type: SendVerificationEmailDtoResponse })
+  async sendVerificationEmail(
+    @Body() sendVerificationDto: SendVerificationEmailDtoRequest,
+  ) {
+    try {
+      return await this.authService.sendVerificationEmail(sendVerificationDto);
+    } catch (error) {
+      console.error('Send verification email controller error:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+      });
+      throw error;
+    }
+  }
+
+  // ENDPOINT TO VERIFY EMAIL CODE
+  @Post('/verify-email-code')
+  @ApiOkResponse({ type: VerifyEmailCodeDtoResponse })
+  async verifyEmailCode(@Body() verifyCodeDto: VerifyEmailCodeDtoRequest) {
+    try {
+      return await this.authService.verifyEmailCode(verifyCodeDto);
+    } catch (error) {
+      console.error('Verify email code controller error:', {
+        message: error?.message,
+        status: error?.status,
+        response: error?.response,
+      });
+      throw error;
+    }
   }
 
   // ENDPOINT TO GET USER BY TOKEN
