@@ -83,11 +83,11 @@
 // bootstrap();
 
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './src/app.module';
+import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { AllExceptionsFilter } from './src/common/filters/http-exception.filter';
+import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
 
 async function bootstrap() {
