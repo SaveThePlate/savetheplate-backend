@@ -29,8 +29,12 @@ import { CacheService } from './cache.service';
             ttl: 300, // Default TTL: 5 minutes (300 seconds)
           };
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-          console.warn('Redis connection failed, falling back to in-memory cache:', errorMessage);
+          // Redis is optional - silently fallback to in-memory cache
+          // Only log in development mode to reduce noise in production logs
+          if (process.env.NODE_ENV === 'development') {
+            const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+            console.warn('Redis connection failed, falling back to in-memory cache:', errorMessage);
+          }
           // Fallback to in-memory cache if Redis is not available
           return {
             ttl: 300,
