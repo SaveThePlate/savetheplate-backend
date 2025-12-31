@@ -495,7 +495,8 @@ export class OfferService {
         throw error;
       }
       // Otherwise, wrap in a more descriptive error
-      throw new Error(`Failed to delete offer: ${error.message}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to delete offer: ${errorMessage}`);
     }
   }
 }

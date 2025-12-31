@@ -30,9 +30,8 @@ export class RatingController {
       ) {
         throw error;
       }
-      throw new BadRequestException(
-        error.message || 'Failed to create rating',
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create rating';
+      throw new BadRequestException(errorMessage);
     }
   }
 

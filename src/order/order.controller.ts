@@ -62,7 +62,8 @@ export class OrderController {
       ) {
         throw error;
       }
-      throw new BadRequestException(error.message || 'Failed to create order');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create order';
+      throw new BadRequestException(errorMessage);
     }
   }
 

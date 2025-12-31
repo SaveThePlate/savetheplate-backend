@@ -60,12 +60,14 @@ export class UsersController {
       return await this.usersService.create(data);
     } catch (error) {
       console.error('Error creating user:', error);
-      if (error.code === 'P2002') {
+      const errorObj = error as any;
+      if (errorObj?.code === 'P2002') {
         // Prisma unique constraint violation
         throw new BadRequestException('User with this email already exists');
       }
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(
-        `Failed to create user: ${error?.message || 'Unknown error'}`,
+        `Failed to create user: ${errorMessage}`,
       );
     }
   }
@@ -184,14 +186,15 @@ export class UsersController {
         role: roleToSet,
       };
     } catch (error) {
+      const errorObj = error as any;
       console.error('Error updating user role:', {
-        error: error?.message || error,
-        stack: error?.stack,
+        error: error instanceof Error ? error.message : errorObj?.message || error,
+        stack: error instanceof Error ? error.stack : errorObj?.stack,
         userId,
         role: upperRole,
-        errorName: error?.name,
-        errorCode: error?.code,
-        errorConstructor: error?.constructor?.name,
+        errorName: errorObj?.name,
+        errorCode: errorObj?.code,
+        errorConstructor: errorObj?.constructor?.name,
         isHttpException: error instanceof BadRequestException || error instanceof NotFoundException || error instanceof InternalServerErrorException,
       });
       
@@ -201,8 +204,9 @@ export class UsersController {
       }
       
       // Wrap other errors in InternalServerErrorException
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(
-        `Failed to update user role: ${error?.message || 'Unknown error'}`,
+        `Failed to update user role: ${errorMessage}`,
       );
     }
   }
@@ -754,15 +758,16 @@ export class UsersController {
       return await this.usersService.updateUserProfile(user.email, updatedData);
     } catch (error) {
       // Log detailed error server-side for debugging and return a helpful message
+      const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(
         'Failed to update profile for',
         user?.email,
         'error:',
-        error?.message || error,
+        errorMessage,
       );
       throw new InternalServerErrorException(
-        error?.message
-          ? `Failed to update profile: ${error.message}`
+        errorMessage
+          ? `Failed to update profile: ${errorMessage}`
           : 'Failed to update profile',
       );
     }

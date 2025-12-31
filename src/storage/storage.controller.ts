@@ -33,7 +33,8 @@ export class StorageController {
       }
     } catch (err) {
       // Log but don't crash here; Multer will surface errors if directory is unusable
-      console.error('Could not create store directory:', err?.message || err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      console.error('Could not create store directory:', errorMessage);
     }
   }
 
@@ -124,15 +125,12 @@ export class StorageController {
     } catch (error) {
       console.error('Upload error:', error);
       // Map some common errors to better HTTP responses
-      if (
-        error &&
-        error.message &&
-        error.message.includes('Only image files are allowed')
-      ) {
-        throw new BadRequestException(error.message);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Only image files are allowed')) {
+        throw new BadRequestException(errorMessage);
       }
       throw new InternalServerErrorException(
-        `Upload failed: ${error?.message || error}`,
+        `Upload failed: ${errorMessage}`,
       );
     }
   }

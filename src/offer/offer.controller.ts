@@ -304,7 +304,8 @@ export class OfferController {
       const updatedOffer = await this.offerService.updateOffer(dataToUpdate);
       return updatedOffer;
     } catch (error) {
-      throw new NotFoundException(error.message || 'Failed to update offer');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update offer';
+      throw new NotFoundException(errorMessage);
     }
   }
 }

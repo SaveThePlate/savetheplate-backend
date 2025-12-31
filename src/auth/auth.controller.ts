@@ -38,10 +38,11 @@ export class AuthController {
       return await this.authService.signup(signupDto);
     } catch (error) {
       // Log the error for debugging
+      const errorObj = error as any;
       console.error('Signup controller error:', {
-        message: error?.message,
-        status: error?.status,
-        response: error?.response,
+        message: error instanceof Error ? error.message : errorObj?.message,
+        status: errorObj?.status,
+        response: errorObj?.response,
       });
       throw error;
     }
@@ -93,10 +94,11 @@ export class AuthController {
       };
     } catch (error) {
       // Log the error for debugging
+      const errorObj = error as any;
       console.error('Verify magic mail controller error:', {
-        message: error?.message,
-        status: error?.status,
-        response: error?.response,
+        message: error instanceof Error ? error.message : errorObj?.message,
+        status: errorObj?.status,
+        response: errorObj?.response,
         token: AuthUserDto?.token ? 'present' : 'missing',
       });
       throw error;
@@ -112,10 +114,11 @@ export class AuthController {
     try {
       return await this.authService.sendVerificationEmail(sendVerificationDto);
     } catch (error) {
+      const errorObj = error as any;
       console.error('Send verification email controller error:', {
-        message: error?.message,
-        status: error?.status,
-        response: error?.response,
+        message: error instanceof Error ? error.message : errorObj?.message,
+        status: errorObj?.status,
+        response: errorObj?.response,
       });
       throw error;
     }
@@ -128,10 +131,11 @@ export class AuthController {
     try {
       return await this.authService.verifyEmailCode(verifyCodeDto);
     } catch (error) {
+      const errorObj = error as any;
       console.error('Verify email code controller error:', {
-        message: error?.message,
-        status: error?.status,
-        response: error?.response,
+        message: error instanceof Error ? error.message : errorObj?.message,
+        status: errorObj?.status,
+        response: errorObj?.response,
       });
       throw error;
     }
