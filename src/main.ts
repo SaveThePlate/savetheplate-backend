@@ -146,6 +146,8 @@ async function bootstrap() {
     // Enable CORS for the frontend and allow credentials
     // Explicitly allow all ccdev.space domains and configured frontend URLs
     const allowedOrigins = [
+      'http://savetheplate.tn',
+      'https://savetheplate.tn',
       'https://leftover.ccdev.space',
       'https://savetheplate.ccdev.space',
       'http://localhost:3000',
@@ -236,7 +238,8 @@ async function bootstrap() {
         // The main CORS middleware should handle this, but this ensures it's set on errors
         if (
           origin &&
-          (origin.includes('.ccdev.space') ||
+          (origin.includes('savetheplate.tn') ||
+            origin.includes('.ccdev.space') ||
             origin.startsWith('http://localhost:') ||
             origin.startsWith('http://127.0.0.1:'))
         ) {

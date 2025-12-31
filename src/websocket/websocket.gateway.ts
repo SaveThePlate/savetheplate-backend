@@ -37,6 +37,8 @@ import { Logger } from '@nestjs/common';
       const allowedOrigins = [
         process.env.FRONTEND_URL,
         process.env.NEXT_PUBLIC_FRONTEND_URL,
+        'http://savetheplate.tn',
+        'https://savetheplate.tn',
         'https://leftover.ccdev.space',
         'https://savetheplate.ccdev.space',
         'https://leftover-be.ccdev.space',
