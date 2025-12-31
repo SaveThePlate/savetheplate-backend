@@ -75,13 +75,46 @@ export class AllExceptionsFilter implements ExceptionFilter {
         // Silently ignore CORS header errors
       }
 
-      // Log the error
-      this.logger.error(
-        `${request.method || 'unknown'} ${request.url || 'unknown'}`,
-        exception instanceof Error
-          ? exception.stack
-          : JSON.stringify(exception),
+      // List of frontend routes that should not be logged as errors
+      // These are Next.js routes that shouldn't reach the backend API
+      const frontendRoutes = [
+        '/_next/',
+        '/client/',
+        '/provider/',
+        '/signIn',
+        '/signin',
+        '/onboarding/',
+        '/privacy',
+        '/contact',
+        '/impact',
+        '/callback/',
+        '/data-deletion',
+        '/logo',
+        '/favicon',
+        '/robots.txt',
+        '/sitemap.xml',
+      ];
+
+      const isFrontendRoute = frontendRoutes.some(route => 
+        request.url?.startsWith(route) || request.url?.includes(route)
       );
+
+      // Only log errors that are not 404s for frontend routes
+      // This reduces log noise from misconfigured proxies or direct frontend requests
+      const shouldLog = !(
+        status === HttpStatus.NOT_FOUND && 
+        isFrontendRoute
+      );
+
+      if (shouldLog) {
+        // Log the error
+        this.logger.error(
+          `${request.method || 'unknown'} ${request.url || 'unknown'}`,
+          exception instanceof Error
+            ? exception.stack
+            : JSON.stringify(exception),
+        );
+      }
 
       // Ensure response has the necessary methods before calling them
       if (
