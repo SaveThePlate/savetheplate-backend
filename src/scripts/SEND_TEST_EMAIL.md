@@ -44,7 +44,7 @@ curl -X POST https://leftover-be.ccdev.space/auth/send-magic-mail \
 
 2. Run the script:
    ```bash
-   npx ts-node scripts/send-test-auth-email.ts
+   npx ts-node src/scripts/send-test-auth-email.ts
    ```
 
 Note: In development mode, the email won't actually be sent - the magic link will be printed to the console instead.

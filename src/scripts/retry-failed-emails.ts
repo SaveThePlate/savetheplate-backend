@@ -2,7 +2,7 @@
  * Script to retry sending to failed email addresses
  * 
  * Usage:
- *   npx ts-node scripts/retry-failed-emails.ts
+ *   npx ts-node src/scripts/retry-failed-emails.ts
  */
 
 import axios from 'axios';

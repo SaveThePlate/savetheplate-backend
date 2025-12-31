@@ -2,14 +2,14 @@
  * Script to send a test auth email by bootstrapping the NestJS app
  * 
  * Usage:
- *   npm run build && node -r tsconfig-paths/register dist/scripts/send-test-auth-email.js
+ *   npm run build && node -r tsconfig-paths/register dist/src/scripts/send-test-auth-email.js
  *   OR
- *   ts-node -r tsconfig-paths/register scripts/send-test-auth-email.ts
+ *   ts-node -r tsconfig-paths/register src/scripts/send-test-auth-email.ts
  */
 
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../src/app.module';
-import { AuthService } from '../src/auth/auth.service';
+import { AppModule } from '../app.module';
+import { AuthService } from '../auth/auth.service';
 
 const TEST_EMAIL = 'sarrasoussia2001@gmail.com';
 

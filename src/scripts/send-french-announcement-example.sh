@@ -3,11 +3,11 @@
 # Example script to send French announcement using curl
 # 
 # Usage:
-#   chmod +x scripts/send-french-announcement-example.sh
-#   ./scripts/send-french-announcement-example.sh
+#   chmod +x src/scripts/send-french-announcement-example.sh
+#   ./src/scripts/send-french-announcement-example.sh
 #
 # Or with custom token:
-#   AUTH_TOKEN=your_token_here ./scripts/send-french-announcement-example.sh
+#   AUTH_TOKEN=your_token_here ./src/scripts/send-french-announcement-example.sh
 
 API_URL="${API_URL:-http://localhost:3001}"
 AUTH_TOKEN="${AUTH_TOKEN:-YOUR_JWT_TOKEN_HERE}"

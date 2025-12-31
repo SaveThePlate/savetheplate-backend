@@ -2,7 +2,7 @@
  * Script to send a French announcement to a list of email addresses
  * 
  * Usage:
- *   ts-node scripts/send-french-announcement.ts
+ *   ts-node src/scripts/send-french-announcement.ts
  * 
  * Make sure to set your JWT token in the AUTH_TOKEN environment variable
  * or update the TOKEN constant below.

@@ -178,7 +178,7 @@ When the admin role system is implemented, the endpoint will be updated to use r
 
 ## Email Template
 
-The announcements use a React-based email template (`emails/Announcement.tsx`) that extends the main template (`emails/MainTemplate.tsx`). The template includes:
+The announcements use a React-based email template (`src/emails/Announcement.tsx`) that extends the main template (`src/emails/MainTemplate.tsx`). The template includes:
 
 - **Header**: "Save The Plate" branding
 - **Title**: Customizable main title
@@ -399,8 +399,8 @@ curl -X POST http://localhost:3001/announcements/send \
 - `src/auth/admin.guard.ts` - Admin authorization guard
 - `src/auth/roles.guard.ts` - Role-based authorization guard
 - `src/utils/mailing/resend.service.ts` - Email service
-- `emails/Announcement.tsx` - Email template
-- `emails/MainTemplate.tsx` - Base email template
+- `src/emails/Announcement.tsx` - Email template
+- `src/emails/MainTemplate.tsx` - Base email template
 
 ## Support
 
