@@ -127,7 +127,8 @@ export class AnnouncementsService {
         }
       } catch (error) {
         failed++;
-        errors.push(`${user.email}: ${error.message}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(`${user.email}: ${errorMessage}`);
       }
     }
 

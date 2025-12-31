@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { encode } from 'blurhash';
 import * as fs from 'fs';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 
 @Injectable()
 export class StorageService {
@@ -57,7 +57,8 @@ export class StorageService {
         height: optimizedMetadata.height || 1500,
       };
     } catch (error) {
-      console.error(`Error processing ${file?.filename}:`, error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Error processing ${file?.filename}:`, errorMessage);
       // Return original file info if processing fails
       return {
         ...file,
@@ -105,7 +106,8 @@ export class StorageService {
       // If you have a database, you could update the image record here:
       // await this.updateImageBlurhash(filename, blurhash);
     } catch (error) {
-      console.error(`Error generating blurhash:`, error.message);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`Error generating blurhash:`, errorMessage);
     }
   }
 }

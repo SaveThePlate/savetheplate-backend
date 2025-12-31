@@ -50,11 +50,12 @@ export class UsersService {
       console.log(`Successfully updated user ${userId} role from ${user.role} to ${role}`);
       return updatedUser;
     } catch (error) {
+      const errorObj = error as any;
       console.error(`Error updating role for user ${userId} to ${role}:`, {
-        error: error?.message,
-        code: error?.code,
-        meta: error?.meta,
-        stack: error?.stack,
+        error: error instanceof Error ? error.message : errorObj?.message,
+        code: errorObj?.code,
+        meta: errorObj?.meta,
+        stack: error instanceof Error ? error.stack : errorObj?.stack,
       });
       
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
@@ -62,16 +63,17 @@ export class UsersService {
       }
       
       // Handle Prisma-specific errors
-      if (error?.code === 'P2002') {
+      if (errorObj?.code === 'P2002') {
         throw new BadRequestException('Unique constraint violation');
       }
-      if (error?.code === 'P2025') {
+      if (errorObj?.code === 'P2025') {
         throw new NotFoundException(`User with ID ${userId} not found`);
       }
       
       // Re-throw with more context as InternalServerErrorException
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       throw new InternalServerErrorException(
-        `Failed to update user role: ${error?.message || 'Unknown error'}. User ID: ${userId}, Role: ${role}, Error Code: ${error?.code || 'N/A'}`,
+        `Failed to update user role: ${errorMessage}. User ID: ${userId}, Role: ${role}, Error Code: ${errorObj?.code || 'N/A'}`,
       );
     }
   }

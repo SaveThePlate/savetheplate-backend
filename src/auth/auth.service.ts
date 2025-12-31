@@ -94,10 +94,11 @@ export class AuthService {
         sent: true,
       };
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error sending email.';
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
-          error: error.message || 'Error sending email.',
+          error: errorMessage,
         },
         HttpStatus.BAD_REQUEST,
         {
@@ -180,14 +181,16 @@ export class AuthService {
       }
 
       // Log the error for debugging
+      const errorObj = error as any;
       console.error('Verify magic mail error:', {
-        message: error?.message,
-        code: error?.code,
-        stack: error?.stack,
+        message: error instanceof Error ? error.message : errorObj?.message,
+        code: errorObj?.code,
+        stack: error instanceof Error ? error.stack : errorObj?.stack,
       });
 
+      const errorMessage = error instanceof Error ? error.message : (errorObj?.message || 'Token is not valid or expired.');
       throw new HttpException(
-        error?.message || 'Token is not valid or expired.',
+        errorMessage,
         HttpStatus.BAD_REQUEST,
         {
           cause: error,
@@ -305,7 +308,8 @@ export class AuthService {
       };
     } catch (error) {
       // Handle Prisma unique constraint violations
-      if (error?.code === 'P2002') {
+      const errorObj = error as any;
+      if (errorObj?.code === 'P2002') {
         throw new HttpException(
           'User with this email or username already exists',
           HttpStatus.BAD_REQUEST,
@@ -319,13 +323,14 @@ export class AuthService {
 
       // Log the error for debugging
       console.error('Signup error:', {
-        message: error?.message,
-        code: error?.code,
-        stack: error?.stack,
+        message: error instanceof Error ? error.message : errorObj?.message,
+        code: errorObj?.code,
+        stack: error instanceof Error ? error.stack : errorObj?.stack,
       });
 
+      const errorMessage = error instanceof Error ? error.message : (errorObj?.message || 'Error creating user');
       throw new HttpException(
-        error?.message || 'Error creating user',
+        errorMessage,
         HttpStatus.BAD_REQUEST,
         {
           cause: error,
@@ -433,8 +438,9 @@ export class AuthService {
         throw error;
       }
 
+      const errorMessage = error instanceof Error ? error.message : 'Error sending verification email.';
       throw new HttpException(
-        error?.message || 'Error sending verification email.',
+        errorMessage,
         HttpStatus.BAD_REQUEST,
         {
           cause: error,
@@ -529,8 +535,9 @@ export class AuthService {
         throw error;
       }
 
+      const errorMessage = error instanceof Error ? error.message : 'Error verifying email code.';
       throw new HttpException(
-        error?.message || 'Error verifying email code.',
+        errorMessage,
         HttpStatus.BAD_REQUEST,
         {
           cause: error,

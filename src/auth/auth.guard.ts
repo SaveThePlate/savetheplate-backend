@@ -70,7 +70,8 @@ export class AuthGuard implements CanActivate {
         this.logger.warn(e.message);
         throw e;
       }
-      this.logger.warn(`Auth guard error: ${e.message}`);
+      const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+      this.logger.warn(`Auth guard error: ${errorMessage}`);
       throw new UnauthorizedException('Authentication failed');
     }
   }
