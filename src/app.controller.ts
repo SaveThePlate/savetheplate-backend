@@ -9,11 +9,6 @@ export class AppController {
     private readonly prisma: PrismaService,
   ) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
   @Get('health')
   async health() {
     // Basic health check - doesn't require database
