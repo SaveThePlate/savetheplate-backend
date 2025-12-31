@@ -132,14 +132,45 @@ async function bootstrap() {
       }),
     );
 
-    const config = new DocumentBuilder()
-      .setTitle('Cats example')
-      .setDescription('The cats API description')
-      .setVersion('1.0')
-      .addTag('cats')
-      .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api', app, document);
+    // Swagger configuration - only enable in development or with authentication
+    const enableSwagger = process.env.ENABLE_SWAGGER === 'true' || process.env.NODE_ENV !== 'production';
+    
+    if (enableSwagger) {
+      const config = new DocumentBuilder()
+        .setTitle('Save The Plate API')
+        .setDescription('Save The Plate API documentation')
+        .setVersion('1.0')
+        .addBearerAuth()
+        .build();
+      const document = SwaggerModule.createDocument(app, config);
+      
+      // Protect Swagger with basic auth in production
+      if (process.env.NODE_ENV === 'production') {
+        // Use a custom middleware to protect Swagger
+        app.use('/api', (req, res, next) => {
+          const swaggerUser = process.env.SWAGGER_USER || 'admin';
+          const swaggerPass = process.env.SWAGGER_PASSWORD || 'changeme';
+          
+          const auth = req.headers.authorization;
+          if (!auth || !auth.startsWith('Basic ')) {
+            res.setHeader('WWW-Authenticate', 'Basic realm="Swagger API Documentation"');
+            return res.status(401).send('Authentication required');
+          }
+          
+          const credentials = Buffer.from(auth.slice(6), 'base64').toString('utf-8');
+          const [username, password] = credentials.split(':');
+          
+          if (username === swaggerUser && password === swaggerPass) {
+            return next();
+          }
+          
+          res.setHeader('WWW-Authenticate', 'Basic realm="Swagger API Documentation"');
+          return res.status(401).send('Invalid credentials');
+        });
+      }
+      
+      SwaggerModule.setup('api', app, document);
+    }
 
     app.useStaticAssets(join(__dirname, '..', 'uploads'));
 
