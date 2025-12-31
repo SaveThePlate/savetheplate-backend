@@ -3,8 +3,8 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { User, UserRole } from '@prisma/client';
 import { ResendService } from 'src/utils/mailing/resend.service';
 import { CacheService } from 'src/cache/cache.service';
-import MagicLinkEmailTemplate from 'emails/MagicLink';
-import VerificationEmailTemplate from 'emails/VerificationEmail';
+import MagicLinkEmailTemplate from 'src/emails/MagicLink';
+import VerificationEmailTemplate from 'src/emails/VerificationEmail';
 import { render } from '@react-email/render';
 import {
   AuthMagicMailSenderDtoRequest,

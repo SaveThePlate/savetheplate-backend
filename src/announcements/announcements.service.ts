@@ -2,7 +2,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ResendService } from 'src/utils/mailing/resend.service';
 import { UserRole } from '@prisma/client';
-import AnnouncementEmailTemplate from '../../emails/Announcement';
+import AnnouncementEmailTemplate from '../emails/Announcement';
 import { render } from '@react-email/render';
 import { SendAnnouncementDto } from './dto/send-announcement.dto';
 
