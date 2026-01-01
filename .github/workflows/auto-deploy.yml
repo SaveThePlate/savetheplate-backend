@@ -19,6 +19,8 @@ jobs:
           username: ${{ secrets.PROD_SERVER_USER }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.PROD_SSH_PASSPHRASE }}
+          timeout: 30s
+          command_timeout: 10m
           script: |
             set -e
             echo "📥 Pulling latest backend changes from git..."
