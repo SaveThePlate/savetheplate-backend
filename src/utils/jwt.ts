@@ -1,4 +1,5 @@
 import { JwtService } from '@nestjs/jwt';
+import type { StringValue } from 'ms';
 
 export enum JwtType {
   EmailToken,
@@ -44,15 +45,18 @@ export const generateToken = async (
     email: email,
     type: type,
   };
-  const jwt = new JwtService();
+  const jwt = new JwtService({
+    secret: process.env.JWT_SECRET,
+  });
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
     throw new Error('JWT_SECRET environment variable is required');
   }
   //generating access and refresh tokens
+  const expiresIn = JwtExpireDateByType(type);
   const token = await jwt.signAsync(jwtPayload, {
     secret: jwtSecret,
-    expiresIn: JwtExpireDateByType(type),
+    expiresIn: expiresIn as StringValue,
   });
 
   //returning the tokens
@@ -60,7 +64,9 @@ export const generateToken = async (
 };
 
 export const DecodeToken = async (token: string): Promise<JwtPayload> => {
-  const jwt = new JwtService();
+  const jwt = new JwtService({
+    secret: process.env.JWT_SECRET,
+  });
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
     throw new Error('JWT_SECRET environment variable is required');
@@ -75,7 +81,9 @@ export const JustCrypt = async (text: string): Promise<string> => {
   const jwtPayload: { text: string } = {
     text: text,
   };
-  const jwt = new JwtService();
+  const jwt = new JwtService({
+    secret: process.env.JWT_SECRET,
+  });
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
     throw new Error('JWT_SECRET environment variable is required');
@@ -89,7 +97,9 @@ export const JustCrypt = async (text: string): Promise<string> => {
 };
 
 export const JustDecrypt = async (token: string): Promise<string> => {
-  const jwt = new JwtService();
+  const jwt = new JwtService({
+    secret: process.env.JWT_SECRET,
+  });
   const jwtSecret = process.env.JWT_SECRET;
   if (!jwtSecret) {
     throw new Error('JWT_SECRET environment variable is required');
