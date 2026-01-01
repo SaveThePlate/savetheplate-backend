@@ -19,6 +19,8 @@ import {
   GetUserByTokenDtoResponse,
   SignupDtoRequest,
   SignupDtoResponse,
+  SigninDtoRequest,
+  SigninDtoResponse,
   SendVerificationEmailDtoRequest,
   SendVerificationEmailDtoResponse,
   VerifyEmailCodeDtoRequest,
@@ -29,6 +31,24 @@ import {
 @ApiTags('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  // ENDPOINT TO SIGN IN WITH PASSWORD
+  @Post('/signin')
+  @ApiOkResponse({ type: SigninDtoResponse })
+  async signin(@Body() signinDto: SigninDtoRequest) {
+    try {
+      return await this.authService.signin(signinDto);
+    } catch (error) {
+      // Log the error for debugging
+      const errorObj = error as any;
+      console.error('Signin controller error:', {
+        message: error instanceof Error ? error.message : errorObj?.message,
+        status: errorObj?.status,
+        response: errorObj?.response,
+      });
+      throw error;
+    }
+  }
 
   // ENDPOINT TO REGISTER USER WITH PASSWORD
   @Post('/signup')

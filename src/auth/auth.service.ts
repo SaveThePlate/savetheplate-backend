@@ -247,6 +247,107 @@ export class AuthService {
     };
   }
 
+  // Signin with email and password
+  async signin(signinDto: SigninDtoRequest): Promise<SigninDtoResponse> {
+    try {
+      // Validate input
+      if (!signinDto.email || !signinDto.password) {
+        throw new HttpException(
+          'Email and password are required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Find user by email
+      const user = await this.prisma.user.findFirst({
+        where: {
+          email: signinDto.email,
+        },
+      });
+
+      if (!user) {
+        throw new HttpException(
+          'Invalid email or password',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      // Check if user has a password (users created via magic link might not have one)
+      if (!user.password) {
+        throw new HttpException(
+          'This account was created with a magic link. Please use magic link to sign in.',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      // Verify password using bcrypt
+      const isPasswordValid = await bcrypt.compare(
+        signinDto.password,
+        user.password,
+      );
+
+      if (!isPasswordValid) {
+        throw new HttpException(
+          'Invalid email or password',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      // Generate tokens
+      const accessToken = await generateToken(
+        user.id.toString(),
+        user.email,
+        JwtType.NormalToken,
+      );
+
+      const refreshToken = await generateToken(
+        user.id.toString(),
+        user.email,
+        JwtType.RefreshToken,
+      );
+
+      return {
+        message: 'Sign in successful',
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          location: user.location || '',
+          phoneNumber: user.phoneNumber?.toString() || '',
+          profileImage: user.profileImage || '',
+          role: user.role,
+          emailVerified: user.emailVerified || false,
+        },
+        role: user.role,
+      };
+    } catch (error) {
+      // Re-throw HttpExceptions as-is
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      // Log the error for debugging
+      const errorObj = error as any;
+      console.error('Signin error:', {
+        message: error instanceof Error ? error.message : errorObj?.message,
+        code: errorObj?.code,
+        stack: error instanceof Error ? error.stack : errorObj?.stack,
+      });
+
+      // Provide user-friendly error message
+      const errorMessage = 'Unable to sign in. Please check your credentials and try again.';
+      throw new HttpException(
+        errorMessage,
+        HttpStatus.UNAUTHORIZED,
+        {
+          cause: error,
+        },
+      );
+    }
+  }
+
   // Signup with email, username, and password
   async signup(signupDto: SignupDtoRequest): Promise<SignupDtoResponse> {
     try {
@@ -310,6 +411,7 @@ export class AuthService {
           phoneNumber: user.phoneNumber?.toString() || '',
           profileImage: user.profileImage || '',
           role: user.role,
+          emailVerified: user.emailVerified || false,
         },
         needsOnboarding: true, // New user needs to complete onboarding
       };

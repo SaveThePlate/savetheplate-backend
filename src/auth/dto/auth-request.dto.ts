@@ -79,6 +79,7 @@ export class SignupDtoResponse {
     phoneNumber: string;
     profileImage: string;
     role: UserRole;
+    emailVerified: boolean;
   };
   @ApiProperty() needsOnboarding: boolean;
 }
@@ -146,6 +147,7 @@ export class SigninDtoResponse {
     phoneNumber: string;
     profileImage: string;
     role: UserRole;
+    emailVerified: boolean;
   };
   @ApiProperty() role: UserRole;
 }
