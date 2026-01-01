@@ -109,8 +109,8 @@ async function downloadImageToStore(
     writer.on('error', (err) => reject(err));
     res.data.on('error', (err) => reject(err));
   });
-  // return public path expected by frontend
-  return { filename, publicPath: `/storage/profile-images/${filename}` };
+  // return public path expected by frontend - utiliser /store/ pour servir directement via nginx
+  return { filename, publicPath: `/store/profile-images/${filename}` };
 }
 
 /**
@@ -233,7 +233,7 @@ async function downloadPhotoViaPlaces(
           });
           return {
             filename,
-            publicPath: `/storage/profile-images/${filename}`,
+            publicPath: `/store/profile-images/${filename}`,
           };
         }
       }

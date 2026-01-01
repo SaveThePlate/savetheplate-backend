@@ -109,7 +109,8 @@ export class StorageController {
       ).replace(/\/$/, '');
       return processedFiles.map((file) => {
         const filename = file.filename;
-        const urlPath = `/storage/${filename}`;
+        // Utiliser /store/ au lieu de /storage/ pour servir directement via nginx
+        const urlPath = `/store/${filename}`;
         const absoluteUrl = baseUrl ? `${baseUrl}${urlPath}` : urlPath;
         return {
           filename,

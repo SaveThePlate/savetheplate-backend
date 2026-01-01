@@ -66,7 +66,8 @@ export class OfferController {
         .replace(/^\.\//, '')
         .replace(/^\/+/, '');
       const filename = candidate.split('/').filter(Boolean).pop() || '';
-      const url = filename ? `/storage/${encodeURIComponent(filename)}` : null;
+      // Utiliser /store/ au lieu de /storage/ pour servir directement via nginx
+      const url = filename ? `/store/${encodeURIComponent(filename)}` : null;
       const absoluteUrl = url
         ? backendBase
           ? `${backendBase}${url}`
@@ -229,8 +230,9 @@ export class OfferController {
               .replace(/^\.\//, '')
               .replace(/^\/+/, '');
             const filename = candidate.split('/').filter(Boolean).pop() || '';
+            // Utiliser /store/ au lieu de /storage/ pour servir directement via nginx
             const url = filename
-              ? `/storage/${encodeURIComponent(filename)}`
+              ? `/store/${encodeURIComponent(filename)}`
               : null;
             const absoluteUrl = url
               ? backendBase

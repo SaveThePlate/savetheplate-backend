@@ -152,16 +152,29 @@ export class OfferService {
           
           // Check if it's already a full URL
           if (/^https?:\/\//i.test(img)) {
+            // Convertir /storage/ en /store/ dans les URLs existantes pour compatibilité
+            const normalizedUrl = img.replace(/\/storage\//g, '/store/');
             return {
-              filename: img.split('/').pop() || null,
-              url: img.includes('/storage/') ? img.match(/\/storage\/.+$/)?.[0] || null : null,
-              absoluteUrl: img,
+              filename: normalizedUrl.split('/').pop() || null,
+              url: normalizedUrl.includes('/store/') ? normalizedUrl.match(/\/store\/.+$/)?.[0] || null : null,
+              absoluteUrl: normalizedUrl,
               original: { url: img },
             };
           }
           
-          // Check if it's a storage path
+          // Check if it's a storage path (convertir en /store/)
           if (img.startsWith('/storage/')) {
+            const storePath = img.replace('/storage/', '/store/');
+            return {
+              filename: storePath.split('/').pop() || null,
+              url: storePath,
+              absoluteUrl: backendBase ? `${backendBase}${storePath}` : storePath,
+              original: { url: img },
+            };
+          }
+          
+          // Check if it's already a store path
+          if (img.startsWith('/store/')) {
             return {
               filename: img.split('/').pop() || null,
               url: img,
@@ -170,8 +183,8 @@ export class OfferService {
             };
           }
           
-          // Assume it's a filename
-          const url = `/storage/${encodeURIComponent(img)}`;
+          // Assume it's a filename - utiliser /store/ au lieu de /storage/
+          const url = `/store/${encodeURIComponent(img)}`;
           return {
             filename: img,
             path: `store/${img}`,
