@@ -13,19 +13,19 @@ const deployBackend = () => {
     const script = `
       set -e
       echo "🐳 Pulling latest Docker image from Docker Hub..."
-      echo "${dockerPassword}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-      docker pull ${DOCKER_USERNAME}/savetheplate-backend:latest
+      echo "${dockerPassword}" | sudo docker login -u "${DOCKER_USERNAME}" --password-stdin
+      sudo docker pull ${DOCKER_USERNAME}/savetheplate-backend:latest
       
       echo "🛑 Stopping old container..."
-      docker stop savetheplate-backend 2>/dev/null || true
-      docker rm savetheplate-backend 2>/dev/null || true
+      sudo docker stop savetheplate-backend 2>/dev/null || true
+      sudo docker rm savetheplate-backend 2>/dev/null || true
       
       echo "🔧 Creating directories..."
       mkdir -p /var/www/save-the-plate/backend/store
       mkdir -p /var/www/save-the-plate/backend/uploads
       
       echo "🚀 Starting new container..."
-      docker run -d \
+      sudo docker run -d \
         --name savetheplate-backend \
         --restart unless-stopped \
         -p 3001:3001 \
@@ -36,10 +36,10 @@ const deployBackend = () => {
         ${DOCKER_USERNAME}/savetheplate-backend:latest
       
       echo "🧹 Cleaning up old images..."
-      docker image prune -f
+      sudo docker image prune -f
       
       echo "✅ Backend deployment complete!"
-      docker ps | grep savetheplate-backend || echo "⚠️  Container may not be running"
+      sudo docker ps | grep savetheplate-backend || echo "⚠️  Container may not be running"
     `;
     
     exec(script, (error, stdout, stderr) => {
@@ -62,25 +62,25 @@ const deployFrontend = () => {
     const script = `
       set -e
       echo "🐳 Pulling latest Docker image from Docker Hub..."
-      echo "${dockerPassword}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
-      docker pull ${DOCKER_USERNAME}/savetheplate-frontend:latest
+      echo "${dockerPassword}" | sudo docker login -u "${DOCKER_USERNAME}" --password-stdin
+      sudo docker pull ${DOCKER_USERNAME}/savetheplate-frontend:latest
       
       echo "🛑 Stopping old container..."
-      docker stop savetheplate-frontend 2>/dev/null || true
-      docker rm savetheplate-frontend 2>/dev/null || true
+      sudo docker stop savetheplate-frontend 2>/dev/null || true
+      sudo docker rm savetheplate-frontend 2>/dev/null || true
       
       echo "🚀 Starting new container..."
-      docker run -d \
+      sudo docker run -d \
         --name savetheplate-frontend \
         --restart unless-stopped \
         -p 3000:3000 \
         ${DOCKER_USERNAME}/savetheplate-frontend:latest
       
       echo "🧹 Cleaning up old images..."
-      docker image prune -f
+      sudo docker image prune -f
       
       echo "✅ Frontend deployment complete!"
-      docker ps | grep savetheplate-frontend || echo "⚠️  Container may not be running"
+      sudo docker ps | grep savetheplate-frontend || echo "⚠️  Container may not be running"
     `;
     
     exec(script, (error, stdout, stderr) => {
