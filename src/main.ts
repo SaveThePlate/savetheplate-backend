@@ -102,9 +102,12 @@ async function bootstrap() {
     // This allows Express to trust X-Forwarded-* headers from the proxy
     app.set('trust proxy', true);
 
-    // Add middleware to immediately return 404 for frontend static files
-    // These should never reach the backend API
-    app.use((req, res, next) => {
+    // Add Express middleware to immediately return 404 for frontend static files
+    // This MUST run before NestJS routing to prevent validation errors
+    // Use getHttpAdapter() to access the underlying Express instance directly
+    const expressApp = app.getHttpAdapter().getInstance();
+    
+    expressApp.use((req, res, next) => {
       const url = req.url || req.path || '';
       
       // List of frontend routes that should return 404 immediately
@@ -114,6 +117,8 @@ async function bootstrap() {
         '/robots.txt',
         '/sitemap.xml',
         '/manifest.json',
+        '/sw.js', // Service worker
+        '/workbox-', // Workbox files
       ];
       
       // Check if this is a frontend static file request
@@ -122,11 +127,13 @@ async function bootstrap() {
       );
       
       if (isFrontendStatic) {
-        // Return 404 immediately without processing
+        // Return 404 immediately without any processing
+        // Set proper headers to prevent caching of error responses
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Content-Type', 'application/json');
         return res.status(404).json({
           statusCode: 404,
-          message: 'Not Found',
-          error: 'This is a frontend route and should not reach the backend API',
+          message: 'Not Found - This is a frontend route and should not reach the backend API',
         });
       }
       

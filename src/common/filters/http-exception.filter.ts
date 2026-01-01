@@ -27,6 +27,32 @@ export class AllExceptionsFilter implements ExceptionFilter {
         return;
       }
 
+      // Check if this is a frontend static file request - return 404 immediately
+      const url = request.url || request.path || '';
+      const frontendStaticRoutes = [
+        '/_next/',
+        '/favicon.ico',
+        '/robots.txt',
+        '/sitemap.xml',
+        '/manifest.json',
+        '/sw.js',
+        '/workbox-',
+      ];
+      
+      const isFrontendStatic = frontendStaticRoutes.some(route => 
+        url.startsWith(route) || url === route
+      );
+      
+      if (isFrontendStatic) {
+        // Return 404 for frontend static files, don't process as API error
+        response.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        response.setHeader('Content-Type', 'application/json');
+        return response.status(404).json({
+          statusCode: 404,
+          message: 'Not Found - This is a frontend route and should not reach the backend API',
+        });
+      }
+
       const status =
         exception instanceof HttpException
           ? exception.getStatus()
