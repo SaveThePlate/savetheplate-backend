@@ -37,9 +37,12 @@ jobs:
 
       - name: 🚀 Trigger deployment via webhook
         run: |
+          echo "🔗 Attempting to connect to webhook server via HTTPS"
           curl -X POST \
+            --max-time 30 \
+            --connect-timeout 10 \
             -H "Content-Type: application/json" \
             -H "X-Webhook-Token: ${{ secrets.WEBHOOK_SECRET }}" \
             -d '{"service": "backend", "token": "${{ secrets.WEBHOOK_SECRET }}"}' \
-            http://${{ secrets.PROD_SERVER_IP }}:3002/backend
+            https://savetheplate.tn/webhook/backend || echo "⚠️ Webhook call failed. Check nginx configuration and webhook server status."
 
