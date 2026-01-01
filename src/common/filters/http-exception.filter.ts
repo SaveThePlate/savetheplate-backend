@@ -122,13 +122,31 @@ export class AllExceptionsFilter implements ExceptionFilter {
       );
 
       if (shouldLog) {
-        // Log the error
+        // Log the error with more details for debugging
+        const errorDetails = {
+          method: request.method || 'unknown',
+          url: request.url || 'unknown',
+          path: request.path || 'unknown',
+          query: request.query || {},
+          body: request.body || {},
+          headers: {
+            origin: request.headers?.origin,
+            'user-agent': request.headers?.['user-agent'],
+            authorization: request.headers?.authorization ? 'Bearer ***' : undefined,
+          },
+          status,
+          message: userMessage,
+        };
+        
         this.logger.error(
-          `${request.method || 'unknown'} ${request.url || 'unknown'}`,
-          exception instanceof Error
-            ? exception.stack
-            : JSON.stringify(exception),
+          `${request.method || 'unknown'} ${request.url || 'unknown'} - ${status} ${userMessage}`,
+          JSON.stringify(errorDetails, null, 2),
         );
+        
+        // Also log stack trace for 400 errors to help debug validation issues
+        if (status === HttpStatus.BAD_REQUEST && exception instanceof Error) {
+          this.logger.debug('Bad Request Stack Trace:', exception.stack);
+        }
       }
 
       // Ensure response has the necessary methods before calling them
