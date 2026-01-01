@@ -45,10 +45,13 @@ export const generateToken = async (
     type: type,
   };
   const jwt = new JwtService();
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
   //generating access and refresh tokens
   const token = await jwt.signAsync(jwtPayload, {
-    // secret: process.env.JWT_SECRET,
-    secret: 'INVOICEakf95Dkz78Ld49',
+    secret: jwtSecret,
     expiresIn: JwtExpireDateByType(type),
   });
 
@@ -58,9 +61,12 @@ export const generateToken = async (
 
 export const DecodeToken = async (token: string): Promise<JwtPayload> => {
   const jwt = new JwtService();
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
   const decoded: JwtPayload = await jwt.verifyAsync(token, {
-    // secret: process.env.JWT_SECRET,
-    secret: 'INVOICEakf95Dkz78Ld49',
+    secret: jwtSecret,
   });
   return decoded;
 };
@@ -70,8 +76,12 @@ export const JustCrypt = async (text: string): Promise<string> => {
     text: text,
   };
   const jwt = new JwtService();
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
   const token = await jwt.signAsync(jwtPayload, {
-    secret: 'INVOICEakf95Dkz78Ld49',
+    secret: jwtSecret,
   });
 
   //returning the tokens
@@ -80,9 +90,12 @@ export const JustCrypt = async (text: string): Promise<string> => {
 
 export const JustDecrypt = async (token: string): Promise<string> => {
   const jwt = new JwtService();
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
   const decoded: { text: string } = await jwt.verifyAsync(token, {
-    // secret: process.env.JWT_SECRET,
-    secret: 'INVOICEakf95Dkz78Ld49',
+    secret: jwtSecret,
   });
   return decoded.text;
 };

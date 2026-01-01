@@ -1,2 +1,0 @@
--- AlterTable
-ALTER TABLE `User` MODIFY `role` ENUM('CLIENT', 'PROVIDER', 'NONE') NOT NULL;

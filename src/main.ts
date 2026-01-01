@@ -148,8 +148,12 @@ async function bootstrap() {
       if (process.env.NODE_ENV === 'production') {
         // Use a custom middleware to protect Swagger
         app.use('/api', (req, res, next) => {
-          const swaggerUser = process.env.SWAGGER_USER || 'admin';
-          const swaggerPass = process.env.SWAGGER_PASSWORD || 'changeme';
+          const swaggerUser = process.env.SWAGGER_USER;
+          const swaggerPass = process.env.SWAGGER_PASSWORD;
+          
+          if (!swaggerUser || !swaggerPass) {
+            return res.status(503).send('Swagger authentication not configured');
+          }
           
           const auth = req.headers.authorization;
           if (!auth || !auth.startsWith('Basic ')) {

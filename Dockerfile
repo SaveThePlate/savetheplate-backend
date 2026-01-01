@@ -41,10 +41,12 @@ RUN apk add --no-cache openssl libc6-compat
 WORKDIR /usr/src/app
 COPY --chown=node:node --from=build /usr/src/app/node_modules ./node_modules
 COPY --chown=node:node --from=build /usr/src/app/dist ./dist
-COPY --chown=node:node --from=build /usr/src/app/.env.staging .env
+# Note: .env file should be provided at runtime via volume mount or environment variables
 # Copy Prisma schema and generated client
 COPY --chown=node:node --from=build /usr/src/app/prisma ./prisma
 # Create store directory with proper permissions for file uploads
 RUN mkdir -p /usr/src/app/store && chown -R node:node /usr/src/app/store
 USER node
+EXPOSE 3001
+ENV PORT=3001
 CMD [ "node", "dist/src/main.js" ]

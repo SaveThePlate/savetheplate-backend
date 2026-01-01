@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "build": "rm -f tsconfig.build.tsbuildinfo && tsc -p tsconfig.build.json && node fix-imports.js",
+    "build": "rm -f tsconfig.build.tsbuildinfo && tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "dev": "nest start --watch",
