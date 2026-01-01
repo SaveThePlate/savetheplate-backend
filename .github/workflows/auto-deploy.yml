@@ -1,0 +1,71 @@
+name: 🚀 Auto Deploy Backend (Git Pull)
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'master'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: 🚀 Deploy Backend to Server
+    steps:
+      - name: 🚀 Deploy to production server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PROD_SERVER_IP }}
+          username: ${{ secrets.PROD_SERVER_USER }}
+          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PROD_SSH_PASSPHRASE }}
+          script: |
+            set -e
+            echo "📥 Pulling latest backend changes from git..."
+            
+            # Navigate to backend directory on server
+            cd /var/www/save-the-plate/backend || exit 1
+            
+            # Pull latest changes
+            git fetch origin
+            git reset --hard origin/main || git reset --hard origin/master
+            git pull origin main || git pull origin master
+            
+            echo "✅ Git pull completed!"
+            
+            # Install dependencies if needed
+            if [ -f "package.json" ]; then
+              echo "📦 Installing dependencies..."
+              npm install --production || yarn install --production || true
+            fi
+            
+            # Build if needed
+            if [ -f "package.json" ] && grep -q '"build"' package.json; then
+              echo "🏗️ Building backend..."
+              npm run build || yarn build || true
+            fi
+            
+            # If using Docker Compose, restart backend service
+            if [ -f "/var/www/save-the-plate/docker-compose.yml" ] || [ -f "/var/www/save-the-plate/docker-compose.yaml" ]; then
+              echo "🐳 Restarting Docker containers..."
+              cd /var/www/save-the-plate
+              docker-compose restart backend || docker-compose up -d backend || true
+              cd backend
+            fi
+            
+            # If using PM2, restart backend service
+            if command -v pm2 &> /dev/null; then
+              echo "🔄 Restarting PM2 backend service..."
+              pm2 restart backend || pm2 restart savetheplate-backend || pm2 restart all || true
+              echo "✅ PM2 service restarted!"
+            fi
+            
+            # If using Docker directly, restart container
+            if docker ps -a | grep -q "savetheplate-backend\|leftover-backend"; then
+              echo "🐳 Restarting Docker container..."
+              docker restart savetheplate-backend 2>/dev/null || \
+              docker restart leftover-backend 2>/dev/null || true
+            fi
+            
+            echo "✅ Backend deployment complete!"
+
