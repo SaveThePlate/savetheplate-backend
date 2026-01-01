@@ -35,48 +35,11 @@ jobs:
           docker push ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
           docker push ${DOCKER_USERNAME}/${IMAGE_NAME}:${{ github.sha }}
 
-      - name: 🚀 Deploy to production server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.PROD_SERVER_IP }}
-          username: ${{ secrets.PROD_SERVER_USER }}
-          key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PROD_SSH_PASSPHRASE }}
-          timeout: 30s
-          command_timeout: 10m
-          envs: IMAGE_NAME,DOCKER_USERNAME
-          script: |
-            set -e
-            echo "🐳 Pulling latest Docker image from Docker Hub..."
-            
-            # Login to Docker Hub
-            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            
-            # Pull latest image
-            docker pull ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
-            
-            echo "🛑 Stopping old container..."
-            docker stop ${IMAGE_NAME} 2>/dev/null || true
-            docker rm ${IMAGE_NAME} 2>/dev/null || true
-            
-            echo "🔧 Creating directories..."
-            mkdir -p /var/www/save-the-plate/backend/store
-            mkdir -p /var/www/save-the-plate/backend/uploads
-            
-            echo "🚀 Starting new container..."
-            docker run -d \
-              --name ${IMAGE_NAME} \
-              --restart unless-stopped \
-              -p 3001:3001 \
-              -v /var/www/save-the-plate/backend/store:/usr/src/app/store \
-              -v /var/www/save-the-plate/backend/uploads:/usr/src/app/uploads \
-              -v /var/www/save-the-plate/backend/.env:/usr/src/app/.env:ro \
-              --env-file /var/www/save-the-plate/backend/.env \
-              ${DOCKER_USERNAME}/${IMAGE_NAME}:latest
-            
-            echo "🧹 Cleaning up old images..."
-            docker image prune -f
-            
-            echo "✅ Backend deployment complete!"
-            docker ps | grep ${IMAGE_NAME} || echo "⚠️  Container may not be running"
+      - name: 🚀 Trigger deployment via webhook
+        run: |
+          curl -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Webhook-Token: ${{ secrets.WEBHOOK_SECRET }}" \
+            -d '{"service": "backend", "token": "${{ secrets.WEBHOOK_SECRET }}"}' \
+            http://${{ secrets.PROD_SERVER_IP }}:3002/backend
 
