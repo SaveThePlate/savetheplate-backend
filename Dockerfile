@@ -27,9 +27,9 @@ RUN npm install --legacy-peer-deps && npm cache clean --force
 RUN npx prisma generate
 # Build the application
 RUN npm run build
-# Set NODE_ENV=production and remove devDependencies after build to reduce image size
-ENV NODE_ENV=production
-RUN npm prune --production && npm cache clean --force
+    # Set NODE_ENV=production and remove devDependencies after build to reduce image size
+    ENV NODE_ENV=production
+    RUN npm prune --production --legacy-peer-deps && npm cache clean --force
 USER node
 
 ###################
