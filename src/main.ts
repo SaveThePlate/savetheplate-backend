@@ -102,6 +102,37 @@ async function bootstrap() {
     // This allows Express to trust X-Forwarded-* headers from the proxy
     app.set('trust proxy', true);
 
+    // Add middleware to immediately return 404 for frontend static files
+    // These should never reach the backend API
+    app.use((req, res, next) => {
+      const url = req.url || req.path || '';
+      
+      // List of frontend routes that should return 404 immediately
+      const frontendStaticRoutes = [
+        '/_next/',
+        '/favicon.ico',
+        '/robots.txt',
+        '/sitemap.xml',
+        '/manifest.json',
+      ];
+      
+      // Check if this is a frontend static file request
+      const isFrontendStatic = frontendStaticRoutes.some(route => 
+        url.startsWith(route) || url === route
+      );
+      
+      if (isFrontendStatic) {
+        // Return 404 immediately without processing
+        return res.status(404).json({
+          statusCode: 404,
+          message: 'Not Found',
+          error: 'This is a frontend route and should not reach the backend API',
+        });
+      }
+      
+      next();
+    });
+
     // Add global exception filter to catch all errors
     app.useGlobalFilters(new AllExceptionsFilter());
 
