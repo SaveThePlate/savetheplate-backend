@@ -26,7 +26,6 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: 🏗️ Build Docker image
-        working-directory: ./leftover-backend
         run: |
           docker build -t ${DOCKER_USERNAME}/${IMAGE_NAME}:latest --target production .
           docker tag ${DOCKER_USERNAME}/${IMAGE_NAME}:latest ${DOCKER_USERNAME}/${IMAGE_NAME}:${{ github.sha }}
@@ -45,6 +44,7 @@ jobs:
           passphrase: ${{ secrets.PROD_SSH_PASSPHRASE }}
           timeout: 30s
           command_timeout: 10m
+          envs: IMAGE_NAME,DOCKER_USERNAME
           script: |
             set -e
             echo "🐳 Pulling latest Docker image from Docker Hub..."
