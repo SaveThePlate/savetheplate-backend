@@ -3,13 +3,28 @@ const { exec } = require('child_process');
 const crypto = require('crypto');
 
 const PORT = 3002;
-const SECRET_TOKEN = process.env.WEBHOOK_SECRET || 'change-this-secret-token';
-const DOCKER_USERNAME = process.env.DOCKER_USERNAME || 'your-docker-username';
+
+// Security: Require environment variables - no defaults in production
+if (!process.env.WEBHOOK_SECRET) {
+  console.error('❌ ERROR: WEBHOOK_SECRET environment variable is required');
+  process.exit(1);
+}
+if (!process.env.DOCKER_USERNAME) {
+  console.error('❌ ERROR: DOCKER_USERNAME environment variable is required');
+  process.exit(1);
+}
+
+const SECRET_TOKEN = process.env.WEBHOOK_SECRET;
+const DOCKER_USERNAME = process.env.DOCKER_USERNAME;
 
 // Script de déploiement backend
 const deployBackend = () => {
   return new Promise((resolve, reject) => {
-    const dockerPassword = process.env.DOCKER_PASSWORD || '';
+    if (!process.env.DOCKER_PASSWORD) {
+      reject(new Error('DOCKER_PASSWORD environment variable is required'));
+      return;
+    }
+    const dockerPassword = process.env.DOCKER_PASSWORD;
     const script = `
       set -e
       echo "🐳 Pulling latest Docker image from Docker Hub..."
@@ -58,7 +73,11 @@ const deployBackend = () => {
 // Script de déploiement frontend
 const deployFrontend = () => {
   return new Promise((resolve, reject) => {
-    const dockerPassword = process.env.DOCKER_PASSWORD || '';
+    if (!process.env.DOCKER_PASSWORD) {
+      reject(new Error('DOCKER_PASSWORD environment variable is required'));
+      return;
+    }
+    const dockerPassword = process.env.DOCKER_PASSWORD;
     const script = `
       set -e
       echo "🐳 Pulling latest Docker image from Docker Hub..."

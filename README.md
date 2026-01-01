@@ -16,7 +16,7 @@ https://tooling.ccdev.space
 
 login: ccdev
 
-password: CcD3VtEaM!
+password: [Contactez l'administrateur pour obtenir les identifiants]
 
 ## Tech Stack
 

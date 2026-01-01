@@ -9,7 +9,7 @@ module.exports = {
     env: {
       NODE_ENV: 'production',
       PORT: 3002,
-      WEBHOOK_SECRET: process.env.WEBHOOK_SECRET || 'change-this-secret-token',
+      WEBHOOK_SECRET: process.env.WEBHOOK_SECRET, // Required - no default for security
       DOCKER_USERNAME: process.env.DOCKER_USERNAME,
       DOCKER_PASSWORD: process.env.DOCKER_PASSWORD
     }
