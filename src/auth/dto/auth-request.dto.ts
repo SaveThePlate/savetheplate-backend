@@ -118,3 +118,34 @@ export class VerifyEmailCodeDtoResponse {
   @ApiProperty() verified: boolean;
   @ApiProperty() message: string;
 }
+
+// Signin DTOs
+
+export class SigninDtoRequest {
+  @ApiProperty({ example: 'user@example.com' })
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty({ message: 'Email is required' })
+  @IsString()
+  email: string;
+
+  @ApiProperty({ example: 'password123' })
+  @IsNotEmpty({ message: 'Password is required' })
+  @IsString()
+  password: string;
+}
+
+export class SigninDtoResponse {
+  @ApiProperty() message: string;
+  @ApiProperty() accessToken: string;
+  @ApiProperty() refreshToken: string;
+  @ApiProperty() user: {
+    id: number;
+    email: string;
+    username: string;
+    location: string;
+    phoneNumber: string;
+    profileImage: string;
+    role: UserRole;
+  };
+  @ApiProperty() role: UserRole;
+}

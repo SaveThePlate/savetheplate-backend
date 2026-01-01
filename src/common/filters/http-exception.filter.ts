@@ -39,17 +39,32 @@ export class AllExceptionsFilter implements ExceptionFilter {
             ? exception.message
             : 'Internal server error';
 
-      const errorResponse = {
+      // Extract user-friendly message
+      let userMessage: string;
+      if (typeof message === 'string') {
+        userMessage = message;
+      } else if (message && typeof message === 'object') {
+        // Handle NestJS HttpException response format
+        const msgObj = message as any;
+        userMessage = msgObj.message || msgObj.error || 'An error occurred';
+      } else {
+        userMessage = 'An error occurred';
+      }
+
+      // Don't expose technical details to users
+      // Only include stack trace in development
+      const errorResponse: any = {
         statusCode: status,
-        timestamp: new Date().toISOString(),
-        path: request.url || 'unknown',
-        method: request.method || 'unknown',
-        message:
-          typeof message === 'string'
-            ? message
-            : (message as any).message || message,
-        error: exception instanceof Error ? exception.stack : undefined,
+        message: userMessage,
       };
+
+      // Only include technical details in development
+      if (process.env.NODE_ENV === 'development') {
+        errorResponse.timestamp = new Date().toISOString();
+        errorResponse.path = request.url || 'unknown';
+        errorResponse.method = request.method || 'unknown';
+        errorResponse.error = exception instanceof Error ? exception.stack : undefined;
+      }
 
       // Set CORS headers on error responses
       try {

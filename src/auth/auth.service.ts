@@ -12,6 +12,8 @@ import {
   AuthMagicMailVerifierDtoResponse,
   SignupDtoRequest,
   SignupDtoResponse,
+  SigninDtoRequest,
+  SigninDtoResponse,
   SendVerificationEmailDtoRequest,
   SendVerificationEmailDtoResponse,
   VerifyEmailCodeDtoRequest,
@@ -94,7 +96,11 @@ export class AuthService {
         sent: true,
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error sending email.';
+      // Log technical details for debugging
+      console.error('Magic mail sender error:', error);
+      
+      // Provide user-friendly error message
+      const errorMessage = 'Unable to send magic link email. Please try again later.';
       throw new HttpException(
         {
           status: HttpStatus.BAD_REQUEST,
@@ -188,7 +194,8 @@ export class AuthService {
         stack: error instanceof Error ? error.stack : errorObj?.stack,
       });
 
-      const errorMessage = error instanceof Error ? error.message : (errorObj?.message || 'Token is not valid or expired.');
+      // Provide user-friendly error message
+      const errorMessage = 'Token is not valid or expired. Please request a new magic link.';
       throw new HttpException(
         errorMessage,
         HttpStatus.BAD_REQUEST,
@@ -328,7 +335,8 @@ export class AuthService {
         stack: error instanceof Error ? error.stack : errorObj?.stack,
       });
 
-      const errorMessage = error instanceof Error ? error.message : (errorObj?.message || 'Error creating user');
+      // Provide user-friendly error message
+      const errorMessage = 'Unable to create account. Please check your information and try again.';
       throw new HttpException(
         errorMessage,
         HttpStatus.BAD_REQUEST,
@@ -438,7 +446,8 @@ export class AuthService {
         throw error;
       }
 
-      const errorMessage = error instanceof Error ? error.message : 'Error sending verification email.';
+      // Provide user-friendly error message
+      const errorMessage = 'Unable to send verification email. Please try again later.';
       throw new HttpException(
         errorMessage,
         HttpStatus.BAD_REQUEST,
@@ -535,7 +544,8 @@ export class AuthService {
         throw error;
       }
 
-      const errorMessage = error instanceof Error ? error.message : 'Error verifying email code.';
+      // Provide user-friendly error message
+      const errorMessage = 'Unable to verify email code. Please check the code and try again.';
       throw new HttpException(
         errorMessage,
         HttpStatus.BAD_REQUEST,
