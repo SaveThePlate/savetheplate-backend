@@ -273,18 +273,40 @@ export class AuthService {
       }
 
       // Check if user has a password (users created via magic link might not have one)
+      // COMMENTED OUT: Magic link disabled, focusing on password-based auth only
+      // if (!user.password) {
+      //   throw new HttpException(
+      //     'This account was created with a magic link. Please use magic link to sign in.',
+      //     HttpStatus.UNAUTHORIZED,
+      //   );
+      // }
+      
+      // If user doesn't have a password, they can't sign in with password
       if (!user.password) {
         throw new HttpException(
-          'This account was created with a magic link. Please use magic link to sign in.',
+          'Invalid email or password',
           HttpStatus.UNAUTHORIZED,
         );
       }
 
       // Verify password using bcrypt
+      // Debug logging to diagnose password comparison issues
+      console.log('Password verification debug:', {
+        email: signinDto.email,
+        providedPasswordLength: signinDto.password?.length,
+        storedPasswordHash: user.password ? `${user.password.substring(0, 20)}...` : 'null',
+        storedPasswordLength: user.password?.length,
+      });
+
       const isPasswordValid = await bcrypt.compare(
         signinDto.password,
         user.password,
       );
+
+      console.log('Password comparison result:', {
+        isValid: isPasswordValid,
+        email: signinDto.email,
+      });
 
       if (!isPasswordValid) {
         throw new HttpException(

@@ -68,62 +68,62 @@ export class AuthController {
     }
   }
 
-  // ENDPOINT TO REGISTER USER
-  @Post('/send-magic-mail')
-  @ApiOkResponse({ type: AuthMagicMailSenderDtoResponse })
-  async Auth(@Body() AuthUserDto: AuthMagicMailSenderDtoRequest) {
-    return await this.authService.AuthMagicMailSender(AuthUserDto);
-  }
+  // ENDPOINT TO REGISTER USER - COMMENTED OUT (Magic Link disabled)
+  // @Post('/send-magic-mail')
+  // @ApiOkResponse({ type: AuthMagicMailSenderDtoResponse })
+  // async Auth(@Body() AuthUserDto: AuthMagicMailSenderDtoRequest) {
+  //   return await this.authService.AuthMagicMailSender(AuthUserDto);
+  // }
 
-  @Post('/verify-magic-mail') // Added the method type
-  @ApiOkResponse({ type: AuthMagicMailVerifierDtoResponse })
-  async AuthMagicMailVerifier(
-    @Body() AuthUserDto: AuthMagicMailVerifierDtoRequest,
-  ): Promise<AuthMagicMailVerifierDtoResponse> {
-    try {
-      const response = await this.authService.AuthMagicMailVerifier(AuthUserDto);
+  // @Post('/verify-magic-mail') // Added the method type
+  // @ApiOkResponse({ type: AuthMagicMailVerifierDtoResponse })
+  // async AuthMagicMailVerifier(
+  //   @Body() AuthUserDto: AuthMagicMailVerifierDtoRequest,
+  // ): Promise<AuthMagicMailVerifierDtoResponse> {
+  //   try {
+  //     const response = await this.authService.AuthMagicMailVerifier(AuthUserDto);
 
-      // Get user role from response (user object is always returned from service)
-      const userRole = response.user?.role || 'NONE';
+  //     // Get user role from response (user object is always returned from service)
+  //     const userRole = response.user?.role || 'NONE';
 
-      // Determine redirect path based on role
-      let redirectTo = '/';
-      if (userRole === 'PROVIDER') {
-        redirectTo = '/provider/home';
-      } else if (userRole === 'PENDING_PROVIDER') {
-        redirectTo = '/onboarding/thank-you';
-      } else if (userRole === 'CLIENT') {
-        redirectTo = '/client/home';
-      }
+  //     // Determine redirect path based on role
+  //     let redirectTo = '/';
+  //     if (userRole === 'PROVIDER') {
+  //       redirectTo = '/provider/home';
+  //     } else if (userRole === 'PENDING_PROVIDER') {
+  //       redirectTo = '/onboarding/thank-you';
+  //     } else if (userRole === 'CLIENT') {
+  //       redirectTo = '/client/home';
+  //     }
 
-      // Return complete response with user, role, and redirect information
-      return {
-        message: response.message,
-        accessToken: response.accessToken,
-        refreshToken: response.refreshToken,
-        user: response.user
-          ? {
-              id: response.user.id,
-              email: response.user.email,
-              role: response.user.role,
-            }
-          : null,
-        needsOnboarding: userRole === 'NONE',
-        redirectTo, // Include redirect path in response
-        role: userRole, // Include role for frontend
-      };
-    } catch (error) {
-      // Log the error for debugging
-      const errorObj = error as any;
-      console.error('Verify magic mail controller error:', {
-        message: error instanceof Error ? error.message : errorObj?.message,
-        status: errorObj?.status,
-        response: errorObj?.response,
-        token: AuthUserDto?.token ? 'present' : 'missing',
-      });
-      throw error;
-    }
-  }
+  //     // Return complete response with user, role, and redirect information
+  //     return {
+  //       message: response.message,
+  //       accessToken: response.accessToken,
+  //       refreshToken: response.refreshToken,
+  //       user: response.user
+  //         ? {
+  //             id: response.user.id,
+  //             email: response.user.email,
+  //             role: response.user.role,
+  //           }
+  //         : null,
+  //       needsOnboarding: userRole === 'NONE',
+  //       redirectTo, // Include redirect path in response
+  //       role: userRole, // Include role for frontend
+  //     };
+  //   } catch (error) {
+  //     // Log the error for debugging
+  //     const errorObj = error as any;
+  //     console.error('Verify magic mail controller error:', {
+  //       message: error instanceof Error ? error.message : errorObj?.message,
+  //       status: errorObj?.status,
+  //       response: errorObj?.response,
+  //       token: AuthUserDto?.token ? 'present' : 'missing',
+  //     });
+  //     throw error;
+  //   }
+  // }
 
   // ENDPOINT TO SEND VERIFICATION EMAIL
   @Post('/send-verification-email')
