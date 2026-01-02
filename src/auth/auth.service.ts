@@ -81,7 +81,7 @@ export class AuthService {
       );
 
       const mail_resp = await this.resend.getResendInstance().emails.send({
-        from: 'Save The Plate <no-reply@ccdev.space>',
+        from: 'Save The Plate <no-reply@savetheplate.tn>',
         to: user.email,
         subject: 'Log in to SaveThePlate',
         html: emailHtml,
@@ -258,12 +258,29 @@ export class AuthService {
         );
       }
 
-      // Find user by email
-      const user = await this.prisma.user.findFirst({
+      // Normalize email to lowercase for case-insensitive lookup
+      const normalizedEmail = signinDto.email.toLowerCase().trim();
+
+      // Find user by email (case-insensitive using raw query for PostgreSQL)
+      // First try exact match with normalized email
+      let user = await this.prisma.user.findFirst({
         where: {
-          email: signinDto.email,
+          email: normalizedEmail,
         },
       });
+
+      // If not found, try case-insensitive search using raw query
+      if (!user) {
+        const users = await this.prisma.$queryRaw<Array<{ id: number; email: string; password: string | null; username: string; location: string | null; mapsLink: string | null; longitude: number | null; latitude: number | null; phoneNumber: number | null; profileImage: string | null; role: string; emailVerified: boolean }>>`
+          SELECT * FROM "User" WHERE LOWER(email) = LOWER(${normalizedEmail}) LIMIT 1
+        `;
+        if (users && users.length > 0) {
+          // Convert raw result to match Prisma User type
+          user = await this.prisma.user.findUnique({
+            where: { id: users[0].id },
+          });
+        }
+      }
 
       if (!user) {
         throw new HttpException(
@@ -292,7 +309,7 @@ export class AuthService {
       // Verify password using bcrypt
       // Debug logging to diagnose password comparison issues
       console.log('Password verification debug:', {
-        email: signinDto.email,
+        email: normalizedEmail,
         providedPasswordLength: signinDto.password?.length,
         storedPasswordHash: user.password ? `${user.password.substring(0, 20)}...` : 'null',
         storedPasswordLength: user.password?.length,
@@ -305,7 +322,7 @@ export class AuthService {
 
       console.log('Password comparison result:', {
         isValid: isPasswordValid,
-        email: signinDto.email,
+        email: normalizedEmail,
       });
 
       if (!isPasswordValid) {
@@ -381,12 +398,28 @@ export class AuthService {
         );
       }
 
-      // Check if user already exists
-      const existingUser = await this.prisma.user.findFirst({
+      // Normalize email to lowercase for consistent storage
+      const normalizedEmail = signupDto.email.toLowerCase().trim();
+
+      // Check if user already exists (case-insensitive)
+      // First try exact match with normalized email
+      let existingUser = await this.prisma.user.findFirst({
         where: {
-          email: signupDto.email,
+          email: normalizedEmail,
         },
       });
+
+      // If not found, try case-insensitive search using raw query
+      if (!existingUser) {
+        const users = await this.prisma.$queryRaw<Array<{ id: number }>>`
+          SELECT id FROM "User" WHERE LOWER(email) = LOWER(${normalizedEmail}) LIMIT 1
+        `;
+        if (users && users.length > 0) {
+          existingUser = await this.prisma.user.findUnique({
+            where: { id: users[0].id },
+          });
+        }
+      }
 
       if (existingUser) {
         throw new HttpException(
@@ -398,10 +431,10 @@ export class AuthService {
       // Hash the password
       const hashedPassword = await bcrypt.hash(signupDto.password, 10);
 
-      // Create new user
+      // Create new user with normalized email
       const user = await this.prisma.user.create({
         data: {
-          email: signupDto.email,
+          email: normalizedEmail,
           username: signupDto.username,
           password: hashedPassword,
           role: UserRole.NONE, // Default role
@@ -476,12 +509,27 @@ export class AuthService {
     sendVerificationDto: SendVerificationEmailDtoRequest,
   ): Promise<SendVerificationEmailDtoResponse> {
     try {
-      // Find the user by email
-      const user = await this.prisma.user.findFirst({
+      // Normalize email to lowercase for case-insensitive lookup
+      const normalizedEmail = sendVerificationDto.email.toLowerCase().trim();
+
+      // Find the user by email (case-insensitive)
+      let user = await this.prisma.user.findFirst({
         where: {
-          email: sendVerificationDto.email,
+          email: normalizedEmail,
         },
       });
+
+      // If not found, try case-insensitive search using raw query
+      if (!user) {
+        const users = await this.prisma.$queryRaw<Array<{ id: number }>>`
+          SELECT id FROM "User" WHERE LOWER(email) = LOWER(${normalizedEmail}) LIMIT 1
+        `;
+        if (users && users.length > 0) {
+          user = await this.prisma.user.findUnique({
+            where: { id: users[0].id },
+          });
+        }
+      }
 
       if (!user) {
         throw new HttpException(
@@ -496,7 +544,8 @@ export class AuthService {
       // Store code in cache for 10 minutes
       // Note: cache-manager TTL is in milliseconds for some stores, but seconds for others
       // Using 600000 milliseconds (10 minutes) to be safe
-      const cacheKey = `verification_code:${user.email}`;
+      // Use normalized email for cache key to ensure consistency
+      const cacheKey = `verification_code:${normalizedEmail}`;
       try {
         // Try with milliseconds first (600000 = 10 minutes)
         await this.cacheService.set(cacheKey, verificationCode, 600000);
@@ -544,7 +593,7 @@ export class AuthService {
 
       // Send actual email (works in both dev and production)
       const mail_resp = await this.resend.getResendInstance().emails.send({
-        from: 'Save The Plate <no-reply@ccdev.space>',
+        from: 'Save The Plate <no-reply@savetheplate.tn>',
         to: user.email,
         subject: 'Verify your email - SaveThePlate',
         html: emailHtml,
@@ -587,12 +636,27 @@ export class AuthService {
     verifyCodeDto: VerifyEmailCodeDtoRequest,
   ): Promise<VerifyEmailCodeDtoResponse> {
     try {
-      // Find the user by email
-      const user = await this.prisma.user.findFirst({
+      // Normalize email to lowercase for case-insensitive lookup
+      const normalizedEmail = verifyCodeDto.email.toLowerCase().trim();
+
+      // Find the user by email (case-insensitive)
+      let user = await this.prisma.user.findFirst({
         where: {
-          email: verifyCodeDto.email,
+          email: normalizedEmail,
         },
       });
+
+      // If not found, try case-insensitive search using raw query
+      if (!user) {
+        const users = await this.prisma.$queryRaw<Array<{ id: number }>>`
+          SELECT id FROM "User" WHERE LOWER(email) = LOWER(${normalizedEmail}) LIMIT 1
+        `;
+        if (users && users.length > 0) {
+          user = await this.prisma.user.findUnique({
+            where: { id: users[0].id },
+          });
+        }
+      }
 
       if (!user) {
         throw new HttpException(
@@ -602,7 +666,8 @@ export class AuthService {
       }
 
       // Get stored verification code from cache
-      const cacheKey = `verification_code:${user.email}`;
+      // Use normalized email for cache key to ensure consistency
+      const cacheKey = `verification_code:${normalizedEmail}`;
       let storedCode = await this.cacheService.get<string>(cacheKey);
 
       if (process.env.NODE_ENV === 'development') {

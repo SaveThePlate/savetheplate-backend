@@ -113,7 +113,7 @@ export class AnnouncementsService {
         const mail_resp = await this.resendService
           .getResendInstance()
           .emails.send({
-            from: 'Save The Plate <no-reply@ccdev.space>',
+            from: 'Save The Plate <no-reply@savetheplate.tn>',
             to: user.email,
             subject: dto.subject,
             html: emailHtml,

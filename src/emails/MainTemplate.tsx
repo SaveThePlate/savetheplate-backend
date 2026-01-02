@@ -90,22 +90,22 @@ function MainTemplate({
 
 
 
-// Styles - Warm, minimalistic design matching the reference image
+// Styles - Clean, mode-neutral design that works in both dark and light modes
 
 const main = {
-  backgroundColor: '#FFFFFF',
-  background: 'linear-gradient(135deg, #FFF8F5 0%, #FFF5F0 30%, #FFFFFF 100%)',
+  backgroundColor: 'transparent',
+  background: 'transparent',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
   padding: '40px 20px',
 };
 
 const container = {
   margin: '0 auto',
-  padding: '48px 40px',
-  borderRadius: '20px',
-  background: '#ffffff',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.04)',
-  maxWidth: '600px',
+  padding: '40px 32px',
+  borderRadius: '0px',
+  background: 'transparent',
+  boxShadow: 'none',
+  maxWidth: '800px',
   width: '100%',
   position: 'relative' as const,
   overflow: 'hidden',
@@ -119,7 +119,7 @@ const heading = {
   justifyContent: 'center',
   paddingBottom: '0px',
   borderBottom: 'none',
-  marginBottom: '32px',
+  marginBottom: '24px',
   position: 'relative' as const,
 };
 
@@ -131,12 +131,12 @@ const logo = {
 };
 
 const headingText = {
-  fontSize: '36px',
-  lineHeight: '44px',
+  fontSize: '28px',
+  lineHeight: '36px',
   margin: '0px',
   color: '#2D7A3F',
-  fontWeight: '800',
-  letterSpacing: '-0.5px',
+  fontWeight: '700',
+  letterSpacing: '-0.3px',
   textAlign: 'center' as const,
 };
 
@@ -150,12 +150,12 @@ const mainTitleContainer = {
 
 const mainTitleStyle = {
   margin: '0px auto',
-  fontSize: '32px',
-  lineHeight: '40px',
-  color: '#2D7A3F',
-  fontWeight: '800',
+  fontSize: '24px',
+  lineHeight: '32px',
+  color: '#111827',
+  fontWeight: '600',
   textAlign: 'center' as const,
-  letterSpacing: '-0.3px',
+  letterSpacing: '-0.2px',
   padding: '0 10px',
 };
 
@@ -171,7 +171,7 @@ const contentContainerStyle = {
 const paragraph = {
   fontSize: '16px',
   lineHeight: '24px',
-  color: '#1F2937',
+  color: '#4B5563',
   marginBottom: '16px',
 };
 
@@ -179,17 +179,17 @@ const centeredParagraph = {
   fontSize: '16px',
   lineHeight: '24px',
   textAlign: 'center' as const,
-  color: '#1F2937',
+  color: '#4B5563',
   marginBottom: '24px',
   fontWeight: '400',
   letterSpacing: '0px',
 };
 
 const detailStyle = {
-  fontSize: '16px',
-  lineHeight: '24px',
-  color: '#374151',
-  marginBottom: '12px',
+  fontSize: '15px',
+  lineHeight: '22px',
+  color: '#6B7280',
+  marginBottom: '10px',
   fontWeight: '400',
   paddingLeft: '0px',
 };
@@ -203,16 +203,16 @@ const buttonContainerStyle = {
 
 const buttonStyle = {
   color: '#FFFFFF',
-  padding: '14px 32px',
-  background: '#FFC09F',
-  borderRadius: '12px',
-  fontWeight: '700',
+  padding: '12px 28px',
+  background: '#2D7A3F',
+  borderRadius: '6px',
+  fontWeight: '500',
   margin: 'auto',
   textDecoration: 'none',
-  fontSize: '16px',
-  boxShadow: '0 2px 8px rgba(255, 192, 159, 0.3)',
+  fontSize: '15px',
+  boxShadow: 'none',
   display: 'inline-block',
-  letterSpacing: '0.2px',
+  letterSpacing: '0px',
   border: 'none',
 };
 
@@ -247,12 +247,12 @@ const accentBar = {
   right: '0',
   height: '0px',
   background: 'transparent',
-  borderRadius: '20px 20px 0 0',
+  borderRadius: '0px',
 };
 
 const footerContainerStyle = {
-  marginTop: '40px',
-  paddingTop: '24px',
+  marginTop: '32px',
+  paddingTop: '20px',
   borderTop: '1px solid #E5E7EB',
   textAlign: 'center' as const,
 };

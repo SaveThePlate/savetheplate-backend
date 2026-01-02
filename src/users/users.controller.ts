@@ -21,6 +21,8 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { UserRole } from '@prisma/client';
 import { ResendService } from 'src/utils/mailing/resend.service';
+import { render } from '@react-email/render';
+import ProviderRegistrationEmail from 'src/emails/ProviderRegistration';
 
 interface ProfileData {
   username?: string;
@@ -308,56 +310,60 @@ export class UsersController {
   }
 
   private async sendProviderApprovalEmail(user: any) {
-    const adminEmail = 'savetheplatetunisia@gmail.com';
+    const adminEmail = process.env.ADMIN_EMAILS || 'savetheplatetunisia@gmail.com';
     const subject = 'New Provider Registration - Approval Required';
 
-    const emailBody = `
-      <h2>New Provider Registration</h2>
-      <p>A new food provider has completed their registration and is waiting for approval.</p>
-      
-      <h3>Provider Details:</h3>
-      <ul>
-        <li><strong>Name:</strong> ${user.username}</li>
-        <li><strong>Email:</strong> ${user.email}</li>
-        <li><strong>Phone:</strong> ${user.phoneNumber || 'Not provided'}</li>
-        <li><strong>Location:</strong> ${user.location || 'Not provided'}</li>
-        <li><strong>Maps Link:</strong> <a href="${user.mapsLink}">${user.mapsLink || 'Not provided'}</a></li>
-      </ul>
-      
-      <p>Please review this provider and approve or reject their registration.</p>
-      <p><strong>User ID:</strong> ${user.id}</p>
-    `;
+    // Render React email template to HTML
+    const emailHtml = await render(
+      ProviderRegistrationEmail({
+        username: user.username,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        location: user.location,
+        mapsLink: user.mapsLink,
+        userId: user.id,
+      }),
+    );
 
     try {
-      // For local dev: Log the email instead of sending
+      // For local dev: Log the email details
       if (process.env.NODE_ENV === 'development') {
         console.log('\n📧 Provider Approval Email (Local Dev):');
         console.log('To:', adminEmail);
         console.log('Subject:', subject);
-        console.log('Body:', emailBody);
-        return;
+        console.log('Provider Details:', {
+          username: user.username,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          location: user.location,
+          mapsLink: user.mapsLink,
+          userId: user.id,
+        });
       }
 
-      // Production: Send actual email
+      // Send actual email (works in both dev and production)
       const mail_resp = await this.resendService
         .getResendInstance()
         .emails.send({
-          from: 'Save The Plate <no-reply@ccdev.space>',
+          from: 'Save The Plate <no-reply@savetheplate.tn>',
           to: adminEmail,
           subject: subject,
-          html: emailBody,
+          html: emailHtml,
         });
 
       if (mail_resp.error) {
         console.error(
-          'Error sending provider approval email:',
+          '❌ Error sending provider approval email:',
           mail_resp.error,
         );
       } else {
-        console.log('Provider approval email sent successfully to', adminEmail);
+        console.log('✅ Provider approval email sent successfully to', adminEmail);
+        if (process.env.NODE_ENV === 'development') {
+          console.log('📧 Email ID:', mail_resp.data?.id);
+        }
       }
     } catch (error) {
-      console.error('Error sending provider approval email:', error);
+      console.error('❌ Failed to send provider approval email:', error);
     }
   }
 
