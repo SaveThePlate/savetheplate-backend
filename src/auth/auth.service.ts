@@ -389,7 +389,18 @@ export class AuthService {
 
   // Signup with email, username, and password
   async signup(signupDto: SignupDtoRequest): Promise<SignupDtoResponse> {
+    // Track created user so we can roll back if a later step fails
+    let createdUserId: number | null = null;
+
     try {
+      // Ensure JWT secret is configured before doing any writes to avoid partial signups
+      if (!process.env.JWT_SECRET) {
+        throw new HttpException(
+          'Server configuration error: missing JWT secret',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
       // Validate input
       if (!signupDto.email || !signupDto.username || !signupDto.password) {
         throw new HttpException(
@@ -440,6 +451,7 @@ export class AuthService {
           role: UserRole.NONE, // Default role
         },
       });
+      createdUserId = user.id;
 
       // Generate tokens
       const accessToken = await generateToken(
@@ -471,8 +483,23 @@ export class AuthService {
         needsOnboarding: true, // New user needs to complete onboarding
       };
     } catch (error) {
-      // Handle Prisma unique constraint violations
+      // If user was created but a later step failed (e.g., token generation), clean up to avoid orphaned accounts
       const errorObj = error as any;
+      const shouldAttemptCleanup =
+        errorObj?.status === HttpStatus.INTERNAL_SERVER_ERROR ||
+        !(error instanceof HttpException);
+      if (shouldAttemptCleanup) {
+        try {
+          // Only delete if we actually created a user in this execution
+          if (typeof createdUserId === 'number') {
+            await this.prisma.user.delete({ where: { id: createdUserId } });
+          }
+        } catch (cleanupError) {
+          console.error('Signup cleanup failed:', cleanupError);
+        }
+      }
+
+      // Handle Prisma unique constraint violations
       if (errorObj?.code === 'P2002') {
         throw new HttpException(
           'User with this email or username already exists',
