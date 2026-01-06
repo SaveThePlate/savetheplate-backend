@@ -12,50 +12,15 @@ import { Server, Socket } from 'socket.io';
 import { PrismaService } from '../prisma/prisma.service';
 import { DecodeToken, JwtType } from '../utils/jwt';
 import { Logger } from '@nestjs/common';
+import { isOriginAllowed } from '../utils/cors';
 
 @WebSocketGateway({
   path: '/socket.io/',
   transports: ['websocket', 'polling'],
   cors: {
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps)
-      if (!origin) {
-        callback(null, true);
-        return;
-      }
-
-      // Always allow localhost for development
-      if (
-        origin.startsWith('http://localhost:') ||
-        origin.startsWith('http://127.0.0.1:')
-      ) {
-        callback(null, true);
-        return;
-      }
-
-      // Allow configured frontend URLs
-      const allowedOrigins = [
-        process.env.FRONTEND_URL,
-        process.env.NEXT_PUBLIC_FRONTEND_URL,
-        'http://savetheplate.tn',
-        'https://savetheplate.tn',
-        'https://leftover.ccdev.space',
-        'https://savetheplate.ccdev.space',
-        'https://leftover-be.ccdev.space',
-      ].filter(Boolean);
-
-      if (allowedOrigins.includes(origin) || origin.includes('.ccdev.space')) {
-        callback(null, true);
-        return;
-      }
-
-      // In development/staging, allow all
-      if (process.env.NODE_ENV !== 'production') {
-        callback(null, true);
-        return;
-      }
-
-      callback(new Error('Not allowed by CORS'), false);
+      if (isOriginAllowed(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'), false);
     },
     credentials: true,
     methods: ['GET', 'POST'],

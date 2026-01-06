@@ -104,7 +104,6 @@ export class StorageController {
       // Return a clean response with just the necessary data
       const baseUrl = (
         process.env.BACKEND_URL ||
-        process.env.NEXT_PUBLIC_BACKEND_URL ||
         ''
       ).replace(/\/$/, '');
       return processedFiles.map((file) => {

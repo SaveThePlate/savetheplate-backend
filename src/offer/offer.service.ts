@@ -146,7 +146,6 @@ export class OfferService {
         if (typeof img === 'string') {
           const backendBase = (
             process.env.BACKEND_URL ||
-            process.env.NEXT_PUBLIC_BACKEND_URL ||
             ''
           ).replace(/\/$/, '');
           

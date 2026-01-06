@@ -22,6 +22,16 @@ import {
 import { generateToken, JwtType, DecodeToken } from 'src/utils/jwt';
 import * as bcrypt from 'bcrypt';
 
+function getFrontendBaseUrl(): string {
+  const v =
+    process.env.FRONT_URL ||
+    process.env.FRONTEND_URL ||
+    (process.env.NODE_ENV === 'production'
+      ? 'https://savetheplate.tn'
+      : 'http://localhost:3000');
+  return String(v || '').replace(/\/$/, '');
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -61,7 +71,7 @@ export class AuthService {
         JwtType.EmailToken,
       );
 
-      const link = `${process.env.FRONT_URL}/callback/${emailToken}`;
+      const link = `${getFrontendBaseUrl()}/callback/${emailToken}`;
 
       // For local dev: Skip email and return the link directly
       if (process.env.NODE_ENV === 'development') {
@@ -601,7 +611,7 @@ export class AuthService {
         JwtType.EmailToken,
       );
 
-      const verificationLink = `${process.env.FRONT_URL}/callback/${emailToken}`;
+      const verificationLink = `${getFrontendBaseUrl()}/callback/${emailToken}`;
 
       // Render React component to HTML (use verification email template with code)
       const emailHtml = await render(

@@ -22,7 +22,7 @@
 //   // will accept Set-Cookie from the backend during the auth callback.
 //   // Make sure FRONT_URL is set to your frontend's origin (including protocol).
 //   app.enableCors({
-//     origin: process.env.FRONT_URL || process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3000',
+//     origin: process.env.FRONT_URL || 'http://localhost:3000',
 //     credentials: true,
 //   });
 
@@ -32,7 +32,7 @@
 //   app.use((req, res, next) => {
 //     try {
 //       const allowUnsafeEval = process.env.ALLOW_UNSAFE_EVAL === 'true';
-//       const frontend = process.env.FRONT_URL || process.env.NEXT_PUBLIC_BACKEND_URL || '';
+//       const frontend = process.env.FRONT_URL || '';
 //       const scriptSrcParts = ["'self'"];
 //       if (allowUnsafeEval) scriptSrcParts.push("'unsafe-eval'");
 //       // You can add trusted CDNs here when needed, e.g. scriptSrcParts.push('https://www.googletagmanager.com')
@@ -90,6 +90,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
 import { loadEnvFromFiles } from './utils/env-loader';
+import { isOriginAllowed } from './utils/cors';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -221,62 +222,11 @@ async function bootstrap() {
 
     app.useStaticAssets(join(__dirname, '..', 'uploads'));
 
-    // Enable CORS for the frontend and allow credentials
-    // Explicitly allow all ccdev.space domains and configured frontend URLs
-    const allowedOrigins = [
-      'http://savetheplate.tn',
-      'https://savetheplate.tn',
-      'https://leftover.ccdev.space',
-      'https://savetheplate.ccdev.space',
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      process.env.FRONTEND_URL,
-      process.env.NEXT_PUBLIC_FRONTEND_URL,
-      process.env.FRONT_URL,
-    ].filter(Boolean) as string[];
-
-    // Use a simpler, more explicit CORS configuration
-    // This ensures CORS headers are always sent, even for errors
+    // CORS: centralized origin allowlist (utils/cors.ts)
     app.enableCors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) {
-          callback(null, true);
-          return;
-        }
-
-        // Always allow localhost for development
-        if (
-          origin.startsWith('http://localhost:') ||
-          origin.startsWith('http://127.0.0.1:')
-        ) {
-          callback(null, true);
-          return;
-        }
-
-        // Always allow all ccdev.space domains (staging environment)
-        // This is the most important check for the current setup
-        if (origin.includes('.ccdev.space')) {
-          callback(null, true);
-          return;
-        }
-
-        // Check against explicit allowed list
-        if (allowedOrigins.includes(origin)) {
-          callback(null, true);
-          return;
-        }
-
-        // In production, reject unknown origins
-        if (process.env.NODE_ENV === 'production') {
-          callback(new Error('Not allowed by CORS'), false);
-          return;
-        }
-
-        // In development/staging, allow all
-        callback(null, true);
+        if (isOriginAllowed(origin)) return callback(null, true);
+        return callback(new Error('Not allowed by CORS'), false);
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],

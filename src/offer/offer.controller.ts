@@ -47,7 +47,6 @@ export class OfferController {
     // Normalize image entries so DB stores a canonical structure
     const backendBase = (
       process.env.BACKEND_URL ||
-      process.env.NEXT_PUBLIC_BACKEND_URL ||
       ''
     ).replace(/\/$/, '');
     const normalizedImages = (images || []).map((img: any) => {
@@ -212,7 +211,6 @@ export class OfferController {
           // Normalize image entries like in create
           const backendBase = (
             process.env.BACKEND_URL ||
-            process.env.NEXT_PUBLIC_BACKEND_URL ||
             ''
           ).replace(/\/$/, '');
           const normalizedImages = parsedImages.map((img: any) => {

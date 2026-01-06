@@ -131,7 +131,6 @@ export class OrderController {
       if (!frontendUrl) {
         frontendUrl =
           process.env.FRONTEND_URL ||
-          process.env.NEXT_PUBLIC_FRONTEND_URL ||
           '';
       }
 
@@ -313,7 +312,6 @@ export class OrderController {
         // For browser requests, redirect to orders page with error message
         let frontendUrl = process.env.FRONT_URL || 
           process.env.FRONTEND_URL || 
-          process.env.NEXT_PUBLIC_FRONTEND_URL ||
           'https://leftover.ccdev.space';
         
         if (request.headers?.referer) {

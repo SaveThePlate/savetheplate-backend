@@ -19,9 +19,8 @@ export function getConfiguredAllowedOrigins(): string[] {
 
   // Support existing env var names used across the repo.
   const frontendFromEnv = [
-    process.env.FRONTEND_URL,
-    process.env.NEXT_PUBLIC_FRONTEND_URL,
     process.env.FRONT_URL,
+    process.env.FRONTEND_URL,
   ].filter(Boolean) as string[];
 
   // De-duplicate while preserving order.
