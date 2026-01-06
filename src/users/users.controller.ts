@@ -8,6 +8,7 @@ import {
   NotFoundException,
   Param,
   Post,
+  Query,
   Req,
   UploadedFile,
   UseGuards,
@@ -23,6 +24,12 @@ import { UserRole } from '@prisma/client';
 import { ResendService } from 'src/utils/mailing/resend.service';
 import { render } from '@react-email/render';
 import ProviderRegistrationEmail from 'src/emails/ProviderRegistration';
+
+type ReverseGeocodeResponse = {
+  city: string;
+  state: string;
+  locationName?: string;
+};
 
 interface ProfileData {
   username?: string;
@@ -275,17 +282,28 @@ export class UsersController {
     const mapsLink = updateDetailsDto.mapsLink;
 
     if (mapsLink) {
-      const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
-      const data = this.extractLocationData(expandedUrl);
+      // IMPORTANT: Never fail onboarding just because Google Maps URL expansion/parsing fails.
+      // Mobile share links are often short links (maps.app.goo.gl/...) and expansion can fail
+      // depending on network/proxy restrictions. We should still persist the submitted details.
+      try {
+        const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
+        const data = this.extractLocationData(expandedUrl);
 
-      if (data.latitude && data.longitude) {
-        latitude = data.latitude;
-        longitude = data.longitude;
-      }
-      // Only extract location name if it wasn't manually provided
-      // This allows users to edit the extracted name and have it preserved
-      if (data.locationName && !locationName) {
-        locationName = data.locationName;
+        if (data.latitude && data.longitude) {
+          latitude = data.latitude;
+          longitude = data.longitude;
+        }
+        // Only extract location name if it wasn't manually provided
+        // This allows users to edit the extracted name and have it preserved
+        if (data.locationName && !locationName) {
+          locationName = data.locationName;
+        }
+      } catch (error) {
+        console.warn('⚠️ Failed to expand/parse Google Maps link during update-details, continuing anyway:', {
+          mapsLink,
+          message: error instanceof Error ? error.message : String(error),
+        });
+        // Keep user-provided locationName/lat/lng as-is.
       }
     }
 
@@ -670,6 +688,94 @@ export class UsersController {
 
     const user = req.user as { email: string };
     return this.usersService.findOne(user.email);
+  }
+
+  /**
+   * Reverse geocode coordinates to a human-readable city/state.
+   *
+   * Used by the client home page to show a friendly location label for
+   * distance-based browsing. This endpoint is intentionally lightweight and
+   * resilient: it never throws for upstream geocoding failures; it returns
+   * "Unknown" values instead.
+   *
+   * Query params:
+   * - lat: number
+   * - lon: number
+   */
+  @Get('reverse-geocode')
+  async reverseGeocode(
+    @Query('lat') latStr: string,
+    @Query('lon') lonStr: string,
+  ): Promise<ReverseGeocodeResponse> {
+    const lat = Number(latStr);
+    const lon = Number(lonStr);
+
+    // Validate inputs
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      throw new BadRequestException('Invalid coordinates');
+    }
+    if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+      throw new BadRequestException('Coordinates out of range');
+    }
+
+    // Default response (safe fallback)
+    const fallback: ReverseGeocodeResponse = { city: 'Unknown', state: 'Unknown' };
+
+    try {
+      // Use OpenStreetMap Nominatim (no API key). Keep timeout and headers explicit.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const url =
+        `https://nominatim.openstreetmap.org/reverse` +
+        `?format=jsonv2&lat=${encodeURIComponent(String(lat))}&lon=${encodeURIComponent(String(lon))}`;
+
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          // Nominatim requires a valid User-Agent identifying the application.
+          'User-Agent': 'SaveThePlate/1.0 (reverse-geocode)',
+          Accept: 'application/json',
+        },
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        return fallback;
+      }
+
+      const data: any = await res.json();
+      const address = data?.address || {};
+
+      // City can be under multiple keys depending on region
+      const city =
+        address.city ||
+        address.town ||
+        address.village ||
+        address.municipality ||
+        address.county ||
+        'Unknown';
+
+      const state =
+        address.state ||
+        address.region ||
+        address.state_district ||
+        address.county ||
+        'Unknown';
+
+      const locationName = data?.display_name ? String(data.display_name) : undefined;
+
+      return {
+        city: String(city || 'Unknown'),
+        state: String(state || 'Unknown'),
+        ...(locationName ? { locationName } : {}),
+      };
+    } catch (error) {
+      // Never fail the caller; just return Unknown.
+      return fallback;
+    }
   }
 
   //get user by Id

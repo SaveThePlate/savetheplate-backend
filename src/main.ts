@@ -89,11 +89,16 @@ import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
+import { loadEnvFromFiles } from './utils/env-loader';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
   try {
+    // Ensure process.env is populated in a predictable way for local vs production.
+    // In production, hosting-provided env vars always win; env files only fill in missing keys.
+    loadEnvFromFiles();
+
     const app = await NestFactory.create<NestExpressApplication>(AppModule, {
       logger: ['error', 'warn', 'log', 'debug', 'verbose'],
     });
