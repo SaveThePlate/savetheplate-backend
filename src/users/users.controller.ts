@@ -162,10 +162,11 @@ export class UsersController {
       console.log(`Updating role for user ${userId} (${dbUser.email}) from ${dbUser.role} to ${upperRole}`);
 
       let redirectTo = '/';
-      // Set role to PROVIDER (not PENDING_PROVIDER) - they become PENDING_PROVIDER only after submitting location details
+      // Set role to PENDING_PROVIDER for providers - this allows them to onboard quickly
+      // They can start using the platform immediately while awaiting admin approval
       let roleToSet: UserRole;
       if (upperRole === 'PROVIDER') {
-        roleToSet = UserRole.PROVIDER;
+        roleToSet = UserRole.PENDING_PROVIDER;
       } else if (upperRole === 'CLIENT') {
         roleToSet = UserRole.CLIENT;
       } else {
@@ -184,7 +185,9 @@ export class UsersController {
       console.log(`Role updated successfully. User ID: ${userId}, New role: ${updatedUser.role}`);
 
       if (upperRole === 'PROVIDER') {
-        redirectTo = '/onboarding/fillDetails';
+        // Don't send approval email here - will be sent after provider fills in details
+        // This ensures the email contains complete information (phone, location, mapsLink)
+        redirectTo = '/provider/home';
       } else {
         redirectTo = '/client/home';
       }
@@ -271,9 +274,9 @@ export class UsersController {
 
     const userId = req.user.id;
 
-    // Get user info to check if they're a provider (not yet pending)
+    // Get user info to check if we need to send approval email
     const user = await this.usersService.findById(userId);
-    const isProvider = user?.role === UserRole.PROVIDER;
+    const isPendingProvider = user?.role === UserRole.PENDING_PROVIDER;
 
     // Expand and extract data if a Google Maps link is provided
     let latitude = updateDetailsDto.latitude;
@@ -316,12 +319,25 @@ export class UsersController {
       mapsLink,
     );
 
-    // If this is a provider completing their location details, change role to PENDING_PROVIDER and send email to admin
-    if (isProvider) {
-      // Change role from PROVIDER to PENDING_PROVIDER after submitting location details
-      const userWithPendingRole = await this.usersService.updateRole(userId, UserRole.PENDING_PROVIDER);
-      await this.sendProviderApprovalEmail(userWithPendingRole);
-      return userWithPendingRole;
+    // If this is a pending provider updating their details for the first time, send approval email
+    // This ensures the email contains complete information (phone, location, mapsLink)
+    if (isPendingProvider && updateDetailsDto.phoneNumber && mapsLink) {
+      console.log('📧 Sending provider approval email with complete details:', {
+        userId: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+        phoneNumber: updatedUser.phoneNumber,
+        location: updatedUser.location,
+        mapsLink: updatedUser.mapsLink,
+      });
+      await this.sendProviderApprovalEmail(updatedUser);
+    } else {
+      console.log('⏭️ Skipping approval email:', {
+        isPendingProvider,
+        hasPhoneNumber: !!updateDetailsDto.phoneNumber,
+        hasMapsLink: !!mapsLink,
+        userRole: user?.role,
+      });
     }
 
     return updatedUser;
