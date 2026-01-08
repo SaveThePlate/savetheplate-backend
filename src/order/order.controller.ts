@@ -39,14 +39,8 @@ export class OrderController {
     try {
       const userId = request.user.id;
 
-      // Validate input
-      if (!createOrderDto.offerId || !createOrderDto.quantity) {
-        throw new BadRequestException('offerId and quantity are required');
-      }
-
-      if (createOrderDto.quantity <= 0) {
-        throw new BadRequestException('Quantity must be greater than 0');
-      }
+      // Note: Validation is now handled by class-validator decorators in CreateOrderDto
+      // No need for manual validation here
 
       const data = {
         userId: userId,
