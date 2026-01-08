@@ -141,6 +141,15 @@ export class UsersService {
       updateData.mapsLink = profileData.mapsLink;
     }
 
+    // Include latitude and longitude if provided
+    if (profileData.latitude !== undefined) {
+      updateData.latitude = profileData.latitude;
+    }
+
+    if (profileData.longitude !== undefined) {
+      updateData.longitude = profileData.longitude;
+    }
+
     const updatedUser = await this.prisma.user.update({
       where: { email },
       data: updateData,

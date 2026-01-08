@@ -846,9 +846,33 @@ export class UsersController {
       // We'll set the field only when provided to avoid sending `undefined` to Prisma.
     };
 
-    // Include mapsLink if provided
+    // Include mapsLink if provided and extract coordinates
     if (profileData.mapsLink !== undefined && profileData.mapsLink !== null) {
-      updatedData.mapsLink = profileData.mapsLink.trim() || null;
+      const mapsLink = profileData.mapsLink.trim();
+      updatedData.mapsLink = mapsLink || null;
+
+      // Extract latitude/longitude from mapsLink if provided
+      if (mapsLink) {
+        try {
+          const expandedUrl = await this.expandGoogleMapsUrl(mapsLink);
+          const data = this.extractLocationData(expandedUrl);
+
+          if (data.latitude && data.longitude) {
+            (updatedData as any).latitude = data.latitude;
+            (updatedData as any).longitude = data.longitude;
+          }
+          // Only extract location name if it wasn't manually provided
+          if (data.locationName && !profileData.location) {
+            updatedData.location = data.locationName;
+          }
+        } catch (error) {
+          console.warn('⚠️ Failed to expand/parse Google Maps link during profile update, continuing anyway:', {
+            mapsLink,
+            message: error instanceof Error ? error.message : String(error),
+          });
+          // Keep user-provided location/lat/lng as-is.
+        }
+      }
     }
 
     // Normalize and add phoneNumber only when present
