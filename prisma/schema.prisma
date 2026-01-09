@@ -45,6 +45,11 @@ model Offer {
   updatedAt       DateTime  @updatedAt
   owner           User?     @relation(fields: [ownerId], references: [id])
   orders          Order[]
+
+  @@index([ownerId])
+  @@index([createdAt(sort: Desc)])
+  @@index([expirationDate])
+  @@index([foodType])
 }
 
 model Order {
@@ -60,6 +65,11 @@ model Order {
   offer       Offer     @relation(fields: [offerId], references: [id])
   user        User      @relation(fields: [userId], references: [id])
   rating      Rating?
+
+  @@index([userId])
+  @@index([offerId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
 }
 
 model ContactMessage {
@@ -85,6 +95,9 @@ model Rating {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([providerId])
+  @@index([userId])
 }
 
 enum Status {

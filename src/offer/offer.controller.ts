@@ -11,6 +11,9 @@ import {
   ForbiddenException,
   Patch,
   Delete,
+  Query,
+  ParseIntPipe,
+  DefaultValuePipe,
 } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
@@ -104,8 +107,15 @@ export class OfferController {
   }
 
   @Get()
-  async findAll() {
-    return this.offerService.findAll();
+  async findAll(
+    @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
+    @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+  ) {
+    // Ensure page and limit are within reasonable bounds
+    const safePage = Math.max(1, Math.min(page, 1000));
+    const safeLimit = Math.max(1, Math.min(limit, 100));
+    
+    return this.offerService.findAll(safePage, safeLimit);
   }
 
   @Get('owner/:id')

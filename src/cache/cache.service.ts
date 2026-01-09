@@ -69,8 +69,11 @@ export class CacheService {
   /**
    * Generate cache key for offers
    */
-  getOfferKey(id?: number): string {
-    return id ? `offer:${id}` : 'offers:all';
+  getOfferKey(page?: number, limit?: number): string {
+    if (page && limit) {
+      return `offers:page:${page}:limit:${limit}`;
+    }
+    return 'offers:all';
   }
 
   /**
@@ -121,13 +124,15 @@ export class CacheService {
    * Invalidate all offer-related cache
    */
   async invalidateOffers(offerId?: number): Promise<void> {
-    if (offerId) {
-      await this.del(this.getOfferKey(offerId));
-    }
-    // Invalidate all offers list
+    // Invalidate all offers list and paginated results
     await this.del(this.getOfferKey());
+    await this.delPattern('offers:page:*');
     // Invalidate all owner-specific caches (pattern matching)
     await this.delPattern('offers:owner:*');
+    // Invalidate specific offer if provided
+    if (offerId) {
+      await this.del(`offer:${offerId}`);
+    }
   }
 
   /**

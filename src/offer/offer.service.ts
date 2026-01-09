@@ -95,15 +95,25 @@ export class OfferService {
     return formattedOffer;
   }
 
-  async findAll() {
-    const cacheKey = this.cacheService.getOfferKey();
-    const cached = await this.cacheService.get<any[]>(cacheKey);
+  async findAll(page: number = 1, limit: number = 50) {
+    const cacheKey = this.cacheService.getOfferKey(page, limit);
+    const cached = await this.cacheService.get<any>(cacheKey);
     
     if (cached) {
       return cached;
     }
 
+    const skip = (page - 1) * limit;
+    
+    // Get total count for pagination metadata
+    const total = await this.prisma.offer.count();
+    
     const offers = await this.prisma.offer.findMany({
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: 'desc', // Most recent offers first
+      },
       include: {
         // Include owner (provider) information to always get fresh data
         owner: {
@@ -215,9 +225,20 @@ export class OfferService {
       };
     });
 
+    const result = {
+      data: formattedOffers,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasMore: skip + offers.length < total,
+      },
+    };
+
     // Cache for 5 minutes
-    await this.cacheService.set(cacheKey, formattedOffers, 300);
-    return formattedOffers;
+    await this.cacheService.set(cacheKey, result, 300);
+    return result;
   }
 
   async findAllByOwnerId(ownerId: number) {

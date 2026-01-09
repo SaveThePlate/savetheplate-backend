@@ -91,6 +91,7 @@ import { AllExceptionsFilter } from './common/filters/http-exception.filter';
 import { Logger, ValidationPipe, HttpStatus, HttpException } from '@nestjs/common';
 import { loadEnvFromFiles } from './utils/env-loader';
 import { isOriginAllowed } from './utils/cors';
+import compression from 'compression';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -107,6 +108,23 @@ async function bootstrap() {
     // Trust proxy - important for production deployments behind reverse proxy (Nginx, etc.)
     // This allows Express to trust X-Forwarded-* headers from the proxy
     app.set('trust proxy', true);
+
+    // Enable compression for all responses
+    // This will significantly reduce response sizes and improve load times
+    app.use(compression({
+      filter: (req, res) => {
+        // Don't compress responses with this request header
+        if (req.headers['x-no-compression']) {
+          return false;
+        }
+        // Fallback to standard compression filter
+        return compression.filter(req, res);
+      },
+      // Compression level (0-9, where 6 is default, 9 is max compression but slower)
+      level: 6,
+      // Only compress responses larger than 1KB
+      threshold: 1024,
+    }));
 
     // Add Express middleware to immediately return 404 for frontend static files
     // This MUST run before NestJS routing to prevent validation errors
