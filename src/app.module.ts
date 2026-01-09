@@ -13,11 +13,22 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { CacheModule } from './cache/cache.module';
 import { RatingModule } from './rating/rating.module';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { CustomThrottlerGuard } from './common/guards/throttler.guard';
 
 @Module({
   imports: [
     CacheModule,
     PrismaModule,
+    // Rate limiting: 100 requests per 60 seconds globally
+    // Can be overridden per route with @Throttle() decorator
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // Time window in milliseconds (60 seconds)
+        limit: 100, // Max requests per time window
+      },
+    ]),
     AuthModule,
     OfferModule,
     StorageModule,
@@ -30,6 +41,12 @@ import { RatingModule } from './rating/rating.module';
     WebSocketModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}

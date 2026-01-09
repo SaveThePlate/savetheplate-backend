@@ -12,6 +12,7 @@ import {
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { Throttle } from '@nestjs/throttler';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { ScanOrderDto } from './dto/scan-order.dto';
@@ -33,6 +34,8 @@ export class OrderController {
     return this.orderService.findOrdersForProvider(providerId);
   }
 
+  // Rate limit: 20 orders per minute (prevents spam but allows legitimate use)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post()
   @UseGuards(AuthGuard)
   async create(@Body() createOrderDto: CreateOrderDto, @Req() request) {

@@ -8,6 +8,7 @@ import {
   Req,
 } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 import { AuthGuard } from './auth.guard';
 import { AuthService } from './auth.service';
@@ -33,6 +34,8 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   // ENDPOINT TO SIGN IN WITH PASSWORD
+  // Rate limit: 5 attempts per minute to prevent brute force attacks
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('/signin')
   @ApiOkResponse({ type: SigninDtoResponse })
   async signin(@Body() signinDto: SigninDtoRequest) {
@@ -51,6 +54,8 @@ export class AuthController {
   }
 
   // ENDPOINT TO REGISTER USER WITH PASSWORD
+  // Rate limit: 3 signups per hour per IP to prevent abuse
+  @Throttle({ default: { limit: 3, ttl: 3600000 } })
   @Post('/signup')
   @ApiOkResponse({ type: SignupDtoResponse })
   async signup(@Body() signupDto: SignupDtoRequest) {
@@ -126,6 +131,8 @@ export class AuthController {
   // }
 
   // ENDPOINT TO SEND VERIFICATION EMAIL
+  // Rate limit: 3 emails per 10 minutes to prevent spam
+  @Throttle({ default: { limit: 3, ttl: 600000 } })
   @Post('/send-verification-email')
   @ApiOkResponse({ type: SendVerificationEmailDtoResponse })
   async sendVerificationEmail(
@@ -145,6 +152,8 @@ export class AuthController {
   }
 
   // ENDPOINT TO VERIFY EMAIL CODE
+  // Rate limit: 10 attempts per 10 minutes (allows for typos)
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
   @Post('/verify-email-code')
   @ApiOkResponse({ type: VerifyEmailCodeDtoResponse })
   async verifyEmailCode(@Body() verifyCodeDto: VerifyEmailCodeDtoRequest) {

@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { diskStorage } from 'multer';
 import { extname, basename, join } from 'path';
 import { Request } from 'express';
@@ -38,6 +39,8 @@ export class StorageController {
     }
   }
 
+  // Rate limit: 10 uploads per minute to prevent abuse
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   @Post('upload')
   @ApiConsumes('multipart/form-data')
   @ApiBody({

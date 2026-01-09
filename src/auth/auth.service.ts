@@ -604,26 +604,15 @@ export class AuthService {
         // Continue anyway - code will be in email
       }
 
-      // Generate email verification token (for link fallback)
-      const emailToken = await generateToken(
-        user.id.toString(),
-        user.email,
-        JwtType.EmailToken,
-      );
-
-      const verificationLink = `${getFrontendBaseUrl()}/callback/${emailToken}`;
-
-      // Render React component to HTML (use verification email template with code)
+      // Render React component to HTML (simple email with just the code)
       const emailHtml = await render(
         VerificationEmailTemplate({ 
-          verificationLink,
-          verificationCode, // Include code in email
+          verificationCode, // Only include code, no link
         }),
       );
 
-      // For local dev: Log the link and code but still try to send email
+      // For local dev: Log the code
       if (process.env.NODE_ENV === 'development') {
-        console.log('\n🔗 Verification Link (Local Dev):', verificationLink);
         console.log('🔐 Verification Code:', verificationCode);
         console.log('📧 Attempting to send email to:', user.email);
       }

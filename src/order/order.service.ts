@@ -239,10 +239,22 @@ export class OrderService {
   }
 
   async placeOrder(data: any) {
-    // Validate input
-    if (!data.offerId || !data.quantity || data.quantity <= 0) {
+    // Validate input - provide specific error messages
+    if (!data.offerId && !data.quantity) {
       throw new BadRequestException(
         'Invalid order data: offerId and quantity are required',
+      );
+    }
+    
+    if (!data.offerId) {
+      throw new BadRequestException(
+        'Invalid order data: offerId is required',
+      );
+    }
+    
+    if (!data.quantity || data.quantity <= 0) {
+      throw new BadRequestException(
+        'Invalid order data: quantity must be a positive number',
       );
     }
 
