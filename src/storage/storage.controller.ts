@@ -138,7 +138,9 @@ export class StorageController {
     }
   }
 
-  @Get('*')
+  // Use a named wildcard to be compatible with the latest path-to-regexp
+  // This maps all /storage/** requests to this handler without LegacyRouteConverter warnings
+  @Get('*path')
   seeUploadedFile(@Req() req: Request, @Res() res) {
     try {
       // Extract the path part after /storage/ (controller is mounted on /storage)
