@@ -292,55 +292,6 @@ npm run test:cov
 
 Test files are located alongside source files with `.spec.ts` extension.
 
-## 🚢 Deployment
-
-### Docker
-
-```bash
-# Build image
-docker build -t savetheplate-backend .
-
-# Run container
-docker run -p 3150:3001 savetheplate-backend
-```
-
-### Production Checklist
-- [ ] Set strong JWT_SECRET
-- [ ] Configure proper DATABASE_URL
-- [ ] Set up Redis for production
-- [ ] Configure email service
-- [ ] Set up OAuth credentials
-- [ ] Configure CORS for production frontend URL
-- [ ] Set NODE_ENV=production
-- [ ] Set up SSL/HTTPS
-- [ ] Configure rate limiting
-- [ ] Set up monitoring and logging
-- [ ] Configure file storage (S3, etc.)
-
-### Auto-Pull Script
-
-The `auto-pull.sh` script can be used for automatic deployment updates. See [AUTO-PULL-README.md](./AUTO-PULL-README.md) for details.
-
-## 📖 Additional Documentation
-
-- [Announcements Feature](./ANNOUNCEMENTS_README.md) - Send promotional emails to users
-- [Auto-Pull Deployment](./AUTO-PULL-README.md) - Automated deployment guide
-- [Confluence Space](https://codecooperation.atlassian.net) - General project documentation
-
-## 🛡️ Code Guidelines
-
-Follow the Code Cooperation guidelines: https://github.com/CodeCooperation/CC-Guidelines
-
-**Key Principles:**
-- Write clean, self-documenting code
-- Use TypeScript types strictly
-- Follow NestJS best practices
-- Write unit tests for business logic
-- Use dependency injection
-- Keep controllers thin, services fat
-- Document complex logic
-- Use environment variables for configuration
-
 ## 🤝 Getting Help
 
 - Check existing documentation in this README and linked files
