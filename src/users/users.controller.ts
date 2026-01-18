@@ -278,6 +278,22 @@ export class UsersController {
     const user = await this.usersService.findById(userId);
     const isPendingProvider = user?.role === UserRole.PENDING_PROVIDER;
 
+    // Normalize and validate phone number before persisting
+    const rawPhone = updateDetailsDto?.phoneNumber;
+    const normalizedPhone =
+      rawPhone === undefined || rawPhone === null
+        ? ''
+        : String(rawPhone).replace(/\D/g, '');
+
+    if (rawPhone !== undefined && rawPhone !== null) {
+      if (!normalizedPhone) {
+        throw new BadRequestException('Phone number is required and must contain digits only');
+      }
+      if (normalizedPhone.length < 8 || normalizedPhone.length > 15) {
+        throw new BadRequestException('Invalid phone number format. Please enter 8-15 digits.');
+      }
+    }
+
     // Expand and extract data if a Google Maps link is provided
     let latitude = updateDetailsDto.latitude;
     let longitude = updateDetailsDto.longitude;
@@ -315,13 +331,13 @@ export class UsersController {
       locationName,
       longitude,
       latitude,
-      updateDetailsDto.phoneNumber,
+      normalizedPhone || undefined,
       mapsLink,
     );
 
     // If this is a pending provider updating their details for the first time, send approval email
     // This ensures the email contains complete information (phone, location, mapsLink)
-    if (isPendingProvider && updateDetailsDto.phoneNumber && mapsLink) {
+    if (isPendingProvider && normalizedPhone && mapsLink) {
       console.log('📧 Sending provider approval email with complete details:', {
         userId: updatedUser.id,
         username: updatedUser.username,
@@ -334,7 +350,7 @@ export class UsersController {
     } else {
       console.log('⏭️ Skipping approval email:', {
         isPendingProvider,
-        hasPhoneNumber: !!updateDetailsDto.phoneNumber,
+        hasPhoneNumber: !!normalizedPhone,
         hasMapsLink: !!mapsLink,
         userRole: user?.role,
       });

@@ -86,9 +86,28 @@ export class UsersService {
     phoneNumber: string | number,
     mapsLink: string,
   ) {
-    // Convert phoneNumber to number if it's a string
-    const parsedPhoneNumber =
-      typeof phoneNumber === 'string' ? parseInt(phoneNumber, 10) : phoneNumber;
+    let phoneNumberToPersist: number | undefined = undefined;
+
+    if (phoneNumber !== undefined && phoneNumber !== null && phoneNumber !== '') {
+      const digitsOnly = String(phoneNumber).replace(/\D/g, '');
+
+      if (!digitsOnly) {
+        throw new BadRequestException('Phone number must contain digits only');
+      }
+
+      const parsed = parseInt(digitsOnly, 10);
+
+      if (!Number.isSafeInteger(parsed) || parsed < 0) {
+        throw new BadRequestException('Invalid phone number value');
+      }
+
+      // Prevent Postgres integer overflow (max 2147483647)
+      if (parsed > 2147483647) {
+        throw new BadRequestException('Phone number is too long');
+      }
+
+      phoneNumberToPersist = parsed;
+    }
 
     const updatedUser = await this.prisma.user.update({
       where: { id },
@@ -96,7 +115,7 @@ export class UsersService {
         latitude,
         longitude,
         location,
-        phoneNumber: parsedPhoneNumber,
+        ...(phoneNumberToPersist !== undefined ? { phoneNumber: phoneNumberToPersist } : {}),
         mapsLink,
       },
     });
@@ -128,8 +147,31 @@ export class UsersService {
     const updateData: any = {
       username: profileData.username,
       location: profileData.location,
-      phoneNumber: profileData.phoneNumber,
     };
+
+    // Normalize phone number when provided
+    if (profileData.phoneNumber !== undefined) {
+      const digitsOnly = String(profileData.phoneNumber ?? '')
+        .replace(/\D/g, '')
+        .trim();
+
+      if (digitsOnly) {
+        const parsed = parseInt(digitsOnly, 10);
+
+        if (!Number.isSafeInteger(parsed) || parsed < 0) {
+          throw new BadRequestException('Invalid phone number value');
+        }
+
+        if (parsed > 2147483647) {
+          throw new BadRequestException('Phone number is too long');
+        }
+
+        updateData.phoneNumber = parsed;
+      } else {
+        // Explicitly clear the phone number when an empty value is sent
+        updateData.phoneNumber = null;
+      }
+    }
 
     // Only include profileImage if it's provided (not undefined)
     if (profileData.profileImage !== undefined) {
