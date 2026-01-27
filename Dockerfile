@@ -49,4 +49,4 @@ RUN mkdir -p /usr/src/app/store && chown -R node:node /usr/src/app/store
 USER node
 EXPOSE 3001
 ENV PORT=3001
-CMD [ "node", "dist/src/main.js" ]
+CMD [ "node", "dist/main.js" ]
