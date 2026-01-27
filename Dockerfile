@@ -25,8 +25,8 @@ COPY --chown=node:node . .
 RUN npm install --legacy-peer-deps && npm cache clean --force
 # Generate Prisma client using the installed prisma version to avoid version conflicts
 RUN npx prisma generate
-# Build the application
-RUN npm run build
+# Build the application (clean dist to avoid stale artifacts)
+RUN npm run build:clean
     # Set NODE_ENV=production and remove devDependencies after build to reduce image size
     ENV NODE_ENV=production
     RUN npm prune --production --legacy-peer-deps && npm cache clean --force
