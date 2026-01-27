@@ -4,6 +4,7 @@
 .env.*.local
 .env.production
 .env.development
+.env.staging
 
 # SSH Keys & Secrets
 *.pem
