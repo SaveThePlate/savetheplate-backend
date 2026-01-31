@@ -239,6 +239,7 @@ async function bootstrap() {
     }
 
     app.useStaticAssets(join(__dirname, '..', 'uploads'));
+    app.useStaticAssets(join(__dirname, '..', 'store'));
 
     // CORS: centralized origin allowlist (utils/cors.ts)
     app.enableCors({

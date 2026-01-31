@@ -17,6 +17,7 @@ import {
 } from '@nestjs/common';
 import { OfferService } from './offer.service';
 import { CreateOfferDto } from './dto/create-offer.dto/create-offer.dto';
+import { RapidOfferDto } from './dto/rapid-offer.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { UsersService } from '../users/users.service';
 
@@ -104,6 +105,38 @@ export class OfferController {
     };
 
     return await this.offerService.create(data);
+  }
+
+  @Post('rapid-minimal')
+  @UseGuards(AuthGuard)
+  async createRapidMinimal(@Body() rapidOfferDto: RapidOfferDto, @Req() req) {
+    const userId = req.user.id;
+    const user = await this.usersService.findById(userId);
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Create minimal offer data with defaults for missing fields
+    const data = {
+      ownerId: userId,
+      title: rapidOfferDto.title,
+      description: '', // Empty description for rapid offers
+      price: rapidOfferDto.price,
+      originalPrice: null, // No original price for rapid offers
+      quantity: rapidOfferDto.quantity,
+      expirationDate: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+      pickupStartTime: rapidOfferDto.pickupStartTime,
+      pickupEndTime: new Date(new Date(rapidOfferDto.pickupStartTime).getTime() + 4 * 60 * 60 * 1000), // 4 hours after start
+      mapsLink: user.mapsLink || '', // Always from user profile
+      latitude: user.latitude || null,
+      longitude: user.longitude || null,
+      images: [], // No images for rapid offers
+      foodType: 'other', // Default food type
+      taste: 'neutral', // Default taste
+    };
+
+    return await this.offerService.createRapidMinimal(data);
   }
 
   @Get()

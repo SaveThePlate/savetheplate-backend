@@ -95,6 +95,67 @@ export class OfferService {
     return formattedOffer;
   }
 
+  async createRapidMinimal(data: any) {
+    // Only shorten URL if mapsLink is provided
+    const shortenedLink = data.mapsLink
+      ? await this.shortenUrl(data.mapsLink)
+      : '';
+
+    const offer = await this.prisma.offer.create({
+      data: {
+        ownerId: data.ownerId,
+        title: data.title,
+        description: data.description,
+        price: data.price,
+        originalPrice: data.originalPrice,
+        expirationDate: data.expirationDate,
+        pickupStartTime: data.pickupStartTime
+          ? new Date(data.pickupStartTime)
+          : null,
+        pickupEndTime: data.pickupEndTime ? new Date(data.pickupEndTime) : null,
+        mapsLink: shortenedLink,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        images: data.images,
+        quantity: data.quantity,
+        foodType: data.foodType || 'other',
+        taste: data.taste || 'neutral',
+      },
+      include: {
+        owner: {
+          select: {
+            id: true,
+            username: true,
+            location: true,
+            phoneNumber: true,
+            mapsLink: true,
+            profileImage: true,
+          },
+        },
+      },
+    });
+
+    // Format offer like findAll() does for consistency
+    // Use owner's location (no pickupLocation field in offer)
+    const formattedOffer = {
+      ...offer,
+      pickupLocation: offer.owner?.location || '',
+      mapsLink: (offer.mapsLink && offer.mapsLink.trim() !== '') ? offer.mapsLink : (offer.owner?.mapsLink || offer.mapsLink),
+    };
+
+    // Emit real-time update
+    try {
+      this.wsGateway.emitOfferUpdate(formattedOffer, 'created');
+    } catch (error) {
+      // Silently fail - WebSocket updates are not critical
+    }
+
+    // Invalidate cache
+    await this.cacheService.invalidateOffers();
+
+    return formattedOffer;
+  }
+
   async findAll(page: number = 1, limit: number = 50) {
     const cacheKey = this.cacheService.getOfferKey(page, limit);
     const cached = await this.cacheService.get<any>(cacheKey);
