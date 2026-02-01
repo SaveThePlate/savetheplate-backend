@@ -788,4 +788,313 @@ export class AuthService {
       );
     }
   }
+
+  // Facebook OAuth Callback Handler
+  async facebookCallback(code: string): Promise<any> {
+    try {
+      if (!code) {
+        throw new HttpException(
+          'Authorization code is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Exchange code for access token
+      const facebookAccessToken = await this.exchangeFacebookCodeForToken(code);
+
+      // Get user info from Facebook
+      const facebookUser = await this.getFacebookUserInfo(facebookAccessToken);
+
+      if (!facebookUser.email) {
+        throw new HttpException(
+          'Unable to retrieve email from Facebook account. Please ensure your email is public on Facebook.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Find or create user (case-insensitive email lookup)
+      let user = await this.prisma.user.findFirst({
+        where: {
+          email: facebookUser.email.toLowerCase(),
+        },
+      });
+
+      // If not found, try case-insensitive search
+      if (!user) {
+        const users = await this.prisma.$queryRaw<Array<{ id: number; email: string }>>`
+          SELECT id, email FROM "User" WHERE LOWER(email) = LOWER(${facebookUser.email.toLowerCase()}) LIMIT 1
+        `;
+        if (users && users.length > 0) {
+          user = await this.prisma.user.findUnique({
+            where: { id: users[0].id },
+          });
+        }
+      }
+
+      // If user doesn't exist, create them
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            email: facebookUser.email.toLowerCase(),
+            username: facebookUser.name || facebookUser.email.split('@')[0],
+            role: UserRole.NONE, // New users need onboarding
+            profileImage: facebookUser.picture?.data?.url || '',
+          },
+        });
+      } else {
+        // Update user's profile image if they don't have one
+        if (!user.profileImage && facebookUser.picture?.data?.url) {
+          user = await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              profileImage: facebookUser.picture.data.url,
+            },
+          });
+        }
+      }
+
+      // Generate tokens
+      const accessToken = await generateToken(
+        user.id.toString(),
+        user.email,
+        JwtType.NormalToken,
+      );
+
+      const refreshToken = await generateToken(
+        user.id.toString(),
+        user.email,
+        JwtType.RefreshToken,
+      );
+
+      return {
+        message: 'Facebook authentication successful',
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          location: user.location || '',
+          phoneNumber: user.phoneNumber?.toString() || '',
+          profileImage: user.profileImage || '',
+          role: user.role,
+          emailVerified: user.emailVerified,
+        },
+        needsOnboarding: user.role === UserRole.NONE,
+      };
+    } catch (error) {
+      // Re-throw HttpExceptions as-is
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      console.error('Facebook callback error:', error);
+      throw new HttpException(
+        'Facebook authentication failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Facebook Access Token Handler (for JavaScript SDK flow)
+  async facebookAccessToken(facebookAccessToken: string): Promise<any> {
+    try {
+      if (!facebookAccessToken) {
+        throw new HttpException(
+          'Access token is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Get user info from Facebook using the provided access token
+      const facebookUser = await this.getFacebookUserInfo(facebookAccessToken);
+
+      if (!facebookUser.email) {
+        throw new HttpException(
+          'Unable to retrieve email from Facebook account. Please ensure your email is public on Facebook.',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Find or create user (case-insensitive email lookup)
+      let user = await this.prisma.user.findFirst({
+        where: {
+          email: facebookUser.email.toLowerCase(),
+        },
+      });
+
+      // If not found, try case-insensitive search
+      if (!user) {
+        const users = await this.prisma.$queryRaw<Array<{ id: number; email: string }>>`
+          SELECT id, email FROM "User" WHERE LOWER(email) = LOWER(${facebookUser.email.toLowerCase()}) LIMIT 1
+        `;
+        if (users && users.length > 0) {
+          user = await this.prisma.user.findUnique({
+            where: { id: users[0].id },
+          });
+        }
+      }
+
+      // If user doesn't exist, create them
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            email: facebookUser.email.toLowerCase(),
+            username: facebookUser.name || facebookUser.email.split('@')[0],
+            role: UserRole.NONE, // New users need onboarding
+            profileImage: facebookUser.picture?.data?.url || '',
+          },
+        });
+      } else {
+        // Update user's profile image if they don't have one
+        if (!user.profileImage && facebookUser.picture?.data?.url) {
+          user = await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              profileImage: facebookUser.picture.data.url,
+            },
+          });
+        }
+      }
+
+      // Generate tokens
+      const accessToken = await generateToken(
+        user.id.toString(),
+        user.email,
+        JwtType.NormalToken,
+      );
+
+      const refreshToken = await generateToken(
+        user.id.toString(),
+        user.email,
+        JwtType.RefreshToken,
+      );
+
+      return {
+        message: 'Facebook authentication successful',
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          location: user.location || '',
+          phoneNumber: user.phoneNumber?.toString() || '',
+          profileImage: user.profileImage || '',
+          role: user.role,
+          emailVerified: user.emailVerified,
+        },
+        needsOnboarding: user.role === UserRole.NONE,
+      };
+    } catch (error) {
+      // Re-throw HttpExceptions as-is
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      console.error('Facebook access token error:', error);
+      throw new HttpException(
+        'Facebook authentication failed',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Exchange Facebook authorization code for access token
+  private async exchangeFacebookCodeForToken(code: string): Promise<string> {
+    try {
+      const appId = process.env.FACEBOOK_APP_ID;
+      const appSecret = process.env.FACEBOOK_APP_SECRET;
+      const redirectUri = this.getFacebookRedirectUri();
+
+      if (!appId || !appSecret) {
+        throw new HttpException(
+          'Facebook credentials not configured',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      const tokenUrl = `https://graph.facebook.com/v18.0/oauth/access_token`;
+      
+      const response = await fetch(tokenUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: appId,
+          client_secret: appSecret,
+          redirect_uri: redirectUri,
+          code: code,
+        }).toString(),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Facebook token exchange error:', errorData);
+        throw new HttpException(
+          'Failed to exchange authorization code',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      const data = await response.json();
+
+      if (!data.access_token) {
+        throw new HttpException(
+          'No access token returned from Facebook',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      return data.access_token;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error exchanging Facebook code:', error);
+      throw new HttpException(
+        'Failed to authenticate with Facebook',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Get user info from Facebook using access token
+  private async getFacebookUserInfo(accessToken: string): Promise<any> {
+    try {
+      const fields = 'id,email,name,picture.type(large)';
+      const url = `https://graph.facebook.com/v18.0/me?fields=${fields}&access_token=${accessToken}`;
+
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Facebook user info error:', errorData);
+        throw new HttpException(
+          'Failed to fetch user information from Facebook',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      console.error('Error fetching Facebook user info:', error);
+      throw new HttpException(
+        'Failed to get user information from Facebook',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  // Get redirect URI for Facebook OAuth
+  private getFacebookRedirectUri(): string {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
+    return `${backendUrl}/auth/facebook/callback`;
+  }
 }
+

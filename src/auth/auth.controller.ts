@@ -17,6 +17,10 @@ import {
   AuthMagicMailSenderDtoResponse,
   AuthMagicMailVerifierDtoRequest,
   AuthMagicMailVerifierDtoResponse,
+  FacebookAccessTokenDtoRequest,
+  FacebookAccessTokenDtoResponse,
+  FacebookCallbackDtoRequest,
+  FacebookCallbackDtoResponse,
   GetUserByTokenDtoResponse,
   SignupDtoRequest,
   SignupDtoResponse,
@@ -176,5 +180,43 @@ export class AuthController {
   @ApiOkResponse({ type: GetUserByTokenDtoResponse })
   GetUserByToken(@Req() request: Request) {
     return this.authService.GetUserByToken(request);
+  }
+
+  // ENDPOINT FOR FACEBOOK OAUTH CALLBACK
+  // Rate limit: 20 attempts per minute (user might retry if there's an issue)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Post('/facebook/callback')
+  @ApiOkResponse({ type: FacebookCallbackDtoResponse })
+  async facebookCallback(@Body() callbackDto: FacebookCallbackDtoRequest) {
+    try {
+      return await this.authService.facebookCallback(callbackDto.code);
+    } catch (error) {
+      const errorObj = error as any;
+      console.error('Facebook callback controller error:', {
+        message: error instanceof Error ? error.message : errorObj?.message,
+        status: errorObj?.status,
+        response: errorObj?.response,
+      });
+      throw error;
+    }
+  }
+
+  // ENDPOINT FOR FACEBOOK ACCESS TOKEN (JavaScript SDK flow)
+  // Rate limit: 20 attempts per minute
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Post('/facebook')
+  @ApiOkResponse({ type: FacebookAccessTokenDtoResponse })
+  async facebookAccessToken(@Body() accessTokenDto: FacebookAccessTokenDtoRequest) {
+    try {
+      return await this.authService.facebookAccessToken(accessTokenDto.accessToken);
+    } catch (error) {
+      const errorObj = error as any;
+      console.error('Facebook access token controller error:', {
+        message: error instanceof Error ? error.message : errorObj?.message,
+        status: errorObj?.status,
+        response: errorObj?.response,
+      });
+      throw error;
+    }
   }
 }

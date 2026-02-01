@@ -151,3 +151,57 @@ export class SigninDtoResponse {
   };
   @ApiProperty() role: UserRole;
 }
+
+// Facebook Access Token DTO (for JavaScript SDK flow)
+export class FacebookAccessTokenDtoRequest {
+  @ApiProperty({ example: 'EAACEdEose0cBA...' })
+  @IsNotEmpty({ message: 'Access token is required' })
+  @IsString()
+  accessToken: string;
+}
+
+export class FacebookAccessTokenDtoResponse {
+  @ApiProperty() message: string;
+  @ApiProperty() accessToken: string;
+  @ApiProperty() refreshToken: string;
+  @ApiProperty() user: {
+    id: number;
+    email: string;
+    username: string;
+    location: string;
+    phoneNumber: string;
+    profileImage: string;
+    role: UserRole;
+    emailVerified: boolean;
+  };
+  @ApiProperty() needsOnboarding: boolean;
+}
+
+// Facebook OAuth Callback DTOs
+export class FacebookCallbackDtoRequest {
+  @ApiProperty({ example: 'AQD1VtZPcu7k0kqXZFLWCX...' })
+  @IsNotEmpty({ message: 'Code is required' })
+  @IsString()
+  code: string;
+
+  @ApiProperty({ example: '1769903890173', required: false })
+  @IsString()
+  state?: string;
+}
+
+export class FacebookCallbackDtoResponse {
+  @ApiProperty() message: string;
+  @ApiProperty() accessToken: string;
+  @ApiProperty() refreshToken: string;
+  @ApiProperty() user: {
+    id: number;
+    email: string;
+    username: string;
+    location: string;
+    phoneNumber: string;
+    profileImage: string;
+    role: UserRole;
+    emailVerified: boolean;
+  };
+  @ApiProperty() needsOnboarding: boolean;
+}
