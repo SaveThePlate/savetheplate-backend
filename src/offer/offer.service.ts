@@ -40,12 +40,15 @@ export class OfferService {
       ? await this.shortenUrl(data.mapsLink)
       : '';
 
+    // Add 1 TND commission to the price
+    const priceWithCommission = parseFloat(data.price) + 1;
+
     const offer = await this.prisma.offer.create({
       data: {
         ownerId: data.ownerId,
         title: data.title,
         description: data.description,
-        price: data.price,
+        price: priceWithCommission,
         originalPrice: data.originalPrice,
         expirationDate: data.expirationDate,
         pickupStartTime: data.pickupStartTime
@@ -101,12 +104,15 @@ export class OfferService {
       ? await this.shortenUrl(data.mapsLink)
       : '';
 
+    // Add 1 TND commission to the price
+    const priceWithCommission = parseFloat(data.price) + 1;
+
     const offer = await this.prisma.offer.create({
       data: {
         ownerId: data.ownerId,
         title: data.title,
         description: data.description,
-        price: data.price,
+        price: priceWithCommission,
         originalPrice: data.originalPrice,
         expirationDate: data.expirationDate,
         pickupStartTime: data.pickupStartTime
