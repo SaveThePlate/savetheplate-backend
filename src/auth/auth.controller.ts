@@ -38,8 +38,9 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   // ENDPOINT TO SIGN IN WITH PASSWORD
-  // Rate limit: 5 attempts per minute to prevent brute force attacks
-  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  // Rate limit: 20 attempts per minute to prevent brute force attacks
+  // This is reasonable for normal usage while still preventing abuse
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
   @Post('/signin')
   @ApiOkResponse({ type: SigninDtoResponse })
   async signin(@Body() signinDto: SigninDtoRequest) {
