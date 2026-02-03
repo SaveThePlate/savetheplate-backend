@@ -3,13 +3,10 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
-  Inject,
-  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Status } from '@prisma/client';
 import { OfferService } from '../offer/offer.service';
-import { AppWebSocketGateway } from '../websocket/websocket.gateway';
 import { CacheService } from '../cache/cache.service';
 import { randomBytes } from 'crypto';
 
@@ -18,8 +15,6 @@ export class OrderService {
   constructor(
     private prisma: PrismaService,
     private offerService: OfferService,
-    @Inject(forwardRef(() => AppWebSocketGateway))
-    private wsGateway: AppWebSocketGateway,
     private cacheService: CacheService,
   ) {}
 
@@ -327,20 +322,16 @@ export class OrderService {
       return { updatedOffer, order };
     });
 
-    // Emit real-time update
-    try {
-      this.wsGateway.emitOrderUpdate(result.order, 'created');
-    } catch (error) {
-      // Silently fail - WebSocket updates are not critical
-    }
-
-    // Invalidate cache
-    await this.cacheService.invalidateOrders(
+    // Invalidate cache asynchronously (don't wait for it)
+    this.cacheService.invalidateOrders(
       result.order.id,
       result.order.userId,
       result.order.offerId,
       result.order.offer?.ownerId,
-    );
+    ).catch((error) => {
+      // Log but don't fail the request
+      console.error('Cache invalidation error:', error);
+    });
 
     return result;
   }
@@ -438,13 +429,6 @@ export class OrderService {
 
       return cancelled;
     });
-
-    // Emit real-time update
-    try {
-      this.wsGateway.emitOrderUpdate(result, 'updated');
-    } catch (error) {
-      // Silently fail - WebSocket updates are not critical
-    }
 
     // Invalidate cache
     await this.cacheService.invalidateOrders(
@@ -630,13 +614,6 @@ export class OrderService {
       },
     });
 
-    // Emit real-time update
-    try {
-      this.wsGateway.emitOrderUpdate(updated, 'updated');
-    } catch (error) {
-      // Silently fail - WebSocket updates are not critical
-    }
-
     // Invalidate cache
     await this.cacheService.invalidateOrders(
       updated.id,
@@ -706,13 +683,6 @@ export class OrderService {
         },
       },
     });
-
-    // Emit real-time update
-    try {
-      this.wsGateway.emitOrderUpdate(updated, 'updated');
-    } catch (error) {
-      // Silently fail - WebSocket updates are not critical
-    }
 
     // Invalidate cache
     await this.cacheService.invalidateOrders(

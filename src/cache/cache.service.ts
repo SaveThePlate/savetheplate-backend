@@ -139,20 +139,25 @@ export class CacheService {
    * Invalidate all order-related cache
    */
   async invalidateOrders(orderId?: number, userId?: number, offerId?: number, providerId?: number): Promise<void> {
+    const deletions: Promise<void>[] = [];
+    
     if (orderId) {
-      await this.del(this.getOrderKey(orderId));
+      deletions.push(this.del(this.getOrderKey(orderId)));
     }
     if (userId) {
-      await this.del(this.getOrdersByUserKey(userId));
+      deletions.push(this.del(this.getOrdersByUserKey(userId)));
     }
     if (offerId) {
-      await this.del(this.getOrdersByOfferKey(offerId));
+      deletions.push(this.del(this.getOrdersByOfferKey(offerId)));
     }
     if (providerId) {
-      await this.del(this.getOrdersByProviderKey(providerId));
+      deletions.push(this.del(this.getOrdersByProviderKey(providerId)));
     }
     // Invalidate all orders list
-    await this.del(this.getOrderKey());
+    deletions.push(this.del(this.getOrderKey()));
+    
+    // Execute all deletions in parallel
+    await Promise.all(deletions);
   }
 
   /**

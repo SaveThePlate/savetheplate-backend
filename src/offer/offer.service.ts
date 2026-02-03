@@ -303,8 +303,8 @@ export class OfferService {
       },
     };
 
-    // Cache for 5 minutes
-    await this.cacheService.set(cacheKey, result, 300);
+    // Cache for 10 minutes (longer TTL for better performance)
+    await this.cacheService.set(cacheKey, result, 600);
     return result;
   }
 
