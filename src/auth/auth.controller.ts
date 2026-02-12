@@ -21,6 +21,8 @@ import {
   FacebookAccessTokenDtoResponse,
   FacebookCallbackDtoRequest,
   FacebookCallbackDtoResponse,
+  GoogleAuthDtoRequest,
+  GoogleAuthDtoResponse,
   GetUserByTokenDtoResponse,
   SignupDtoRequest,
   SignupDtoResponse,
@@ -213,6 +215,25 @@ export class AuthController {
     } catch (error) {
       const errorObj = error as any;
       console.error('Facebook access token controller error:', {
+        message: error instanceof Error ? error.message : errorObj?.message,
+        status: errorObj?.status,
+        response: errorObj?.response,
+      });
+      throw error;
+    }
+  }
+
+  // ENDPOINT FOR GOOGLE OAUTH (ID Token verification)
+  // Rate limit: 20 attempts per minute
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Post('/google')
+  @ApiOkResponse({ type: GoogleAuthDtoResponse })
+  async googleAuth(@Body() googleAuthDto: GoogleAuthDtoRequest) {
+    try {
+      return await this.authService.googleAuth(googleAuthDto.token);
+    } catch (error) {
+      const errorObj = error as any;
+      console.error('Google auth controller error:', {
         message: error instanceof Error ? error.message : errorObj?.message,
         status: errorObj?.status,
         response: errorObj?.response,

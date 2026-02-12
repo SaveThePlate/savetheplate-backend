@@ -12,6 +12,7 @@ model User {
   email         String   @unique
   username      String
   password      String?
+  googleId      String?  @unique
   location      String?
   mapsLink      String?
   longitude     Float?

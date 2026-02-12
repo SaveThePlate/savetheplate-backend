@@ -205,3 +205,45 @@ export class FacebookCallbackDtoResponse {
   };
   @ApiProperty() needsOnboarding: boolean;
 }
+
+// Google OAuth DTOs
+export class GoogleAuthDtoRequest {
+  @ApiProperty({
+    example: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjExIn0...',
+    description: 'Google ID Token from frontend',
+  })
+  @IsNotEmpty({ message: 'Google ID Token is required' })
+  @IsString()
+  token: string;
+}
+
+export class GoogleAuthDtoResponse {
+  @ApiProperty({
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+    description: 'JWT access token for authenticated requests',
+  })
+  message: string;
+
+  @ApiProperty() accessToken: string;
+
+  @ApiProperty() refreshToken: string;
+
+  @ApiProperty() user: {
+    id: number;
+    email: string;
+    username: string;
+    location: string;
+    phoneNumber: string;
+    profileImage: string;
+    role: UserRole;
+    emailVerified: boolean;
+  };
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether this is a new user (just created)',
+  })
+  isNewUser: boolean;
+
+  @ApiProperty() needsOnboarding: boolean;
+}
