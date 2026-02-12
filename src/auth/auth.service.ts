@@ -1096,5 +1096,128 @@ export class AuthService {
     const backendUrl = process.env.BACKEND_URL || 'http://localhost:3001';
     return `${backendUrl}/auth/facebook/callback`;
   }
+
+  // Google OAuth Handler (for Google Sign-In token verification)
+  async googleAuth(token: string): Promise<any> {
+    try {
+      if (!token) {
+        throw new HttpException(
+          'Google ID Token is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // Import google-auth-library for token verification
+      const { OAuth2Client } = require('google-auth-library');
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+      // Verify and decode the token
+      const ticket = await client.verifyIdToken({
+        idToken: token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+
+      const payload = ticket.getPayload();
+
+      if (!payload.email) {
+        throw new HttpException(
+          'Unable to retrieve email from Google account',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const googleId = payload.sub;
+      const email = payload.email.toLowerCase();
+      const username = payload.name || email.split('@')[0];
+      const profileImage = payload.picture || '';
+
+      // Find user by googleId first, then by email
+      let user = await this.prisma.user.findFirst({
+        where: {
+          googleId,
+        },
+      });
+
+      // If not found by googleId, try finding by email
+      if (!user) {
+        user = await this.prisma.user.findFirst({
+          where: {
+            email,
+          },
+        });
+
+        // If found by email, link the Google account
+        if (user) {
+          user = await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+              googleId,
+              // Update profile image if user doesn't have one
+              profileImage: user.profileImage || profileImage,
+            },
+          });
+        }
+      }
+
+      // If user doesn't exist, create them
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            googleId,
+            username,
+            role: UserRole.NONE, // New users need onboarding
+            profileImage,
+            emailVerified: true, // Google emails are pre-verified
+          },
+        });
+      }
+
+      // Generate tokens
+      const accessToken = await generateToken(
+        user.id.toString(),
+        user.email,
+        JwtType.NormalToken,
+      );
+
+      const refreshToken = await generateToken(
+        user.id.toString(),
+        user.email,
+        JwtType.RefreshToken,
+      );
+
+      // Determine if this is a new user (just created)
+      const isNewUser = user.role === UserRole.NONE;
+
+      return {
+        message: 'Google authentication successful',
+        accessToken,
+        refreshToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          username: user.username,
+          location: user.location || '',
+          phoneNumber: user.phoneNumber?.toString() || '',
+          profileImage: user.profileImage || '',
+          role: user.role,
+          emailVerified: user.emailVerified || true,
+        },
+        isNewUser,
+        needsOnboarding: isNewUser,
+      };
+    } catch (error) {
+      // Re-throw HttpExceptions as-is
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      console.error('Google auth error:', error);
+      throw new HttpException(
+        'Google authentication failed. Please ensure your token is valid.',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+  }
 }
 
