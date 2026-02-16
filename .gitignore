@@ -1,6 +1,7 @@
 # Environment variables
 .env
-.env.local
+# .env.local is committed with test values for local development
+# .env.local (REMOVED - now committed with test values)
 .env.*.local
 .env.production
 .env.development

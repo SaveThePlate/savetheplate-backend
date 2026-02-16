@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./leftover-backend
+      dockerfile: Dockerfile
+    container_name: savetheplate-backend-local
+    environment:
+      - DATABASE_URL=postgresql://savetheplate_user:local_dev_password@db:5432/savetheplate_local
+      - NODE_ENV=development
+      - PORT=3001
+      - FRONT_URL=http://localhost:3000
+      - BACKEND_URL=http://localhost:3001
+      - RESEND_TOKEN=test_token_local
+      - RESEND_DOMAIN=savetheplate.local
+      - STORAGE_PATH=./store
+      - ADMIN_EMAILS=dev@savetheplate.local
+      - GOOGLE_MAPS_API_KEY=test_key
+      - GOOGLE_CLIENT_ID=test_id
+      - GOOGLE_CLIENT_SECRET=test_secret
+      - FACEBOOK_APP_ID=test_id
+      - FACEBOOK_APP_SECRET=test_secret
+      - NEXT_PUBLIC_FACEBOOK_APP_ID=test_id
+      - JWT_SECRET=dev-secret-key-change-in-production
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./leftover-backend/store:/usr/src/app/store
+      - ./leftover-backend/uploads:/usr/src/app/uploads
+      - ./leftover-backend/src:/usr/src/app/src
+    depends_on:
+      - db
+      - redis
+    restart: on-failure
+    networks:
+      - savetheplate-local
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./leftover-frontend
+      dockerfile: Dockerfile
+    container_name: savetheplate-frontend-local
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_MAPS_API_KEY=test_key
+      - NEXT_PUBLIC_FACEBOOK_APP_ID=test_id
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=test_id
+      - NEXT_PUBLIC_BACKEND_URL=http://localhost:3001/api
+      - NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./leftover-frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    restart: on-failure
+    networks:
+      - savetheplate-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  db:
+    image: postgres:16-alpine
+    container_name: savetheplate-db-local
+    environment:
+      POSTGRES_DB: savetheplate_local
+      POSTGRES_USER: savetheplate_user
+      POSTGRES_PASSWORD: local_dev_password
+      TZ: UTC
+    volumes:
+      - postgres_data_local:/var/lib/postgresql/data
+      - ./backups:/backups
+    ports:
+      - "5432:5432"
+    restart: on-failure
+    networks:
+      - savetheplate-local
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U savetheplate_user -d savetheplate_local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: savetheplate-redis-local
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_local:/data
+    restart: on-failure
+    networks:
+      - savetheplate-local
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data_local:
+    driver: local
+  redis_data_local:
+    driver: local
+
+networks:
+  savetheplate-local:
+    driver: bridge
