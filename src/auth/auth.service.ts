@@ -401,7 +401,7 @@ export class AuthService {
   async signup(signupDto: SignupDtoRequest): Promise<SignupDtoResponse> {
     // Track created user so we can roll back if a later step fails
     let createdUserId: number | null = null;
-
+    console.log();
     try {
       // Ensure JWT secret is configured before doing any writes to avoid partial signups
       if (!process.env.JWT_SECRET) {
