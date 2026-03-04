@@ -1,15 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 import { User, UserRole } from '@prisma/client';
 
 // AuthMagicMailSender
 
 export class AuthMagicMailSenderDtoRequest {
-  @ApiProperty({ example: 'user@example.com' })
+  @ApiProperty({ example: 'user@example.com', required: false })
   @IsEmail({}, { message: 'Please provide a valid email address' })
-  @IsNotEmpty({ message: 'Email is required' })
   @IsString()
-  email: string;
+  email?: string;
 }
 
 export class AuthMagicMailSenderDtoResponse {
@@ -49,11 +48,11 @@ export class GetUserByTokenDtoResponse {
 // Signup DTOs
 
 export class SignupDtoRequest {
-  @ApiProperty({ example: 'user@example.com' })
+  @ApiProperty({ example: 'user@example.com', required: false })
+  @IsOptional()
   @IsEmail({}, { message: 'Please provide a valid email address' })
-  @IsNotEmpty({ message: 'Email is required' })
   @IsString()
-  email: string;
+  email?: string;
 
   @ApiProperty({ example: 'username123' })
   @IsNotEmpty({ message: 'Username is required' })
@@ -87,11 +86,10 @@ export class SignupDtoResponse {
 // Send Verification Email DTOs
 
 export class SendVerificationEmailDtoRequest {
-  @ApiProperty({ example: 'user@example.com' })
+  @ApiProperty({ example: 'user@example.com', required: false })
   @IsEmail({}, { message: 'Please provide a valid email address' })
-  @IsNotEmpty({ message: 'Email is required' })
   @IsString()
-  email: string;
+  email?: string;
 }
 
 export class SendVerificationEmailDtoResponse {
@@ -102,11 +100,10 @@ export class SendVerificationEmailDtoResponse {
 // Verify Email Code DTOs
 
 export class VerifyEmailCodeDtoRequest {
-  @ApiProperty({ example: 'user@example.com' })
+  @ApiProperty({ example: 'user@example.com', required: false })
   @IsEmail({}, { message: 'Please provide a valid email address' })
-  @IsNotEmpty({ message: 'Email is required' })
   @IsString()
-  email: string;
+  email?: string;
 
   @ApiProperty({ example: '123456' })
   @IsNotEmpty({ message: 'Verification code is required' })
@@ -123,11 +120,10 @@ export class VerifyEmailCodeDtoResponse {
 // Signin DTOs
 
 export class SigninDtoRequest {
-  @ApiProperty({ example: 'user@example.com' })
+  @ApiProperty({ example: 'user@example.com', required: false })
   @IsEmail({}, { message: 'Please provide a valid email address' })
-  @IsNotEmpty({ message: 'Email is required' })
   @IsString()
-  email: string;
+  email?: string;
 
   @ApiProperty({ example: 'password123' })
   @IsNotEmpty({ message: 'Password is required' })

@@ -25,7 +25,8 @@ export class AdminGuard implements CanActivate {
       throw new ForbiddenException('User not found in request');
     }
 
-    const isAdmin = this.adminEmails.includes(user.email);
+    // Check if user has email and if it's an admin email
+    const isAdmin = user.email && this.adminEmails.includes(user.email);
 
     if (!isAdmin) {
       throw new ForbiddenException(

@@ -89,9 +89,12 @@ export class AnnouncementsService {
         sent: 0,
         failed: 0,
         recipients: users.length,
-        users: users.map((u) => ({ email: u.email, username: u.username })),
+        users: users.map((u) => ({ email: u.email || 'N/A', username: u.username })),
       };
     }
+
+    // Filter out users without email addresses
+    const usersWithEmail = users.filter(u => u.email);
 
     // Production: Send emails
     let sent = 0;
@@ -101,8 +104,8 @@ export class AnnouncementsService {
     // Rate limit: Resend allows 2 requests per second, so we'll send 1 per 600ms to be safe
     const delayBetweenEmails = 600; // milliseconds
 
-    for (let i = 0; i < users.length; i++) {
-      const user = users[i];
+    for (let i = 0; i < usersWithEmail.length; i++) {
+      const user = usersWithEmail[i];
       
       // Add delay between emails (except for the first one)
       if (i > 0) {
@@ -114,7 +117,7 @@ export class AnnouncementsService {
           .getResendInstance()
           .emails.send({
             from: 'Save The Plate <no-reply@savetheplate.tn>',
-            to: user.email,
+            to: user.email!,
             subject: dto.subject,
             html: emailHtml,
           });

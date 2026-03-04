@@ -42,14 +42,14 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Invalid Token');
       }
 
-      const user = await this.prisma.user.findFirst({
+      const user = await this.prisma.user.findUnique({
         where: {
-          email: payload.email,
+          id: Number(payload.id),
         },
       });
       
       if (!user) {
-        this.logger.warn(`User not found for email: ${payload.email}`);
+        this.logger.warn(`User not found for token id: ${payload.id}`);
         throw new NotFoundException('User not found');
       }
       
@@ -63,7 +63,8 @@ export class AuthGuard implements CanActivate {
         throw new UnauthorizedException('Failed to authenticate user');
       }
       
-      this.logger.debug(`User authenticated: ${user.email} (ID: ${user.id})`);
+      const identity = user.email || user.username || 'unknown-user';
+      this.logger.debug(`User authenticated: ${identity} (ID: ${user.id})`);
       return true;
     } catch (e) {
       if (e instanceof UnauthorizedException || e instanceof NotFoundException) {
