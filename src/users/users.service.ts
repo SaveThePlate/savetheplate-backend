@@ -45,7 +45,7 @@ export class UsersService {
       });
       
       // Invalidate cache
-      await this.cacheService.invalidateUsers(userId, user.email);
+      await this.cacheService.invalidateUsers(userId, user.email || undefined);
       
       console.log(`Successfully updated user ${userId} role from ${user.role} to ${role}`);
       return updatedUser;
@@ -219,6 +219,91 @@ export class UsersService {
     // Invalidate cache
     await this.cacheService.invalidateUsers(updatedUser.id, email);
     await this.cacheService.invalidateOffers(); // Offers may have changed
+
+    return updatedUser;
+  }
+
+  async updateUserProfileById(userId: number, profileData: any) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Reuse existing update logic by email when available
+    if (user.email) {
+      return this.updateUserProfile(user.email, profileData);
+    }
+
+    // Email-less user path
+    const updateData: any = {
+      username: profileData.username,
+      location: profileData.location,
+    };
+
+    if (profileData.phoneNumber !== undefined) {
+      const digitsOnly = String(profileData.phoneNumber ?? '')
+        .replace(/\D/g, '')
+        .trim();
+
+      if (digitsOnly) {
+        const parsed = parseInt(digitsOnly, 10);
+
+        if (!Number.isSafeInteger(parsed) || parsed < 0) {
+          throw new BadRequestException('Invalid phone number value');
+        }
+
+        if (parsed > 2147483647) {
+          throw new BadRequestException('Phone number is too long');
+        }
+
+        updateData.phoneNumber = parsed;
+      } else {
+        updateData.phoneNumber = null;
+      }
+    }
+
+    if (profileData.profileImage !== undefined) {
+      updateData.profileImage = profileData.profileImage;
+    }
+
+    if (profileData.mapsLink !== undefined) {
+      updateData.mapsLink = profileData.mapsLink;
+    }
+
+    if (profileData.latitude !== undefined) {
+      updateData.latitude = profileData.latitude;
+    }
+
+    if (profileData.longitude !== undefined) {
+      updateData.longitude = profileData.longitude;
+    }
+
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+
+    if (profileData.mapsLink !== undefined) {
+      try {
+        await this.prisma.offer.updateMany({
+          where: { ownerId: updatedUser.id },
+          data: {
+            mapsLink: updatedUser.mapsLink || '',
+            latitude: updatedUser.latitude || null,
+            longitude: updatedUser.longitude || null,
+          },
+        });
+      } catch (error) {
+        console.error('Error updating offers after profile mapsLink change:', error);
+      }
+    }
+
+    await this.cacheService.invalidateUsers(updatedUser.id, updatedUser.email || undefined);
+    await this.cacheService.invalidateOffers();
 
     return updatedUser;
   }

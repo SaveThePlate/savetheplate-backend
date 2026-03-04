@@ -67,7 +67,7 @@ export class AuthService {
       // Generate token from email and user ID
       const emailToken = await generateToken(
         user.id.toString(),
-        user.email,
+        user.email || user.username,
         JwtType.EmailToken,
       );
 
@@ -77,14 +77,21 @@ export class AuthService {
       if (process.env.NODE_ENV === 'development') {
         console.log('\n🔗 Magic Link (Local Dev):', link);
         return {
-          message: `Magic link generated for ${user.email}`,
+          message: `Magic link generated for ${user.email || user.username}`,
           sent: true,
           magicLink: link, // Return link directly in dev mode
           emailToken, // Also return the token
         };
       }
 
-      // Production: Send actual email
+      // Production: Send actual email (only if email exists)
+      if (!user.email) {
+        throw new HttpException(
+          'Email is required to send magic link',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       // Render React component to HTML
       const emailHtml = await render(
         MagicLinkEmailTemplate({ magicLink: link }),
@@ -162,13 +169,13 @@ export class AuthService {
       // Generate tokens
       const accessToken = await generateToken(
         user.id.toString(),
-        user.email,
+        user.email || user.username,
         JwtType.NormalToken,
       );
 
       const refreshToken = await generateToken(
         user.id.toString(),
-        user.email,
+        user.email || user.username,
         JwtType.RefreshToken,
       );
 
@@ -217,11 +224,11 @@ export class AuthService {
   }
 
   // Create a new user and generate tokens
-  async createUser(email: string) {
-    const username = email.split('@')[0];
+  async createUser(email?: string) {
+    const username = email ? email.split('@')[0] : `user_${Date.now()}`;
     const user = await this.prisma.user.create({
       data: {
-        email,
+        email: email || null,
         username,
         role: UserRole.NONE, // Default role
       },
@@ -230,13 +237,13 @@ export class AuthService {
     // Generate and return access and refresh tokens
     const accessToken = await generateToken(
       user.id.toString(),
-      user.email,
+      user.email || user.username,
       JwtType.NormalToken,
     );
 
     const refreshToken = await generateToken(
       user.id.toString(),
-      user.email,
+      user.email || user.username,
       JwtType.RefreshToken,
     );
 
@@ -246,7 +253,7 @@ export class AuthService {
       refreshToken,
       user: {
         id: user.id,
-        email: user.email,
+        email: user.email || '',
         username: user.username,
         location: user.location || '',
         phoneNumber: user.phoneNumber || '',
@@ -261,9 +268,17 @@ export class AuthService {
   async signin(signinDto: SigninDtoRequest): Promise<SigninDtoResponse> {
     try {
       // Validate input
-      if (!signinDto.email || !signinDto.password) {
+      if (!signinDto.password) {
         throw new HttpException(
-          'Email and password are required',
+          'Password is required',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      // If email is not provided, we can't sign in
+      if (!signinDto.email) {
+        throw new HttpException(
+          'Email is required for signin',
           HttpStatus.BAD_REQUEST,
         );
       }
@@ -345,13 +360,13 @@ export class AuthService {
       // Generate tokens
       const accessToken = await generateToken(
         user.id.toString(),
-        user.email,
+        user.email || user.username,
         JwtType.NormalToken,
       );
 
       const refreshToken = await generateToken(
         user.id.toString(),
-        user.email,
+        user.email || user.username,
         JwtType.RefreshToken,
       );
 
@@ -361,7 +376,7 @@ export class AuthService {
         refreshToken,
         user: {
           id: user.id,
-          email: user.email,
+          email: user.email || '',
           username: user.username,
           location: user.location || '',
           phoneNumber: user.phoneNumber?.toString() || '',
@@ -412,50 +427,52 @@ export class AuthService {
       }
 
       // Validate input
-      if (!signupDto.email || !signupDto.username || !signupDto.password) {
+      if (!signupDto.username || !signupDto.password) {
         throw new HttpException(
-          'Email, username, and password are required',
+          'Username and password are required',
           HttpStatus.BAD_REQUEST,
         );
       }
 
-      // Normalize email to lowercase for consistent storage
-      const normalizedEmail = signupDto.email.toLowerCase().trim();
+      // Normalize email to lowercase for consistent storage if provided
+      const normalizedEmail = signupDto.email ? signupDto.email.toLowerCase().trim() : undefined;
 
-      // Check if user already exists (case-insensitive)
-      // First try exact match with normalized email
-      let existingUser = await this.prisma.user.findFirst({
-        where: {
-          email: normalizedEmail,
-        },
-      });
+      // Check if user already exists (case-insensitive) only if email is provided
+      if (normalizedEmail) {
+        // First try exact match with normalized email
+        let existingUser = await this.prisma.user.findFirst({
+          where: {
+            email: normalizedEmail,
+          },
+        });
 
-      // If not found, try case-insensitive search using raw query
-      if (!existingUser) {
-        const users = await this.prisma.$queryRaw<Array<{ id: number }>>`
-          SELECT id FROM "User" WHERE LOWER(email) = LOWER(${normalizedEmail}) LIMIT 1
-        `;
-        if (users && users.length > 0) {
-          existingUser = await this.prisma.user.findUnique({
-            where: { id: users[0].id },
-          });
+        // If not found, try case-insensitive search using raw query
+        if (!existingUser) {
+          const users = await this.prisma.$queryRaw<Array<{ id: number }>>`
+            SELECT id FROM "User" WHERE LOWER(email) = LOWER(${normalizedEmail}) LIMIT 1
+          `;
+          if (users && users.length > 0) {
+            existingUser = await this.prisma.user.findUnique({
+              where: { id: users[0].id },
+            });
+          }
         }
-      }
 
-      if (existingUser) {
-        throw new HttpException(
-          'User with this email already exists',
-          HttpStatus.CONFLICT,
-        );
+        if (existingUser) {
+          throw new HttpException(
+            'User with this email already exists',
+            HttpStatus.CONFLICT,
+          );
+        }
       }
 
       // Hash the password
       const hashedPassword = await bcrypt.hash(signupDto.password, 10);
 
-      // Create new user with normalized email
+      // Create new user with normalized email (optional)
       const user = await this.prisma.user.create({
         data: {
-          email: normalizedEmail,
+          email: normalizedEmail || null,
           username: signupDto.username,
           password: hashedPassword,
           role: UserRole.NONE, // Default role
@@ -466,13 +483,13 @@ export class AuthService {
       // Generate tokens
       const accessToken = await generateToken(
         user.id.toString(),
-        user.email,
+        user.email || user.username,
         JwtType.NormalToken,
       );
 
       const refreshToken = await generateToken(
         user.id.toString(),
-        user.email,
+        user.email || user.username,
         JwtType.RefreshToken,
       );
 
@@ -482,7 +499,7 @@ export class AuthService {
         refreshToken,
         user: {
           id: user.id,
-          email: user.email,
+          email: user.email || '',
           username: user.username,
           location: user.location || '',
           phoneNumber: user.phoneNumber?.toString() || '',

@@ -48,22 +48,25 @@ export class UsersController {
   ) {}
 
   @Post()
-  async create(@Body('email') email: string) {
-    if (!email || typeof email !== 'string') {
-      throw new BadRequestException('Email is required and must be a string');
-    }
-
-    // Basic email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      throw new BadRequestException('Invalid email format');
+  async create(@Body('email') email?: string, @Body('username') username?: string) {
+    // Email is now optional
+    if (email) {
+      if (typeof email !== 'string') {
+        throw new BadRequestException('Email must be a string');
+      }
+      
+      // Basic email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new BadRequestException('Invalid email format');
+      }
     }
 
     try {
-      const username = email.split('@')[0];
+      const defaultUsername = email ? email.split('@')[0] : username || `user_${Date.now()}`;
       const data = {
-        email: email,
-        username: username,
+        email: email || null,
+        username: defaultUsername,
         role: UserRole.NONE,
       };
       return await this.usersService.create(data);
@@ -341,7 +344,7 @@ export class UsersController {
       console.log('📧 Sending provider approval email with complete details:', {
         userId: updatedUser.id,
         username: updatedUser.username,
-        email: updatedUser.email,
+        email: updatedUser.email || 'N/A',
         phoneNumber: updatedUser.phoneNumber,
         location: updatedUser.location,
         mapsLink: updatedUser.mapsLink,
@@ -367,7 +370,7 @@ export class UsersController {
     const emailHtml = await render(
       ProviderRegistrationEmail({
         username: user.username,
-        email: user.email,
+        email: user.email || 'N/A',
         phoneNumber: user.phoneNumber,
         location: user.location,
         mapsLink: user.mapsLink,
@@ -383,7 +386,7 @@ export class UsersController {
         console.log('Subject:', subject);
         console.log('Provider Details:', {
           username: user.username,
-          email: user.email,
+          email: user.email || 'N/A',
           phoneNumber: user.phoneNumber,
           location: user.location,
           mapsLink: user.mapsLink,
@@ -714,12 +717,16 @@ export class UsersController {
   @UseGuards(AuthGuard)
   async getCurrentUser(@Req() req: Request) {
     // Validate that user is authenticated
-    if (!req.user || !(req.user as any).email) {
+    if (!req.user || !(req.user as any).id) {
       throw new BadRequestException('User not authenticated');
     }
 
-    const user = req.user as { email: string };
-    return this.usersService.findOne(user.email);
+    const user = req.user as { id: number };
+    const currentUser = await this.usersService.findById(user.id);
+    if (!currentUser) {
+      throw new NotFoundException('User not found');
+    }
+    return currentUser;
   }
 
   /**
@@ -849,11 +856,11 @@ export class UsersController {
     @Req() req: Request,
   ) {
     // Validate that user is authenticated
-    if (!req.user || !(req.user as any).email) {
+    if (!req.user || !(req.user as any).id) {
       throw new BadRequestException('User not authenticated');
     }
 
-    const user = req.user as { email: string };
+    const user = req.user as { id: number; email?: string };
 
     const updatedData: Partial<ProfileData> = {
       username: profileData.username,
@@ -923,13 +930,13 @@ export class UsersController {
     console.log('📤 Final updatedData:', JSON.stringify(updatedData, null, 2));
 
     try {
-      return await this.usersService.updateUserProfile(user.email, updatedData);
+      return await this.usersService.updateUserProfileById(user.id, updatedData);
     } catch (error) {
       // Log detailed error server-side for debugging and return a helpful message
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error(
         'Failed to update profile for',
-        user?.email,
+        user?.email || `user:${user?.id}`,
         'error:',
         errorMessage,
       );
