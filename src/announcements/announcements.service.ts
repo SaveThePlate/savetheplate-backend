@@ -113,14 +113,19 @@ export class AnnouncementsService {
       }
 
       try {
-        const mail_resp = await this.resendService
-          .getResendInstance()
-          .emails.send({
-            from: 'Save The Plate <no-reply@savetheplate.tn>',
-            to: user.email!,
-            subject: dto.subject,
-            html: emailHtml,
-          });
+        const resendInstance = this.resendService.getResendInstance();
+        if (!resendInstance) {
+          failed++;
+          errors.push(`${user.email}: Email service is not configured. Set RESEND_TOKEN environment variable.`);
+          continue;
+        }
+
+        const mail_resp = await resendInstance.emails.send({
+          from: 'Save The Plate <no-reply@savetheplate.tn>',
+          to: user.email!,
+          subject: dto.subject,
+          html: emailHtml,
+        });
 
         if (mail_resp.error) {
           failed++;

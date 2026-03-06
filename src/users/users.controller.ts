@@ -395,14 +395,17 @@ export class UsersController {
       }
 
       // Send actual email (works in both dev and production)
-      const mail_resp = await this.resendService
-        .getResendInstance()
-        .emails.send({
-          from: 'Save The Plate <no-reply@savetheplate.tn>',
-          to: adminEmail,
-          subject: subject,
-          html: emailHtml,
-        });
+      const resendInstance = this.resendService.getResendInstance();
+      if (!resendInstance) {
+        throw new Error('Email service is not configured. Please set RESEND_TOKEN environment variable.');
+      }
+
+      const mail_resp = await resendInstance.emails.send({
+        from: 'Save The Plate <no-reply@savetheplate.tn>',
+        to: adminEmail,
+        subject: subject,
+        html: emailHtml,
+      });
 
       if (mail_resp.error) {
         console.error(

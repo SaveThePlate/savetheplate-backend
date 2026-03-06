@@ -97,7 +97,12 @@ export class AuthService {
         MagicLinkEmailTemplate({ magicLink: link }),
       );
 
-      const mail_resp = await this.resend.getResendInstance().emails.send({
+      const resendInstance = this.resend.getResendInstance();
+      if (!resendInstance) {
+        throw new Error('Email service is not configured. Please set RESEND_TOKEN environment variable.');
+      }
+
+      const mail_resp = await resendInstance.emails.send({
         from: 'Save The Plate <no-reply@savetheplate.tn>',
         to: user.email,
         subject: 'Log in to SaveThePlate',
@@ -635,7 +640,12 @@ export class AuthService {
       }
 
       // Send actual email (works in both dev and production)
-      const mail_resp = await this.resend.getResendInstance().emails.send({
+      const resendInstance = this.resend.getResendInstance();
+      if (!resendInstance) {
+        throw new Error('Email service is not configured. Please set RESEND_TOKEN environment variable.');
+      }
+
+      const mail_resp = await resendInstance.emails.send({
         from: 'Save The Plate <no-reply@savetheplate.tn>',
         to: user.email,
         subject: 'Verify your email - SaveThePlate',

@@ -3,31 +3,39 @@ import { Resend } from 'resend';
 
 @Injectable()
 export class ResendService {
-  private resendInstance: Resend;
+  private resendInstance: Resend | null = null;
   private readonly logger = new Logger(ResendService.name);
 
   constructor() {
     const apiKey = process.env.RESEND_TOKEN;
     if (!apiKey) {
-      this.logger.warn('RESEND_TOKEN is not set. Email sending will fail.');
+      this.logger.warn(
+        'RESEND_TOKEN is not set. Email sending will be disabled. Set RESEND_TOKEN in your .env.local to enable email functionality.',
+      );
+      return;
     }
-    this.resendInstance = new Resend(apiKey);
     
-    // Only try to create domain if RESEND_DOMAIN is set
-    // Note: This might fail if domain already exists, which is fine
-    if (process.env.RESEND_DOMAIN) {
-      this.resendInstance.domains
-        .create({ name: process.env.RESEND_DOMAIN })
-        .catch((error) => {
-          // Domain might already exist, which is fine
-          if (!error.message?.includes('already exists')) {
-            this.logger.warn('Failed to create Resend domain:', error.message);
-          }
-        });
+    try {
+      this.resendInstance = new Resend(apiKey);
+      
+      // Only try to create domain if RESEND_DOMAIN is set
+      // Note: This might fail if domain already exists, which is fine
+      if (process.env.RESEND_DOMAIN) {
+        this.resendInstance.domains
+          .create({ name: process.env.RESEND_DOMAIN })
+          .catch((error) => {
+            // Domain might already exist, which is fine
+            if (!error.message?.includes('already exists')) {
+              this.logger.warn('Failed to create Resend domain:', error.message);
+            }
+          });
+      }
+    } catch (error) {
+      this.logger.error('Failed to initialize Resend service:', error);
     }
   }
 
-  getResendInstance(): Resend {
+  getResendInstance(): Resend | null {
     return this.resendInstance;
   }
 }
